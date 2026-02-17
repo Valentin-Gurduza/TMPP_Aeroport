@@ -1,0 +1,63 @@
+@using TMPP_Aeroport.Domain.Entities
+@model dynamic
+
+@{
+    ViewData["Title"] = "Smart Airport Dashboard";
+}
+
+<div class="text-center">
+    <h1 class="display-4">Smart Airport Management</h1>
+    <p>Laborator 1: Implementare OOP & SOLID</p>
+</div>
+
+<div class="container mt-5">
+    <div class="row">
+        <div class="col-md-6">
+            <h3>Zboruri (SRP: Doar datele despre zbor)</h3>
+            <table class="table table-striped">
+                <thead>
+                    <tr>
+                        <th>Nr Zbor</th>
+                        <th>Origine</th>
+                        <th>Destinație</th>
+                        <th>Plecare</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (Flight flight in Model.Flights)
+// ...
+        <div class="col-md-6">
+            <h3>Flotă Aeriană (Polimorfism)</h3>
+            <table class="table table-bordered">
+                <thead>
+                    <tr>
+                        <th>Model</th>
+                        <th>Nr. Înreg.</th>
+                        <th>Tip</th>
+                        <th>Detalii</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (Aircraft aircraft in Model.Aircrafts)
+                    {
+                        <tr>
+                            <td>@aircraft.Model</td>
+                            <td>@aircraft.RegistrationNumber</td>
+                            <td>@aircraft.GetAircraftType()</td>
+                            <td>
+                                @if (aircraft is PassengerPlane pp)
+                                {
+                                    <span>Cap: @pp.PassengerCapacity pax</span>
+                                }
+                                else if (aircraft is CargoPlane cp)
+                                {
+                                    <span>Max Load: @cp.MaxCargoWeightKg kg</span>
+                                }
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
