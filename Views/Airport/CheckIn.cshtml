@@ -1,0 +1,63 @@
+@model dynamic
+
+@{
+    ViewData["Title"] = "Imbarcare";
+}
+
+<div class="text-center mb-5">
+    <h1 class="display-4">Check-In Pasager</h1>
+    <p>Demonstrație <strong>Abstract Factory Pattern</strong></p>
+</div>
+
+<div class="container">
+    <div class="row justify-content-center">
+        <!-- Controale pentru selectarea tipului de bilet (Schimbarea Fabricii) -->
+        <div class="col-md-12 text-center mb-4">
+            <p>Selectează tipul de bilet pentru a vedea cum se schimbă documentele generate:</p>
+            <a href="@Url.Action("CheckIn", "Airport", new { ticketType = "economy" })" class="btn btn-primary">Check-In ECONOMY</a>
+            <a href="@Url.Action("CheckIn", "Airport", new { ticketType = "business" })" class="btn btn-warning">Check-In BUSINESS</a>
+        </div>
+    </div>
+
+    @if (Model != null)
+    {
+        <div class="row mt-4">
+            <!-- Produs A: Boarding Pass -->
+            <div class="col-md-6">
+                <div class="card shadow-sm h-100">
+                    <div class="card-header bg-info text-white">
+                        <h5>Tichet de Îmbarcare (Abstract Product A)</h5>
+                    </div>
+                    <div class="card-body">
+                        <p class="card-text">
+                            <strong>Detaliu Generat:</strong> <br />
+                            @Model.BoardingPass.GetTicketDetails()
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Produs B: Baggage Tag -->
+            <div class="col-md-6">
+                <div class="card shadow-sm h-100">
+                    <div class="card-header bg-secondary text-white">
+                        <h5>Etichetă Bagaj (Abstract Product B)</h5>
+                    </div>
+                    <div class="card-body">
+                        <p class="card-text">
+                            <strong>Cod:</strong> @Model.BaggageTag.Code <br />
+                            <strong>Culoare (Specifică Familiei):</strong> @Model.BaggageTag.GetTagColor()
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="alert alert-success mt-4">
+            <strong>Observație:</strong>
+            Deși codul Controller-ului este identic (<code>factory.Create...</code>),
+            obiectele create sunt complet diferite în funcție de fabrica selectată (<span class="text-uppercase">@Model.TicketType</span>).
+            Asta demonstrează <strong>Abstract Factory</strong>: familii de obiecte compatibile.
+        </div>
+    }
+</div>
