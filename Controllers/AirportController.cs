@@ -25,5 +25,42 @@ namespace TMPP_Aeroport.Controllers
 
             return View(model);
         }
+
+        // Abstract Factory Pattern Usage
+        // Actiunea CheckIn demonstreaza crearea unei familii de obiecte compatibile.
+        [HttpGet]
+        public IActionResult CheckIn(string ticketType)
+        {
+            TMPP_Aeroport.Domain.AbstractFactory.IFlightDocumentFactory factory;
+
+            // Selectia fabricii se face la runtime (in functie de input-ul utilizatorului)
+            switch (ticketType?.ToLower())
+            {
+                case "business":
+                    factory = new TMPP_Aeroport.Domain.AbstractFactory.BusinessDocumentFactory();
+                    break;
+                case "economy":
+                default:
+                    factory = new TMPP_Aeroport.Domain.AbstractFactory.EconomyDocumentFactory();
+                    break;
+            }
+
+            // Clientul (Controller-ul) nu stie ce clasa concreta de Bilet sau Eticheta va primi.
+            // El stie doar ca Biletul si Eticheta vor fi compatibile intre ele (aceeasi familie).
+            var boardingPass = factory.CreateBoardingPass();
+            var baggageTag = factory.CreateBaggageTag();
+
+            // Setam date demo
+            boardingPass.PassengerName = "John Doe";
+            boardingPass.FlightNumber = "RO301";
+            baggageTag.Code = "BGG-" + Guid.NewGuid().ToString().Substring(0, 8).ToUpper();
+
+            dynamic model = new ExpandoObject();
+            model.BoardingPass = boardingPass;
+            model.BaggageTag = baggageTag;
+            model.TicketType = ticketType ?? "Standard";
+
+            return View(model);
+        }
     }
 }
