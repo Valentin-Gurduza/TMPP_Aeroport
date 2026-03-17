@@ -6,7 +6,7 @@ namespace TMPP_Aeroport.Domain.Entities
     // Aceasta este clasa de bază (părinte) pentru toate entitățile din sistem.
     public abstract class BaseEntity
     {
-        public Guid Id { get; private set; }
+        public Guid Id { get; protected set; }
         public DateTime CreatedAt { get; private set; }
 
         protected BaseEntity()

@@ -1,0 +1,43 @@
+@model IReadOnlyList<string>
+
+@{
+    ViewData["Title"] = "Demonstrație: Singleton Pattern";
+}
+
+<div class="container mt-5">
+    <h2 class="mb-4 text-dark">📋 Sistem Centralizat Log-uri (Singleton)</h2>
+    
+    <div class="alert alert-secondary text-dark">
+        <strong>Cum funcționează?</strong> Clasa <code>AirportLogger</code> folosește pattern-ul Singleton "Thread-Safe" cu <code>Lazy&lt;T&gt;</code>. Indiferent din ce punct din aplicație se apelează logger-ul (din servicii, din controllere, din fabrici), va fi folosită <strong>mereu aceeași și singura instanță</strong> de Logger alocată în memorie. Astfel, obținem o listă unică, coerentă și sigură.
+    </div>
+
+    <div class="card shadow border-dark">
+        <div class="card-header bg-dark text-white">
+            <h5 class="mb-0">Logs Console (<pre class="d-inline text-success">@Model.Count()</pre> inregistrari)</h5>
+        </div>
+        <div class="card-body bg-light" style="max-height: 400px; overflow-y: auto;">
+            @if (Model.Any())
+            {
+                <ul class="list-group list-group-flush font-monospace">
+                    @foreach (var log in Model)
+                    {
+                        <li class="list-group-item bg-transparent">
+                            <span class="text-secondary">@log</span>
+                        </li>
+                    }
+                </ul>
+            }
+            else
+            {
+                <p class="text-muted">Nu există log-uri în sistem.</p>
+            }
+        </div>
+        <div class="card-footer d-flex justify-content-end">
+             <a href="@Url.Action("SingletonDemo", "Airport")" class="btn btn-outline-dark btn-sm">Refresh Logs</a>
+        </div>
+    </div>
+    
+    <div class="mt-4 text-center">
+        <p class="text-muted small">Navighează pe alte pagini (Check-In, Itinerar, Clonare) pentru a popula acest jurnal înainte de a da Refresh!</p>
+    </div>
+</div>

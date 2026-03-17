@@ -15,8 +15,44 @@ namespace TMPP_Aeroport.Services
             // Populăm cu date de test
             _flights.Add(new Flight("RO301", "Bucharest", "Frankfurt") { DepartureTime = DateTime.Now.AddHours(2), ArrivalTime = DateTime.Now.AddHours(5) });
             _flights.Add(new Flight("RO305", "Bucharest", "London") { DepartureTime = DateTime.Now.AddHours(4), ArrivalTime = DateTime.Now.AddHours(8) });
+            
+            // Singleton: Jurnalizăm instanțierea cu un singur obiect global
+            TMPP_Aeroport.Domain.Singleton.AirportLogger.Instance.Log("FlightService creat și populat cu zboruri de bază.");
         }
-// ...
+
+        public IEnumerable<Flight> GetAllFlights()
+        {
+            TMPP_Aeroport.Domain.Singleton.AirportLogger.Instance.Log("A fost preluată lista cu toate zborurile.");
+            return _flights;
+        }
+
+        public void ScheduleFlight(Flight flight)
+        {
+            _flights.Add(flight);
+            TMPP_Aeroport.Domain.Singleton.AirportLogger.Instance.Log($"Zbor nou programat: {flight.FlightNumber}");
+        }
+
+        // Prototype Pattern: Clonarea unui zbor existent
+        public Flight CloneFlight(Guid flightId)
+        {
+            var original = _flights.Find(f => f.Id == flightId);
+            if (original == null) return null;
+
+            // Apelăm metoda de clonare care face Shallow Copy și mută zborul pe ziua următoare
+            var clone = original.CloneForNextDay();
+            _flights.Add(clone);
+
+            TMPP_Aeroport.Domain.Singleton.AirportLogger.Instance.Log($"Zborul {original.FlightNumber} a fost CLONAT (Prototype) pentru data {clone.DepartureTime:dd-MM-yyyy}");
+            
+            return clone;
+        }
+
+    }
+
+    public class AircraftService : IAircraftService
+    {
+        private readonly List<Aircraft> _aircrafts = new List<Aircraft>();
+
         public AircraftService()
         {
             // Factory Method Pattern Usage
