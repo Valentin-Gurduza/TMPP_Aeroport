@@ -1,0 +1,50 @@
+@using TMPP_Aeroport.Domain.Entities
+@model IEnumerable<Flight>
+
+@{
+    ViewData["Title"] = "Demonstrație: Prototype Pattern";
+}
+
+<div class="container mt-5">
+    <h2 class="mb-4 text-warning">✈️ Clonare Zboruri (Prototype Pattern)</h2>
+    
+    <div class="alert alert-warning text-dark">
+        <strong>Cum funcționează?</strong> Când vrem să programăm același zbor pentru a doua zi, în loc să re-introducem toate datele greoaie manual (Nume, Destinație, Echipaj, etc), apelăm <code>original.CloneForNextDay()</code>. Această metodă folosește <code>ICloneable</code> pentru a transfera toate proprietățile, dar generează un ID nou și modifică doar data (Shallow Copy adaptat).
+    </div>
+
+    <div class="card shadow">
+        <div class="card-header bg-dark text-white d-flex justify-content-between align-items-center">
+            <h4 class="mb-0">Lista Zboruri</h4>
+            <span class="badge bg-primary">Total: @Model.Count()</span>
+        </div>
+        <div class="card-body p-0">
+            <table class="table table-hover table-bordered mb-0">
+                <thead class="table-light">
+                    <tr>
+                        <th>Zbor</th>
+                        <th>Ruta</th>
+                        <th>Plecare</th>
+                        <th>Sosire</th>
+                        <th>Acțiune (Prototype)</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var flight in Model)
+                    {
+                        <tr>
+                            <td><strong>@flight.FlightNumber</strong><br><small class="text-muted">@flight.Id.ToString().Substring(0, 8)...</small></td>
+                            <td>@flight.Origin ➡️ @flight.Destination</td>
+                            <td>@flight.DepartureTime.ToString("dd MMM yyyy, HH:mm")</td>
+                            <td>@flight.ArrivalTime.ToString("dd MMM yyyy, HH:mm")</td>
+                            <td class="text-center">
+                                <a href="@Url.Action("PrototypeDemo", "Airport", new { cloneFlightId = flight.Id })" class="btn btn-sm btn-outline-warning text-dark">
+                                    🐑 Clonează pt Mâine
+                                </a>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>

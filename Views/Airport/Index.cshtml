@@ -12,9 +12,18 @@
 
 <div class="container mt-5">
     <div class="row mb-4">
-        <div class="col-md-12 text-center">
-            <a href="@Url.Action("CheckIn", "Airport")" class="btn btn-lg btn-success">
-                🧳 Mergi la Check-In (Demo Abstract Factory)
+        <div class="col-md-12 text-center d-flex justify-content-center gap-2 flex-wrap">
+            <a href="@Url.Action("CheckIn", "Airport")" class="btn btn-outline-success">
+                🧳 Lab 2: Check-In (Abstract Factory)
+            </a>
+            <a href="@Url.Action("BuilderDemo", "Airport")" class="btn btn-primary">
+                🎫 Lab 3: Flight Itinerary (Builder)
+            </a>
+            <a href="@Url.Action("PrototypeDemo", "Airport")" class="btn btn-warning text-dark">
+                ✈️ Lab 3: Clone Flights (Prototype)
+            </a>
+            <a href="@Url.Action("SingletonDemo", "Airport")" class="btn btn-dark">
+                📋 Lab 3: System Logs (Singleton)
             </a>
         </div>
     </div>
@@ -33,7 +42,18 @@
                 </thead>
                 <tbody>
                     @foreach (Flight flight in Model.Flights)
-// ...
+                    {
+                        <tr>
+                            <td>@flight.FlightNumber</td>
+                            <td>@flight.Origin</td>
+                            <td>@flight.Destination</td>
+                            <td>@flight.DepartureTime.ToString("g")</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+
         <div class="col-md-6">
             <h3>Flotă Aeriană (Polimorfism)</h3>
             <table class="table table-bordered">

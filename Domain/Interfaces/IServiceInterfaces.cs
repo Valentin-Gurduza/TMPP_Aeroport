@@ -10,6 +10,9 @@ namespace TMPP_Aeroport.Domain.Interfaces
     {
         IEnumerable<Flight> GetAllFlights();
         void ScheduleFlight(Flight flight);
+        
+        // Prototype Pattern Demo
+        Flight CloneFlight(Guid flightId);
     }
 
     public interface IAircraftService

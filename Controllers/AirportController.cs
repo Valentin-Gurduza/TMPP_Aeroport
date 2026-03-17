@@ -62,5 +62,46 @@ namespace TMPP_Aeroport.Controllers
 
             return View(model);
         }
+
+        // Builder Pattern Usage
+        [HttpGet]
+        public IActionResult BuilderDemo(string passengerName = "Maria Popescu", string type = "Business")
+        {
+            TMPP_Aeroport.Domain.Builder.IItineraryBuilder builder;
+            
+            if (type.ToLower() == "business")
+                builder = new TMPP_Aeroport.Domain.Builder.BusinessItineraryBuilder();
+            else
+                builder = new TMPP_Aeroport.Domain.Builder.EconomyItineraryBuilder();
+
+            var director = new TMPP_Aeroport.Domain.Builder.ItineraryDirector(builder);
+            director.ConstructFullItinerary(passengerName);
+
+            var itinerary = builder.GetResult();
+            
+            TMPP_Aeroport.Domain.Singleton.AirportLogger.Instance.Log($"Itinerar (Builder) creat pentru {passengerName} de tip {type}");
+
+            return View(itinerary);
+        }
+
+        // Prototype Pattern Usage
+        public IActionResult PrototypeDemo(Guid? cloneFlightId)
+        {
+            if (cloneFlightId.HasValue)
+            {
+                // Clona pe baza prototipului selectat
+                _flightService.CloneFlight(cloneFlightId.Value);
+            }
+
+            var flights = _flightService.GetAllFlights();
+            return View(flights);
+        }
+
+        // Singleton Pattern Usage
+        public IActionResult SingletonDemo()
+        {
+            var logs = TMPP_Aeroport.Domain.Singleton.AirportLogger.Instance.GetLogs();
+            return View(logs);
+        }
     }
 }
