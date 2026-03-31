@@ -1,0 +1,76 @@
+@{
+    ViewData["Title"] = "Facade Demo";
+}
+
+<div class="container mt-5">
+    <h2>Demonstrație Facade Pattern 🛫</h2>
+    <p class="text-muted">Orchestrarea unui sistem extrem de complex (Aprobări Turn Control, Echipaj, Bagaje) cu o singură linie de cod în Controller.</p>
+    <hr />
+
+    <div class="row">
+        <div class="col-md-5">
+            <div class="card bg-light">
+                <div class="card-header bg-danger text-white">
+                    <h5>Inițiere Decolare (UI Simplificat)</h5>
+                </div>
+                <div class="card-body">
+                    <form method="post" action="/Airport/FacadeDemoExecute">
+                        <div class="form-group mb-3">
+                            <label>Număr Zbor:</label>
+                            <input type="text" name="flightNumber" class="form-control" value="TAROM-301" />
+                        </div>
+                        <div class="form-group mb-3">
+                            <label>Pistă Alocată:</label>
+                            <input type="text" name="runway" class="form-control" value="08R" />
+                        </div>
+                        <button type="submit" class="btn btn-danger btn-lg w-100">Cere Aprobare (Facade)</button>
+                    </form>
+                </div>
+            </div>
+
+            <div class="alert alert-secondary mt-3">
+                <h5>Sub-Sisteme Ascunse:</h5>
+                <ul>
+                    <li><code>ATCService</code> (Turnul de Control)</li>
+                    <li><code>CrewManagementService</code> (Echipaj)</li>
+                    <li><code>BaggageLoadingService</code> (Logistica Calei)</li>
+                </ul>
+                Toate aceste clase au fost izolate.
+            </div>
+        </div>
+
+        <div class="col-md-7">
+            @if (ViewBag.FlightLog != null)
+            {
+                <div class="card border-danger">
+                    <div class="card-header text-danger">
+                        <h5>Log-ul de Procesare Fațadă</h5>
+                    </div>
+                    <div class="card-body bg-dark text-white rounded-bottom" style="font-family: monospace;">
+                        @foreach (var step in ViewBag.FlightLog)
+                        {
+                            if (step.Contains("SUCCES"))
+                            {
+                                <p class="text-success fw-bold">@step</p>
+                            }
+                            else if (step.Contains("EROARE"))
+                            {
+                                <p class="text-danger fw-bold">@step</p>
+                            }
+                            else
+                            {
+                                <p class="text-light">> @step</p>
+                            }
+                        }
+                    </div>
+                </div>
+            }
+            else
+            {
+                <div class="h-100 d-flex align-items-center justify-content-center text-muted border border-dashed rounded">
+                    <p>Așteptare comandă decuplare...</p>
+                </div>
+            }
+        </div>
+    </div>
+</div>

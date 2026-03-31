@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
 using System.Dynamic;
 using TMPP_Aeroport.Domain.Interfaces;
+using TMPP_Aeroport.Domain.Composite;
 
 namespace TMPP_Aeroport.Controllers
 {
@@ -8,12 +9,14 @@ namespace TMPP_Aeroport.Controllers
     {
         private readonly IFlightService _flightService;
         private readonly IAircraftService _aircraftService;
+        private readonly TMPP_Aeroport.Domain.Adapter.IAirportWeatherService _weatherService;
 
         // DIP: Controller-ul depinde de abstracții (Interfețe), nu de clase concrete.
-        public AirportController(IFlightService flightService, IAircraftService aircraftService)
+        public AirportController(IFlightService flightService, IAircraftService aircraftService, TMPP_Aeroport.Domain.Adapter.IAirportWeatherService weatherService)
         {
             _flightService = flightService;
             _aircraftService = aircraftService;
+            _weatherService = weatherService;
         }
 
         public IActionResult Index()
@@ -102,6 +105,71 @@ namespace TMPP_Aeroport.Controllers
         {
             var logs = TMPP_Aeroport.Domain.Singleton.AirportLogger.Instance.GetLogs();
             return View(logs);
+        }
+
+        // Adapter Pattern Usage
+        public IActionResult AdapterDemo(string city = "BBU") // Bucharest by default
+        {
+            // Controller-ul MVC solicită temperatura în Celsius (curat, via Interfață standard)
+            // Tot mecanismul de traducere din sistemul Legacy este ascuns de Adapter.
+            double currentTemp = _weatherService.GetTemperatureCelsius(city);
+
+            ViewBag.City = city;
+            ViewBag.Temperature = currentTemp;
+
+            return View();
+        }
+
+        // Composite Pattern Usage
+        public IActionResult CompositeDemo()
+        {
+            // 1. Creăm Noduri Frunze simple
+            ILuggageItem pasager1Valiza1 = new Suitcase("Valiză Roșie", 23.5);
+            ILuggageItem pasager1Rucsac = new Backpack("Rucsac Laptop", 5.2);
+            ILuggageItem pasager2Valiza = new Suitcase("Valiză Neagră", 18.0);
+
+            // 2. Creăm un Container mediu (Familia Popescu) care combină valizele lor
+            LuggageContainer popescuFamilyContainer = new LuggageContainer("POP-01");
+            popescuFamilyContainer.Add(pasager1Valiza1);
+            popescuFamilyContainer.Add(pasager1Rucsac);
+            popescuFamilyContainer.Add(pasager2Valiza);
+
+            // 3. Alt pasager separat
+            ILuggageItem pasager3Valiza = new Suitcase("Geantă Golf", 12.0);
+
+            // 4. Creăm Containerul Uriaș (Cala Avionului) care deține tot
+            LuggageContainer mainCargo = new LuggageContainer("CARGO-MAIN-737");
+            mainCargo.Add(popescuFamilyContainer); // Adăugăm un nod Compus înăuntrul altuia
+            mainCargo.Add(pasager3Valiza);         // Adăugăm și o Frunză direct
+
+            ViewBag.MainCargo = mainCargo;
+            
+            // Controllerul cere 'GetWeight()' o singură dată. Nu face bucle ForEach!
+            ViewBag.TotalWeight = mainCargo.GetWeight();
+            ViewBag.StringTree = mainCargo.Display();
+
+            return View();
+        }
+
+        // Facade Pattern Usage
+        [HttpPost]
+        public IActionResult FacadeDemoExecute(string flightNumber, string runway)
+        {
+            // Controller-ul MVC apelează O SINGURĂ LINIUȚĂ DE COD pentru a decola!
+            // Toată birocrația ATC/Crew/Baggage este ascunsă de obiectul Facade.
+            
+            var facade = new TMPP_Aeroport.Domain.Facade.FlightDepartureFacade();
+            var flightLog = facade.AuthoriseDeparture(flightNumber, runway);
+
+            ViewBag.FlightLog = flightLog;
+            ViewBag.FlightNumber = flightNumber;
+            return View("FacadeDemo");
+        }
+
+        [HttpGet]
+        public IActionResult FacadeDemo()
+        {
+            return View();
         }
     }
 }

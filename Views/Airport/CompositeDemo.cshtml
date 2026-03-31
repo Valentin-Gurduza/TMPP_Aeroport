@@ -1,0 +1,46 @@
+@{
+    ViewData["Title"] = "Composite Demo";
+}
+
+<div class="container mt-5">
+    <h2>Demonstrație Composite Pattern 📦</h2>
+    <p class="text-muted">Calcularea recursivă a masei pentru o ierarhie de containere și bagaje, folosind interfața uniformă `ILuggageItem`.</p>
+    <hr />
+
+    <div class="row">
+        <div class="col-md-6">
+            <div class="card bg-light">
+                <div class="card-header bg-dark text-white">
+                    <h5>Arborele Sistemului de Cală</h5>
+                </div>
+                <div class="card-body">
+                    <pre class="bg-dark text-success p-3 rounded" style="font-family: monospace; font-size: 1.1rem;">
+@ViewBag.StringTree
+                    </pre>
+                </div>
+                <div class="card-footer text-muted">
+                    <small><i>Controller-ul a deținut doar componenta Rădăcină (Main Cargo). Pattern-ul a desenat toți copilașii recursiv, invocând aceeași funcție `Display()`.</i></small>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-6">
+            <div class="card border-success mt-3 mt-md-0">
+                <div class="card-header bg-success text-white">
+                    <h5>Greutate Totală (TakeOff Weight)</h5>
+                </div>
+                <div class="card-body text-center py-5">
+                    <h1 class="display-3 fw-bold text-success">@ViewBag.TotalWeight kg</h1>
+                    <p class="lead mt-3">Calculată automat prin polimorfism.</p>
+                </div>
+            </div>
+
+            <div class="alert alert-secondary mt-3">
+                <h5>Cum funcționează?</h5>
+                Părintele principal "Cala Avionului" își adaugă greutatea proprie a tablei (15kg) și apoi își întreabă sub-containerele: "Cât cântăriți?". Orice `LuggageContainer` întreabă mai departe "Frunzele" `Suitcase` și adună tot. 
+                <br /><br />
+                <b>Zero if-uri!</b> Controller-ul a rulat doar <code>mainCargo.GetWeight()</code> și a primit răspunsul gata sumat.
+            </div>
+        </div>
+    </div>
+</div>
