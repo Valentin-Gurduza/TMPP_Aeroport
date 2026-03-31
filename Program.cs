@@ -7,6 +7,10 @@ builder.Services.AddControllersWithViews();
 builder.Services.AddSingleton<TMPP_Aeroport.Domain.Interfaces.IFlightService, TMPP_Aeroport.Services.FlightService>();
 builder.Services.AddSingleton<TMPP_Aeroport.Domain.Interfaces.IAircraftService, TMPP_Aeroport.Services.AircraftService>();
 
+// Register Adapter Pattern Services
+builder.Services.AddSingleton<TMPP_Aeroport.Domain.Adapter.LegacyWeatherSystem>();
+builder.Services.AddSingleton<TMPP_Aeroport.Domain.Adapter.IAirportWeatherService, TMPP_Aeroport.Domain.Adapter.WeatherAdapter>();
+
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.

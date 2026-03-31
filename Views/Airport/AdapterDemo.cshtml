@@ -1,0 +1,50 @@
+@{
+    ViewData["Title"] = "Adapter Demo";
+}
+
+<div class="container mt-5">
+    <h2>Demonstrație Adapter Pattern ⚡</h2>
+    <p class="text-muted">Integrarea sistemului extern de vreme (LegacyWeatherSystem) cu sistemul nostru strictizat în Celsius.</p>
+    <hr />
+
+    <div class="row">
+        <div class="col-md-6">
+            <div class="card bg-light">
+                <div class="card-header">
+                    <h4>Vreme Aeroport (Sistemul Nostru)</h4>
+                </div>
+                <div class="card-body">
+                    <form method="get" action="/Airport/AdapterDemo">
+                        <div class="form-group mb-3">
+                            <label>Cod IATA / Nume Oraș:</label>
+                            <input type="text" name="city" class="form-control" value="@ViewBag.City" />
+                        </div>
+                        <button type="submit" class="btn btn-primary">Află Vremea (Celsius)</button>
+                    </form>
+
+                    <div class="mt-4 p-4 rounded text-white @(ViewBag.Temperature < 10 ? "bg-info" : ViewBag.Temperature > 22 ? "bg-danger" : "bg-warning")">
+                        <h3>Temperatura în @ViewBag.City</h3>
+                        <h1 class="display-4">@ViewBag.Temperature °C</h1>
+                    </div>
+                </div>
+                <div class="card-footer text-muted">
+                    <small><i>Controller-ul a cerut doar un `double` în Celsius. Nu știe nimic despre Kelvin sau de sistemul vechi! Adaptarea s-a făcut invizibil în spate.</i></small>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-6">
+            <div class="alert alert-secondary mt-3 mt-md-0">
+                <h5>Procesul în trepte:</h5>
+                <ol>
+                    <li>Formularul trimite codul către `AirportController`.</li>
+                    <li>Controller-ul injectează `IAirportWeatherService` (interfața compatibilă).</li>
+                    <li>Apelează `.GetTemperatureCelsius()`.</li>
+                    <li>`WeatherAdapter`-ul interceptează, transformă IATA-ul și apelează sistemul Legacy folosind funcția ciudată `.GetTemperatureKelvin()`.</li>
+                    <li>Conversia Kelvin-Celsius se execută matematic.</li>
+                    <li>Rezultatul perfect curat se afișează pe ecran.</li>
+                </ol>
+            </div>
+        </div>
+    </div>
+</div>
