@@ -1,0 +1,36 @@
+@{
+    ViewData["Title"] = "Flyweight Demo";
+}
+
+<div class="container mt-5">
+    <h2>Demonstrație Flyweight Pattern 🪶</h2>
+    <p class="text-muted">Afișăm teoretic un ecran de radar cu zeci de mii de zboruri fară a bloca memoria cu grafică redundantă.</p>
+    <hr />
+
+    <div class="row text-center my-5">
+        <div class="col-md-6">
+            <div class="card border-primary shadow-sm h-100">
+                <div class="card-body py-5">
+                    <h1 class="display-3 text-primary">@ViewBag.TotalObjects.ToString("N0")</h1>
+                    <h4>Instanțe Locale `RadarBlip` (În zbor)</h4>
+                    <p class="text-muted mt-3">Sunt ușoare. Fiecare conține doar 2 coordonate (Lat, Lng).</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6 mt-4 mt-md-0">
+            <div class="card border-success shadow-sm h-100">
+                <div class="card-body py-5">
+                    <h1 class="display-3 text-success">@ViewBag.UniqueModelsInMemory</h1>
+                    <h4>Instanțe Grele `AircraftModelData`</h4>
+                    <p class="text-muted mt-3">Stochează texturi 3D și mesh-uri de sute de mega. Ele sunt <b>reciclate</b> din RAM pentru toate zborurile de același tip!</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="alert alert-info border-info mt-4">
+        <h5 class="alert-heading"><i class="bi bi-info-circle-fill"></i> Explicație OOP:</h5>
+        Dacă cele 50.000 de instanțe ar fi conținut și array-ul masiv <code>byte[] Mesh3D</code> (Intrinsec), programul ar fi cerut zeci de GB de RAM și ar fi crăpat prin <i>OutOfMemoryException</i>. 
+        Flyweight salvează situația delegând memoria grea către o singură instanță comună ("Boeing 737"), și conectând 25.000 de pointeri ușori la ea!
+    </div>
+</div>

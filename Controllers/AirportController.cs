@@ -2,6 +2,10 @@ using Microsoft.AspNetCore.Mvc;
 using System.Dynamic;
 using TMPP_Aeroport.Domain.Interfaces;
 using TMPP_Aeroport.Domain.Composite;
+using TMPP_Aeroport.Domain.Flyweight;
+using TMPP_Aeroport.Domain.Decorator;
+using TMPP_Aeroport.Domain.Bridge;
+using TMPP_Aeroport.Domain.Proxy;
 
 namespace TMPP_Aeroport.Controllers
 {
@@ -168,6 +172,113 @@ namespace TMPP_Aeroport.Controllers
 
         [HttpGet]
         public IActionResult FacadeDemo()
+        {
+            return View();
+        }
+
+        // ==========================================
+        // LAB 5: Flyweight, Decorator, Bridge, Proxy
+        // ==========================================
+
+        // 1. Flyweight Pattern Usage
+        public IActionResult FlyweightDemo()
+        {
+            var factory = new AircraftModelFactory();
+            var blips = new List<RadarBlip>();
+
+            // Creăm 50.000 de puncte radar pe ecran
+            for (int i = 0; i < 50000; i++)
+            {
+                // Modelele grele 'Boeing 737' și 'Airbus A320' sunt reciclate din Factory, 
+                // scutind zeci de Gigabytes de RAM.
+                string modelName = (i % 2 == 0) ? "Boeing 737" : "Airbus A320";
+                
+                blips.Add(new RadarBlip(
+                    flightNum: $"FL-{i}", 
+                    lat: 44.4 + (i * 0.0001), 
+                    lon: 26.1 + (i * 0.0001), 
+                    model: factory.GetAircraftModel(modelName)
+                ));
+            }
+
+            ViewBag.TotalObjects = blips.Count;
+            ViewBag.UniqueModelsInMemory = factory.GetCacheSize(); // Doar 2!
+
+            return View();
+        }
+
+        // 2. Decorator Pattern Usage
+        [HttpPost]
+        public IActionResult DecoratorDemoExecute(string passengerName, bool sms, bool email)
+        {
+            // Baza standard
+            IBoardingNotifier notifier = new WebAppNotifier();
+
+            // Decorăm dinamic în funcție de preferințele utilizatorului
+            if (sms)
+                notifier = new SMSNotifierDecorator(notifier);
+            if (email)
+                notifier = new EmailNotifierDecorator(notifier);
+
+            // Apelăm notificarea "înfășurată".
+            var logs = notifier.SendNotification(passengerName, "Zborul tău a fost programat la Poarta 4.");
+
+            ViewBag.Logs = logs;
+            ViewBag.PassengerName = passengerName;
+
+            return View("DecoratorDemo");
+        }
+
+        [HttpGet]
+        public IActionResult DecoratorDemo()
+        {
+            return View();
+        }
+
+        // 3. Bridge Pattern Usage
+        public IActionResult BridgeDemo(string hardware = "led")
+        {
+            // Listă falsă de zboruri pentru display
+            var flights = new List<string> { "RO-302", "WZZ-15K", "LH-1652", "BA-092" };
+
+            // 1) Alegem Implementarea Hardware (LED sau Web/SmartTV)
+            IDisplayRenderer renderer = (hardware == "web") ? new WebRenderer() : new LEDRenderer();
+
+            // 2) Alegem Abstractizarea de Business (Plecări sau Sosiri)
+            FlightBoard departures = new DeparturesBoard(renderer);
+            FlightBoard arrivals = new ArrivalsBoard(renderer);
+
+            ViewBag.Hardware = hardware;
+            ViewBag.DeparturesRender = departures.ShowBoard(flights);
+            ViewBag.ArrivalsRender = arrivals.ShowBoard(flights);
+
+            return View();
+        }
+
+        // 4. Proxy Pattern Usage
+        [HttpPost]
+        public IActionResult ProxyDemoExecute(string role, string actionType)
+        {
+            // Creăm interfața Proxy, nu instanțiem direct serviciul periculos.
+            IRunwayControl runwayProxy = new RunwayControlProxy(role);
+            string result = "";
+
+            if (actionType == "clearance")
+            {
+                result = runwayProxy.GrantClearance("TAROM-102", "Pista Nord 01L");
+            }
+            else if (actionType == "lock")
+            {
+                result = runwayProxy.LockRunway("Pista Nord 01L");
+            }
+
+            ViewBag.RoleAttempted = role;
+            ViewBag.Result = result;
+            return View("ProxyDemo");
+        }
+
+        [HttpGet]
+        public IActionResult ProxyDemo()
         {
             return View();
         }
