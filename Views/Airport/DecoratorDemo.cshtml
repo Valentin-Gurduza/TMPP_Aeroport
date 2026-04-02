@@ -1,0 +1,71 @@
+@{
+    ViewData["Title"] = "Decorator Demo";
+}
+
+<div class="container mt-5">
+    <h2>Demonstrație Decorator Pattern 🔔</h2>
+    <p class="text-muted">Extindem funcționalitățile obiectelor de notificare treptat și dinamic (la momentul rulării), nu prin crearea a zeci de clase noi de bază.</p>
+    <hr />
+
+    <div class="row mt-4">
+        <div class="col-md-5">
+            <div class="card bg-light">
+                <div class="card-header bg-dark text-white">
+                    Trimite Notificare Îmbarcare
+                </div>
+                <div class="card-body">
+                    <form method="post" action="/Airport/DecoratorDemoExecute">
+                        <div class="mb-3">
+                            <label>Nume Pasager:</label>
+                            <input type="text" name="passengerName" class="form-control" value="Maria Popescu" />
+                        </div>
+                        <div class="mb-3">
+                            <label class="d-block text-muted small mb-2">OPȚIUNI EXTRA (Comportament Adăugat Dinamic):</label>
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" name="sms" value="true" id="checkSms">
+                                <label class="form-check-label" for="checkSms">
+                                    Include Notificare prin SMS
+                                </label>
+                            </div>
+                            <div class="form-check mt-2">
+                                <input class="form-check-input" type="checkbox" name="email" value="true" id="checkEmail">
+                                <label class="form-check-label" for="checkEmail">
+                                    Include Notificare pe Email
+                                </label>
+                            </div>
+                        </div>
+                        <button type="submit" class="btn btn-primary w-100 mt-3">Procesează</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-7 mt-4 mt-md-0">
+            @if (ViewBag.Logs != null)
+            {
+                <div class="card border-primary h-100">
+                    <div class="card-header bg-primary text-white">
+                        Flux de Execuție (Invertit, din stiva decoratorilor)
+                    </div>
+                    <div class="card-body bg-dark text-light p-4" style="font-family: monospace;">
+                        @foreach (var log in ViewBag.Logs)
+                        {
+                            <div class="mb-2">
+                                @if (log.Contains("[WEB]")) { <span class="badge bg-secondary">Bază</span> }
+                                @if (log.Contains("[SMS]")) { <span class="badge bg-success">Add-on</span> }
+                                @if (log.Contains("[EMAIL]")) { <span class="badge bg-warning text-dark">Add-on</span> }
+                                > @log
+                            </div>
+                        }
+                    </div>
+                </div>
+            }
+            else
+            {
+                <div class="h-100 d-flex align-items-center justify-content-center text-muted border border-dashed rounded p-5 text-center">
+                    Selectează opțiunile și apasă Procesează pentru a vedea cum `WebAppNotifier` este învelit din mers de Decoratori!
+                </div>
+            }
+        </div>
+    </div>
+</div>

@@ -1,0 +1,77 @@
+@{
+    ViewData["Title"] = "Proxy Demo";
+}
+
+<div class="container mt-5">
+    <h2>Demonstrație Proxy Pattern 🛡️</h2>
+    <p class="text-muted">Protejarea "Real Subject" (Pista Aeroportului) de apeluri neautorizate, folosind un proxy ca Middle-Man.</p>
+    <hr />
+
+    <div class="row mt-4">
+        <div class="col-md-5">
+            <div class="card bg-light shadow-sm">
+                <div class="card-header bg-danger text-white">
+                    Panoul de Semnalizare Pistă
+                </div>
+                <div class="card-body">
+                    <form method="post" action="/Airport/ProxyDemoExecute">
+                        <div class="mb-3">
+                            <label class="form-label d-block text-muted small">Cine va face apelul (Autentificare Falsă)?</label>
+                            <select name="role" class="form-select border-danger">
+                                <option value="BaggageHandler" selected>Baggage Handler (Nu are funcție)</option>
+                                <option value="Passenger">Pasager Simplu (Nu are funcție)</option>
+                                <option value="ATC_Manager">Tower Control Manager (Autorizat)</option>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label d-block text-muted small">Ce acțiune doriți?</label>
+                            <div class="form-check">
+                                <input class="form-check-input" type="radio" name="actionType" id="a1" value="clearance" checked>
+                                <label class="form-check-label text-success" for="a1">Oferă Clearance pt Decolare TAROM</label>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input" type="radio" name="actionType" id="a2" value="lock">
+                                <label class="form-check-label text-danger" for="a2">Apasă Butonul Roșu (Lock Runway)</label>
+                            </div>
+                        </div>
+                        <button type="submit" class="btn btn-dark w-100 mt-3">Trimite Comanda Sistemului</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-7 mt-4 mt-md-0">
+            @if (ViewBag.Result != null)
+            {
+                bool isError = ViewBag.Result.ToString().Contains("ACCES RESPINS") || ViewBag.Result.ToString().Contains("CRITICAL");
+                <div class="card text-center h-100 @(isError ? "border-danger text-danger bg-white" : "bg-dark text-success")">
+                    <div class="card-header @(isError ? "bg-danger text-white" : "border-success")">
+                        Răspuns Sistem (Rutat via Proxy)
+                    </div>
+                    <div class="card-body d-flex align-items-center justify-content-center p-5">
+                        <div>
+                            @if(isError)
+                            {
+                                <i class="display-1 bi bi-shield-x"></i>
+                                <h3 class="mt-4">@ViewBag.Result</h3>
+                                <p class="text-dark">Acțiunea a fost blocată la nivelul Proxy-ului din memorie, apelul nu a ajuns la Serviciul Real al pistei!</p>
+                            }
+                            else
+                            {
+                                <i class="display-1 bi bi-shield-check"></i>
+                                <h3 class="mt-4">@ViewBag.Result</h3>
+                                <p class="text-light">Proxy-ul a confirmat rolul <b>[@ViewBag.RoleAttempted]</b> și te-a lăsat să treci la Clasa Principală.</p>
+                            }
+                        </div>
+                    </div>
+                </div>
+            }
+            else
+            {
+                <div class="h-100 d-flex align-items-center text-center justify-content-center text-muted border border-dashed rounded p-5">
+                    Orice comandă din panoul lateral nu apelează sistemul aeroportului. Apelează un Protector Proxy care conține sistemul aeroportului. Testează!
+                </div>
+            }
+        </div>
+    </div>
+</div>

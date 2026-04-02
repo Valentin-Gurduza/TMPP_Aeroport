@@ -1,0 +1,61 @@
+@{
+    ViewData["Title"] = "Bridge Demo";
+}
+
+<div class="container mt-5">
+    <h2>Demonstrație Bridge Pattern 📺</h2>
+    <p class="text-muted">Afișăm Zboruri și Sosiri (Abstractizări) conectându-le la Display-uri diferite ca implementare hardware, fără a exploda numărul de clase!</p>
+    <hr />
+
+    <div class="row text-center mt-4">
+        <form method="get" action="/Airport/BridgeDemo">
+            <label class="fw-bold me-2">Alege Dispozitivul de Redare (Implementarea Podului):</label>
+            <div class="btn-group" role="group">
+                <button type="submit" name="hardware" value="led" class="btn btn-outline-danger @(ViewBag.Hardware == "led" ? "active" : "")">Matrix LED Vechi</button>
+                <button type="submit" name="hardware" value="web" class="btn btn-outline-info @(ViewBag.Hardware == "web" ? "active" : "")">SmartTV Web Interface</button>
+            </div>
+        </form>
+    </div>
+
+    <div class="row mt-5">
+        <div class="col-md-6 mb-4">
+            <div class="card bg-dark text-white border-warning h-100">
+                <div class="card-header border-warning text-warning">
+                    Panoul de PLECĂRI (DeparturesBoard)
+                </div>
+                <div class="card-body">
+                    @if (ViewBag.Hardware == "led")
+                    {
+                        <pre class="text-danger fw-bold" style="font-family: 'Courier New', monospace; font-size: 1.1rem; line-height: 1.5;">
+@ViewBag.DeparturesRender
+                        </pre>
+                    }
+                    else
+                    {
+                        @Html.Raw(ViewBag.DeparturesRender)
+                    }
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-6 mb-4">
+            <div class="card bg-dark text-white h-100">
+                <div class="card-header text-info">
+                    Panoul de SOSIRI (ArrivalsBoard)
+                </div>
+                <div class="card-body">
+                    @if (ViewBag.Hardware == "led")
+                    {
+                        <pre class="text-danger fw-bold" style="font-family: 'Courier New', monospace; font-size: 1.1rem; line-height: 1.5;">
+@ViewBag.ArrivalsRender
+                        </pre>
+                    }
+                    else
+                    {
+                        @Html.Raw(ViewBag.ArrivalsRender)
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
