@@ -9,17 +9,15 @@ namespace TMPP_Aeroport.Domain.Adapter
         double GetTemperatureCelsius(string city);
     }
 
-    // ---------------------------------------------------------
     // "Adaptee" (Clasa Incompatibilă / Legacy)
     // O simulăm ca pe un API extern care furnizează temperatura 
     // doar în grade Kelvin, pe care nu avem voie sau nu putem să o modificăm.
-    // ---------------------------------------------------------
     public class LegacyWeatherSystem
     {
         // Metodă care nu se potrivește cu contractul IAirportWeatherService
         public double GetTemperatureKelvin(string cityCode)
         {
-            // Simulăm un apel la un API extern (Hardcodat pentru demo)
+            // Simulăm un apel la un API extern
             if (cityCode.ToUpper() == "BBU" || cityCode.ToUpper() == "OTP")
             {
                 // ~ 25 grade Celsius = 298.15 Kelvin
@@ -34,11 +32,9 @@ namespace TMPP_Aeroport.Domain.Adapter
         }
     }
 
-    // ---------------------------------------------------------
     // "Adapter" (Adaptorul)
     // Implementează interfața cerută de noi, și se folosește
     // interactiv de obiectul Legacy pentru a extrage și traduce datale.
-    // ---------------------------------------------------------
     public class WeatherAdapter : IAirportWeatherService
     {
         private readonly LegacyWeatherSystem _legacySystem;

@@ -1,77 +1,175 @@
 @{
-    ViewData["Title"] = "Proxy Demo";
+    ViewData["Title"] = "Security Clearance Terminal";
+    Layout = "_LayoutSAMS";
 }
+<header class="mb-12">
+    <h1 class="font-headline-lg text-primary-fixed leading-tight tracking-tight">Security Clearance Terminal</h1>
+    <p class="font-body-lg text-on-surface-variant max-w-2xl mt-2">
+        Proxy Pattern — Protection Proxy controlling access to <span class="font-mono text-cyan-400 text-sm">RunwayControlService</span>.
+        System intercepts all calls to verify clearance levels.
+    </p>
+</header>
 
-<div class="container mt-5">
-    <h2>Demonstrație Proxy Pattern 🛡️</h2>
-    <p class="text-muted">Protejarea "Real Subject" (Pista Aeroportului) de apeluri neautorizate, folosind un proxy ca Middle-Man.</p>
-    <hr />
-
-    <div class="row mt-4">
-        <div class="col-md-5">
-            <div class="card bg-light shadow-sm">
-                <div class="card-header bg-danger text-white">
-                    Panoul de Semnalizare Pistă
+<div class="grid grid-cols-1 lg:grid-cols-2 gap-8 items-start">
+    <!-- LEFT: Access Control -->
+    <section class="flex flex-col gap-6">
+        <div class="relative rounded-lg overflow-hidden border border-amber-500/30 shadow-[0_0_20px_rgba(245,158,11,0.1)] bg-[#111827]">
+            <div class="bg-amber-600/20 border-b border-amber-500/30 px-6 py-3 flex items-center gap-3">
+                <span class="material-symbols-outlined text-amber-500" style="font-variation-settings: 'FILL' 1;">warning</span>
+                <span class="font-label-caps text-amber-500">⚠ RESTRICTED RUNWAY CONTROL SYSTEM</span>
+            </div>
+            <div class="p-8 flex flex-col gap-8">
+                <div>
+                    <label class="block font-label-caps text-slate-400 mb-3">AUTHENTICATED AS:</label>
+                    <div class="relative">
+                        <select class="w-full bg-[#05070A] border-0 border-b-2 border-outline-variant focus:border-cyan-400 focus:ring-0 text-on-background py-3 font-data-mono appearance-none cursor-pointer">
+                            <option @(ViewBag.SelectedRole == "BaggageHandler" ? "selected" : "")>Baggage Handler (No Clearance)</option>
+                            <option @(ViewBag.SelectedRole == "Passenger" ? "selected" : "")>Passenger (No Clearance)</option>
+                            <option @(ViewBag.SelectedRole == "ATC_Manager" ? "selected" : "")>ATC Manager (Authorized)</option>
+                        </select>
+                        <span class="material-symbols-outlined absolute right-3 top-3 pointer-events-none text-slate-500">expand_more</span>
+                    </div>
                 </div>
-                <div class="card-body">
-                    <form method="post" action="/Airport/ProxyDemoExecute">
-                        <div class="mb-3">
-                            <label class="form-label d-block text-muted small">Cine va face apelul (Autentificare Falsă)?</label>
-                            <select name="role" class="form-select border-danger">
-                                <option value="BaggageHandler" selected>Baggage Handler (Nu are funcție)</option>
-                                <option value="Passenger">Pasager Simplu (Nu are funcție)</option>
-                                <option value="ATC_Manager">Tower Control Manager (Autorizat)</option>
-                            </select>
+                <hr class="border-white/10" />
+                <div>
+                    <label class="block font-label-caps text-slate-400 mb-4">COMMAND:</label>
+                    <div class="flex flex-col gap-4">
+                        <a asp-controller="Airport" asp-action="ProxyDemo" asp-route-role="ATC_Manager" asp-route-action="takeoff"
+                           class="flex items-center justify-center gap-3 bg-[#1e293b] border border-cyan-400/50 text-cyan-400 py-4 rounded-lg font-headline-md hover:bg-cyan-400/10 transition-all">
+                            <span class="material-symbols-outlined">flight_takeoff</span>
+                            ✈ GRANT TAKEOFF CLEARANCE
+                        </a>
+                        <a asp-controller="Airport" asp-action="ProxyDemo" asp-route-role="BaggageHandler" asp-route-action="lock"
+                           class="flex items-center justify-center gap-3 bg-error text-on-error py-4 rounded-lg font-headline-md hover:bg-error/90 transition-all shadow-[0_4px_15px_rgba(255,180,171,0.3)]">
+                            <span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">block</span>
+                            🔴 EMERGENCY LOCK RUNWAY
+                        </a>
+                    </div>
+                </div>
+            </div>
+            <div class="px-8 py-4 bg-[#05070A]/50 border-t border-white/5">
+                <p class="text-xs text-slate-500 italic">
+                    All commands are intercepted by <span class="font-mono text-cyan-500/80">RunwayControlProxy</span>
+                    before reaching <span class="font-mono text-cyan-500/80">RunwayControlService</span>.
+                </p>
+            </div>
+        </div>
+        <!-- Telemetry Chips -->
+        <div class="flex flex-wrap gap-4">
+            <div class="bg-[#111827] border border-white/10 px-4 py-2 rounded flex items-center gap-3">
+                <span class="text-[10px] font-bold text-slate-500">SYS_STATUS</span>
+                <span class="flex h-2 w-2 rounded-full bg-cyan-400 animate-pulse"></span>
+                <span class="font-data-mono text-cyan-400">ACTIVE_PROXY</span>
+            </div>
+            <div class="bg-[#111827] border border-white/10 px-4 py-2 rounded flex items-center gap-3">
+                <span class="text-[10px] font-bold text-slate-500">LATENCY</span>
+                <span class="font-data-mono text-cyan-400">0.4ms</span>
+            </div>
+            <div class="bg-[#111827] border border-white/10 px-4 py-2 rounded flex items-center gap-3">
+                <span class="text-[10px] font-bold text-slate-500">SEC_LEVEL</span>
+                <span class="font-data-mono text-error">CRITICAL</span>
+            </div>
+        </div>
+    </section>
+
+    <!-- RIGHT: Response Terminal -->
+    <section>
+        <div class="min-h-[500px] flex flex-col rounded-lg bg-[#111827]/85 backdrop-blur-xl border border-white/10 shadow-2xl relative">
+            <div class="p-6 border-b border-white/10 flex justify-between items-center">
+                <h3 class="font-headline-md text-primary tracking-wide">PROXY RESPONSE</h3>
+                <div class="flex gap-2">
+                    <span class="w-3 h-3 rounded-full bg-red-500/50"></span>
+                    <span class="w-3 h-3 rounded-full bg-amber-500/50"></span>
+                    <span class="w-3 h-3 rounded-full bg-green-500/50"></span>
+                </div>
+            </div>
+            <div class="flex-grow flex flex-col items-center justify-center p-10 text-center">
+                @if (ViewBag.AccessGranted == true)
+                {
+                    <div class="w-24 h-24 rounded-full bg-green-500/20 border border-green-500/50 flex items-center justify-center mb-6 shadow-[0_0_30px_rgba(16,185,129,0.2)]">
+                        <span class="material-symbols-outlined text-green-400 text-6xl" style="font-variation-settings: 'FILL' 1;">verified</span>
+                    </div>
+                    <h2 class="font-display-xl text-green-400 mb-2 tracking-tighter">COMMAND ACCEPTED</h2>
+                    <p class="font-body-lg text-slate-400 mb-8 max-w-sm">RunwayControlProxy validated the request and forwarded to RunwayControlService.</p>
+                    <div class="w-full bg-[#05070A] rounded p-4 text-left font-data-mono text-sm leading-relaxed border border-white/5">
+                        <div class="flex gap-3 mb-2">
+                            <span class="text-slate-600">[14:32:01]</span>
+                            <span class="text-cyan-400">[PROXY]</span>
+                            <span class="text-slate-300">HasAccess() → <span class="text-green-400">true</span> for role: ATC_Manager</span>
                         </div>
-                        <div class="mb-3">
-                            <label class="form-label d-block text-muted small">Ce acțiune doriți?</label>
-                            <div class="form-check">
-                                <input class="form-check-input" type="radio" name="actionType" id="a1" value="clearance" checked>
-                                <label class="form-check-label text-success" for="a1">Oferă Clearance pt Decolare TAROM</label>
-                            </div>
-                            <div class="form-check">
-                                <input class="form-check-input" type="radio" name="actionType" id="a2" value="lock">
-                                <label class="form-check-label text-danger" for="a2">Apasă Butonul Roșu (Lock Runway)</label>
-                            </div>
+                        <div class="flex gap-3">
+                            <span class="text-slate-600">[14:32:01]</span>
+                            <span class="text-green-400">[DELEGATED]</span>
+                            <span class="text-slate-300">RunwayControlService.@ViewBag.CommandExecuted executed.</span>
                         </div>
-                        <button type="submit" class="btn btn-dark w-100 mt-3">Trimite Comanda Sistemului</button>
-                    </form>
+                    </div>
+                }
+                else
+                {
+                    <div class="w-24 h-24 rounded-full bg-error/20 border border-error/50 flex items-center justify-center mb-6 shadow-[0_0_30px_rgba(255,180,171,0.15)]">
+                        <span class="material-symbols-outlined text-error text-6xl" style="font-variation-settings: 'FILL' 1;">shield</span>
+                    </div>
+                    <h2 class="font-display-xl text-error mb-2 tracking-tighter">ACCESS DENIED</h2>
+                    <p class="font-body-lg text-slate-400 mb-8 max-w-sm">RunwayControlProxy blocked this request due to insufficient clearance levels.</p>
+                    <div class="w-full bg-[#05070A] rounded p-4 text-left font-data-mono text-sm leading-relaxed border border-white/5">
+                        <div class="flex gap-3 mb-2">
+                            <span class="text-slate-600">[14:32:01]</span>
+                            <span class="text-cyan-400">[PROXY]</span>
+                            <span class="text-slate-300">HasAccess() → <span class="text-error">false</span> for role: BaggageHandler</span>
+                        </div>
+                        <div class="flex gap-3">
+                            <span class="text-slate-600">[14:32:01]</span>
+                            <span class="text-error">[PROXY BLOCK]</span>
+                            <span class="text-slate-300">Request intercepted. Real subject not instantiated.</span>
+                        </div>
+                    </div>
+                }
+            </div>
+            <div class="absolute bottom-0 left-0 w-full h-1 opacity-50"
+                 style="background: linear-gradient(to right, transparent, @(ViewBag.AccessGranted == true ? "rgb(16,185,129)" : "rgb(255,180,171)"), transparent)"></div>
+        </div>
+    </section>
+</div>
+
+<!-- UML Flow -->
+<section class="mt-16 pt-16 border-t border-white/10">
+    <h3 class="font-label-caps text-slate-500 mb-8 text-center uppercase tracking-widest">UML SEQUENCE FLOW</h3>
+    <div class="flex flex-col md:flex-row items-center justify-center gap-4 md:gap-0">
+        <div class="bg-surface-container-high border border-white/10 p-6 rounded-lg w-full md:w-48 text-center">
+            <span class="font-label-caps text-cyan-400 block mb-2">CLIENT</span>
+            <span class="font-headline-md text-sm">AirportController</span>
+        </div>
+        <div class="h-8 w-[2px] md:h-[2px] md:w-12 bg-white/20"></div>
+        <div class="bg-surface-container-highest border-2 border-cyan-400/50 p-6 rounded-lg w-full md:w-56 text-center shadow-[0_0_15px_rgba(0,212,255,0.1)]">
+            <span class="font-label-caps text-cyan-400 block mb-2">PROXY</span>
+            <span class="font-headline-md text-sm">RunwayControlProxy</span>
+            <span class="block mt-2 font-data-mono text-[10px] text-slate-500">(IRunwayControl)</span>
+        </div>
+        <div class="h-8 w-[2px] md:h-[2px] md:w-12 bg-white/20"></div>
+        <div class="w-28 h-28 border-2 border-amber-500/50 rotate-45 flex items-center justify-center bg-amber-500/5">
+            <div class="-rotate-45 text-center">
+                <span class="font-bold text-amber-500 text-xs">HasAccess()?</span>
+            </div>
+        </div>
+        <div class="flex flex-col gap-8 ml-4">
+            <div class="flex items-center">
+                <div class="w-12 h-[2px] bg-cyan-500/40 relative">
+                    <div class="absolute -top-5 left-2 text-[10px] font-bold text-cyan-500">IF YES</div>
+                </div>
+                <div class="bg-surface-container-high border border-white/10 p-4 rounded-lg w-48 text-center opacity-60">
+                    <span class="font-label-caps text-slate-400 block mb-1">REAL SUBJECT</span>
+                    <span class="font-headline-md text-xs">RunwayControlService</span>
+                </div>
+            </div>
+            <div class="flex items-center">
+                <div class="w-12 h-[2px] bg-error/40 relative">
+                    <div class="absolute -top-5 left-2 text-[10px] font-bold text-error">IF NO</div>
+                </div>
+                <div class="bg-error-container border border-error/30 p-4 rounded-lg w-48 text-center shadow-[0_0_15px_rgba(255,180,171,0.1)]">
+                    <span class="font-label-caps text-error block mb-1">ACTION</span>
+                    <span class="font-headline-md text-xs">BLOCK REQUEST</span>
                 </div>
             </div>
         </div>
-
-        <div class="col-md-7 mt-4 mt-md-0">
-            @if (ViewBag.Result != null)
-            {
-                bool isError = ViewBag.Result.ToString().Contains("ACCES RESPINS") || ViewBag.Result.ToString().Contains("CRITICAL");
-                <div class="card text-center h-100 @(isError ? "border-danger text-danger bg-white" : "bg-dark text-success")">
-                    <div class="card-header @(isError ? "bg-danger text-white" : "border-success")">
-                        Răspuns Sistem (Rutat via Proxy)
-                    </div>
-                    <div class="card-body d-flex align-items-center justify-content-center p-5">
-                        <div>
-                            @if(isError)
-                            {
-                                <i class="display-1 bi bi-shield-x"></i>
-                                <h3 class="mt-4">@ViewBag.Result</h3>
-                                <p class="text-dark">Acțiunea a fost blocată la nivelul Proxy-ului din memorie, apelul nu a ajuns la Serviciul Real al pistei!</p>
-                            }
-                            else
-                            {
-                                <i class="display-1 bi bi-shield-check"></i>
-                                <h3 class="mt-4">@ViewBag.Result</h3>
-                                <p class="text-light">Proxy-ul a confirmat rolul <b>[@ViewBag.RoleAttempted]</b> și te-a lăsat să treci la Clasa Principală.</p>
-                            }
-                        </div>
-                    </div>
-                </div>
-            }
-            else
-            {
-                <div class="h-100 d-flex align-items-center text-center justify-content-center text-muted border border-dashed rounded p-5">
-                    Orice comandă din panoul lateral nu apelează sistemul aeroportului. Apelează un Protector Proxy care conține sistemul aeroportului. Testează!
-                </div>
-            }
-        </div>
     </div>
-</div>
+</section>

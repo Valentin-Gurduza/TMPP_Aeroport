@@ -4,11 +4,9 @@ using System.Linq;
 
 namespace TMPP_Aeroport.Domain.Composite
 {
-    // ---------------------------------------------------------
     // "Component" (Interfața Comună)
     // Atât obiectele simple (Frunzele) cât și obiectele compuse 
     // trebuie să respecte aceeași regulă. Aici: calculul greutății.
-    // ---------------------------------------------------------
     public interface ILuggageItem
     {
         string GetName();
@@ -18,10 +16,8 @@ namespace TMPP_Aeroport.Domain.Composite
         string Display(int depth = 0); 
     }
 
-    // ---------------------------------------------------------
     // "Leaf" (Nodurile Frunză - Obiectele Individuale simple)
     // Acestea nu pot conține alte obiecte. Reprezintă baza.
-    // ---------------------------------------------------------
     public class Suitcase : ILuggageItem
     {
         private string _name;
@@ -61,12 +57,10 @@ namespace TMPP_Aeroport.Domain.Composite
             return new string('-', depth) + $" 🎒 {_name} ({_weight} kg)\n";
         }
     }
-
-    // ---------------------------------------------------------
+    
     // "Composite" (Nodul Compus)
     // Acest element este capabil să conțină atât Frunze (Suitcase)
     // cât și ALTE noduri Composite (Containers în Containers).
-    // ---------------------------------------------------------
     public class LuggageContainer : ILuggageItem
     {
         private string _containerId;

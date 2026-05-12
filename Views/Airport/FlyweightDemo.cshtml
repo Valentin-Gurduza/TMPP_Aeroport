@@ -1,36 +1,108 @@
 @{
-    ViewData["Title"] = "Flyweight Demo";
+    ViewData["Title"] = "Radar Tracking System";
+    Layout = "_LayoutSAMS";
 }
+<header class="mb-xl">
+    <h2 class="font-headline-lg text-display-xl text-on-surface mb-xs uppercase tracking-tight">Radar Tracking System</h2>
+    <p class="font-data-mono text-cyan-400/80 uppercase">Flyweight Pattern — Shared intrinsic state reduces RAM from 1TB → 2 objects</p>
+</header>
 
-<div class="container mt-5">
-    <h2>Demonstrație Flyweight Pattern 🪶</h2>
-    <p class="text-muted">Afișăm teoretic un ecran de radar cu zeci de mii de zboruri fară a bloca memoria cu grafică redundantă.</p>
-    <hr />
+<div class="grid grid-cols-10 gap-gutter items-start">
+    <!-- RADAR DISPLAY -->
+    <section class="col-span-7 relative h-[620px] bg-[#020617] glass-card rounded-xl overflow-hidden group">
+        <div class="absolute inset-0 radar-grid opacity-30"></div>
+        <div class="absolute inset-0 flex items-center justify-center">
+            <div class="border border-white/5 rounded-full w-[150px] h-[150px]"></div>
+            <div class="absolute border border-white/5 rounded-full w-[300px] h-[300px]"></div>
+            <div class="absolute border border-white/5 rounded-full w-[450px] h-[450px]"></div>
+            <div class="absolute border border-white/5 rounded-full w-[580px] h-[580px]"></div>
+            <div class="absolute w-full h-[1px] bg-white/5"></div>
+            <div class="absolute h-full w-[1px] bg-white/5"></div>
+            <div class="absolute w-[600px] h-[600px] radar-sweep opacity-40 animate-[spin_4s_linear_infinite]"></div>
+        </div>
+        <!-- Blips -->
+        <div class="absolute inset-0 p-10 overflow-hidden pointer-events-none">
+            <div class="absolute top-1/4 left-1/3 w-1 h-1 bg-cyan-400 rounded-full shadow-[0_0_5px_#22d3ee]"></div>
+            <div class="absolute top-1/4 left-1/3 ml-4 mt-2 font-data-mono text-[9px] text-cyan-400/60">FL-301</div>
+            <div class="absolute top-1/2 left-2/3 w-1 h-1 bg-green-400 rounded-full shadow-[0_0_5px_#4ade80]"></div>
+            <div class="absolute top-1/2 left-2/3 ml-4 mt-2 font-data-mono text-[9px] text-green-400/60">FL-882</div>
+            <div class="absolute top-[20%] left-[10%] w-0.5 h-0.5 bg-cyan-200/40 rounded-full"></div>
+            <div class="absolute top-[80%] left-[45%] w-0.5 h-0.5 bg-green-200/40 rounded-full"></div>
+            <div class="absolute top-[40%] left-[80%] w-1 h-1 bg-cyan-400 rounded-full shadow-[0_0_5px_#22d3ee]"></div>
+            <div class="absolute top-[40%] left-[80%] ml-4 font-data-mono text-[9px] text-cyan-400/60">FL-109</div>
+            <div class="absolute top-[15%] left-[70%] w-0.5 h-0.5 bg-cyan-200/20 rounded-full"></div>
+            <div class="absolute top-[65%] left-[20%] w-0.5 h-0.5 bg-green-200/30 rounded-full"></div>
+            <div class="absolute top-[35%] left-[25%] w-1 h-1 bg-green-400 rounded-full"></div>
+            <div class="absolute top-[75%] left-[60%] w-0.5 h-0.5 bg-cyan-200/30 rounded-full"></div>
+            <div class="absolute top-[55%] left-[35%] w-0.5 h-0.5 bg-green-200/20 rounded-full"></div>
+            <div class="absolute top-[10%] left-[50%] w-1 h-1 bg-cyan-400/60 rounded-full shadow-[0_0_4px_#22d3ee]"></div>
+            <div class="absolute top-[88%] left-[15%] w-0.5 h-0.5 bg-cyan-200/20 rounded-full"></div>
+        </div>
+        <!-- Label -->
+        <div class="absolute top-6 left-6 z-10">
+            <div class="flex items-center gap-3">
+                <div class="w-2 h-2 bg-red-500 rounded-full animate-pulse"></div>
+                <span class="font-['Space_Grotesk'] text-[10px] font-black tracking-widest text-on-surface/80 uppercase">HENRI COANDĂ ATC RADAR — LIVE</span>
+            </div>
+        </div>
+    </section>
 
-    <div class="row text-center my-5">
-        <div class="col-md-6">
-            <div class="card border-primary shadow-sm h-100">
-                <div class="card-body py-5">
-                    <h1 class="display-3 text-primary">@ViewBag.TotalObjects.ToString("N0")</h1>
-                    <h4>Instanțe Locale `RadarBlip` (În zbor)</h4>
-                    <p class="text-muted mt-3">Sunt ușoare. Fiecare conține doar 2 coordonate (Lat, Lng).</p>
+    <!-- STATS PANEL -->
+    <aside class="col-span-3 flex flex-col gap-md">
+        <div class="glass-card p-6 rounded-xl border-l-4 border-cyan-400">
+            <h3 class="font-label-caps text-cyan-400 mb-2">ACTIVE BLIPS</h3>
+            <div class="flex items-baseline gap-2">
+                <span class="font-headline-lg text-4xl text-white">@(ViewBag.BlipCount ?? "50,000")</span>
+                <span class="text-xs text-slate-400">units</span>
+            </div>
+            <p class="font-body-sm text-on-surface-variant mt-2 italic">RadarBlip instances (Extrinsic State)</p>
+        </div>
+        <div class="glass-card p-6 rounded-xl border-l-4 border-green-400">
+            <h3 class="font-label-caps text-green-400 mb-2">MODELS IN RAM</h3>
+            <div class="flex items-baseline gap-2">
+                <span class="font-headline-lg text-4xl text-white">@(ViewBag.ModelCount ?? "2")</span>
+                <span class="text-xs text-slate-400">active types</span>
+            </div>
+            <p class="font-body-sm text-on-surface-variant mt-2 italic">AircraftModelData objects (Intrinsic State)</p>
+        </div>
+        <div class="glass-card p-6 rounded-xl border-l-4 border-orange-400">
+            <h3 class="font-label-caps text-orange-400 mb-2">MEMORY SAVED</h3>
+            <div class="flex items-baseline gap-2">
+                <span class="font-headline-lg text-4xl text-white">~47 GB</span>
+            </div>
+            <p class="font-body-sm text-on-surface-variant mt-2 italic">Without Flyweight: 50,000 × 1MB/model</p>
+        </div>
+        <!-- Code snippet -->
+        <div class="bg-black/40 p-lg rounded-xl border border-white/5">
+            <div class="flex items-center gap-2 mb-4">
+                <div class="w-2.5 h-2.5 rounded-full bg-red-500/50"></div>
+                <div class="w-2.5 h-2.5 rounded-full bg-amber-500/50"></div>
+                <div class="w-2.5 h-2.5 rounded-full bg-green-500/50"></div>
+                <span class="ml-2 font-data-mono text-[10px] text-slate-500">FACTORY_REUSE.LOG</span>
+            </div>
+            <div class="space-y-3">
+                <div class="flex items-center gap-2 flex-wrap">
+                    <span class="font-data-mono text-cyan-400 text-xs">factory.GetModel("Boeing 737")</span>
+                    <span class="text-green-400 font-data-mono text-xs">→ cached ✓</span>
+                </div>
+                <div class="flex items-center gap-2 flex-wrap">
+                    <span class="font-data-mono text-cyan-400 text-xs">factory.GetModel("Airbus A320")</span>
+                    <span class="text-green-400 font-data-mono text-xs">→ cached ✓</span>
+                </div>
+                <div class="flex items-center gap-2 bg-white/5 p-2 rounded flex-wrap">
+                    <span class="font-data-mono text-cyan-400 text-xs">factory.GetModel("Boeing 737")</span>
+                    <span class="text-orange-400 font-data-mono font-bold text-xs">→ REUSED ♻</span>
                 </div>
             </div>
         </div>
-        <div class="col-md-6 mt-4 mt-md-0">
-            <div class="card border-success shadow-sm h-100">
-                <div class="card-body py-5">
-                    <h1 class="display-3 text-success">@ViewBag.UniqueModelsInMemory</h1>
-                    <h4>Instanțe Grele `AircraftModelData`</h4>
-                    <p class="text-muted mt-3">Stochează texturi 3D și mesh-uri de sute de mega. Ele sunt <b>reciclate</b> din RAM pentru toate zborurile de același tip!</p>
-                </div>
-            </div>
-        </div>
-    </div>
+    </aside>
+</div>
 
-    <div class="alert alert-info border-info mt-4">
-        <h5 class="alert-heading"><i class="bi bi-info-circle-fill"></i> Explicație OOP:</h5>
-        Dacă cele 50.000 de instanțe ar fi conținut și array-ul masiv <code>byte[] Mesh3D</code> (Intrinsec), programul ar fi cerut zeci de GB de RAM și ar fi crăpat prin <i>OutOfMemoryException</i>. 
-        Flyweight salvează situația delegând memoria grea către o singură instanță comună ("Boeing 737"), și conectând 25.000 de pointeri ușori la ea!
+<div class="fixed bottom-6 right-10 z-50">
+    <div class="glass-card px-4 py-2 flex items-center gap-4 rounded-full border-cyan-400/20">
+        <span class="material-symbols-outlined text-cyan-400 text-sm">location_on</span>
+        <span class="font-data-mono text-[10px] tracking-widest text-on-surface/60 uppercase">REGION: OTP / LROP (BUCHAREST)</span>
+        <div class="w-[1px] h-4 bg-white/10"></div>
+        <span class="font-data-mono text-[10px] text-green-400">UPTIME: 1422H 12M</span>
     </div>
 </div>

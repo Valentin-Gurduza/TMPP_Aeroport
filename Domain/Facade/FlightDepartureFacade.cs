@@ -51,11 +51,9 @@ namespace TMPP_Aeroport.Domain.Facade
         }
     }
 
-    // =========================================================
     // FACADE: Interfața Unificată
     // Ascunde toți pașii complecși și obiectele individuale 
     // de mai sus într-un singur buton logic.
-    // =========================================================
     public class FlightDepartureFacade
     {
         private readonly ATCService _atc;
