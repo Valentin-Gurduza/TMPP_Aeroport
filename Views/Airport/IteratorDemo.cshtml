@@ -1,0 +1,61 @@
+@{
+    ViewData["Title"] = "Flight Schedule Iterator";
+    Layout = "_LayoutSAMS";
+}
+
+<header class="border-l-4 pl-lg mb-xl" style="border-color:#3cd7ff;">
+    <h1 class="font-headline-lg text-display-xl text-on-surface">Schedule Filter Engine</h1>
+    <p class="font-body-sm text-on-surface-variant max-w-2xl">Iterator Pattern — Sequentially accesses collection elements without exposing its underlying representation.</p>
+</header>
+
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-xl items-start">
+    <section class="glass-card p-lg rounded-lg shadow-2xl lg:col-span-1 border-t-2" style="border-top-color:#3cd7ff;">
+        <h3 class="font-headline-md text-cyan-400 mb-md">Select Iterator</h3>
+        
+        <form asp-action="IteratorDemo" method="get" class="space-y-md">
+            <div>
+                <label class="font-label-caps text-on-surface-variant block mb-1">TERMINAL FILTER</label>
+                <select name="targetTerminal" class="w-full bg-[#05070A] border border-white/20 rounded px-3 py-2 text-primary-container outline-none">
+                    @if(ViewBag.SelectedTerminal == "All") { <option value="All" selected>All Terminals</option> } else { <option value="All">All Terminals</option> }
+                    @if(ViewBag.SelectedTerminal == "T1") { <option value="T1" selected>Terminal T1 Only</option> } else { <option value="T1">Terminal T1 Only</option> }
+                    @if(ViewBag.SelectedTerminal == "T2") { <option value="T2" selected>Terminal T2 Only</option> } else { <option value="T2">Terminal T2 Only</option> }
+                    @if(ViewBag.SelectedTerminal == "T3") { <option value="T3" selected>Terminal T3 Only</option> } else { <option value="T3">Terminal T3 Only</option> }
+                </select>
+            </div>
+            <button type="submit" class="w-full py-3 bg-cyan-600/20 text-cyan-400 border border-cyan-500/50 rounded hover:bg-cyan-500/30 transition-all font-label-caps tracking-widest">
+                ITERATE SCHEDULE
+            </button>
+        </form>
+
+        <div class="mt-6 p-4 bg-white/5 border border-white/10 rounded text-sm text-slate-400">
+            <strong>Internal List:</strong><br/>
+            [RO101 - T1, RO202 - T2, RO303 - T1, RO404 - T3]
+        </div>
+    </section>
+
+    <section class="lg:col-span-2 glass-card p-lg rounded-lg shadow-2xl min-h-[300px]">
+        <div class="flex justify-between items-end border-b border-white/10 pb-sm mb-md">
+            <h3 class="font-label-caps text-on-surface-variant tracking-widest">ITERATION RESULTS</h3>
+            <span class="text-xs font-data-mono text-cyan-400">while (iterator.HasNext())</span>
+        </div>
+        
+        <div class="space-y-sm">
+            @if (ViewBag.Flights != null)
+            {
+                foreach (var item in ViewBag.Flights)
+                {
+                    <div class="flex items-center justify-between p-3 bg-surface-container-low border border-white/5 rounded">
+                        <div class="flex items-center gap-3">
+                            <span class="material-symbols-outlined text-cyan-400">flight_takeoff</span>
+                            <span class="font-headline-md text-on-surface">@item.FlightNumber</span>
+                        </div>
+                        <div class="flex gap-4 items-center">
+                            <span class="px-3 py-1 bg-white/5 border border-white/10 rounded text-amber-400 font-data-mono text-xs">@item.Terminal</span>
+                            <span class="text-sm font-['Space_Grotesk'] @(item.Status == "Delayed" ? "text-red-400" : "text-green-400")">@item.Status</span>
+                        </div>
+                    </div>
+                }
+            }
+        </div>
+    </section>
+</div>

@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html class="dark" lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] - SAMS</title>
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700;900&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet" />
+    <script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "surface": "#051424",
+                        "surface-dim": "#051424",
+                        "surface-bright": "#2c3a4c",
+                        "surface-container-lowest": "#010f1f",
+                        "surface-container-low": "#0d1c2d",
+                        "surface-container": "#122131",
+                        "surface-container-high": "#1c2b3c",
+                        "surface-container-highest": "#273647",
+                        "on-surface": "#d4e4fa",
+                        "on-surface-variant": "#bbc9cf",
+                        "inverse-surface": "#d4e4fa",
+                        "inverse-on-surface": "#233143",
+                        "outline": "#859398",
+                        "outline-variant": "#3c494e",
+                        "surface-tint": "#3cd7ff",
+                        "primary": "#a8e8ff",
+                        "on-primary": "#003642",
+                        "primary-container": "#00d4ff",
+                        "on-primary-container": "#00586b",
+                        "inverse-primary": "#00677e",
+                        "primary-fixed": "#b4ebff",
+                        "primary-fixed-dim": "#3cd7ff",
+                        "on-primary-fixed": "#001f27",
+                        "on-primary-fixed-variant": "#004e5f",
+                        "secondary": "#c0c6db",
+                        "on-secondary": "#293040",
+                        "secondary-container": "#404758",
+                        "on-secondary-container": "#aeb5c9",
+                        "secondary-fixed": "#dce2f7",
+                        "secondary-fixed-dim": "#c0c6db",
+                        "on-secondary-fixed": "#141b2b",
+                        "on-secondary-fixed-variant": "#404758",
+                        "tertiary": "#dbdef0",
+                        "on-tertiary": "#2c303d",
+                        "tertiary-container": "#bfc2d3",
+                        "on-tertiary-container": "#4c4f5e",
+                        "tertiary-fixed": "#dfe2f3",
+                        "tertiary-fixed-dim": "#c3c6d7",
+                        "on-tertiary-fixed": "#171b28",
+                        "on-tertiary-fixed-variant": "#434654",
+                        "error": "#ffb4ab",
+                        "on-error": "#690005",
+                        "error-container": "#93000a",
+                        "on-error-container": "#ffdad6",
+                        "background": "#051424",
+                        "on-background": "#d4e4fa",
+                        "surface-variant": "#273647",
+                        "amber-accent": "#FFB300"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.125rem",
+                        "lg": "0.25rem",
+                        "xl": "0.5rem",
+                        "full": "0.75rem"
+                    },
+                    "spacing": {
+                        "margin": "40px",
+                        "gutter": "20px",
+                        "md": "16px",
+                        "lg": "24px",
+                        "sm": "8px",
+                        "unit": "4px",
+                        "xl": "32px",
+                        "xs": "4px"
+                    },
+                    "fontFamily": {
+                        "body-lg": ["Inter"],
+                        "body-md": ["Inter"],
+                        "body-sm": ["Inter"],
+                        "display-xl": ["Space Grotesk"],
+                        "label-caps": ["Inter"],
+                        "headline-lg": ["Space Grotesk"],
+                        "data-mono": ["Inter"],
+                        "headline-md": ["Space Grotesk"]
+                    },
+                    "fontSize": {
+                        "body-lg": ["18px", {"lineHeight": "1.6", "fontWeight": "400"}],
+                        "body-md": ["16px", {"lineHeight": "1.5", "fontWeight": "400"}],
+                        "body-sm": ["14px", {"lineHeight": "1.5", "fontWeight": "400"}],
+                        "display-xl": ["48px", {"lineHeight": "1.1", "letterSpacing": "-0.02em", "fontWeight": "700"}],
+                        "label-caps": ["12px", {"lineHeight": "1", "letterSpacing": "0.1em", "fontWeight": "700"}],
+                        "headline-lg": ["30px", {"lineHeight": "1.2", "fontWeight": "600"}],
+                        "data-mono": ["14px", {"lineHeight": "1", "letterSpacing": "0.05em", "fontWeight": "600"}],
+                        "headline-md": ["24px", {"lineHeight": "1.3", "fontWeight": "600"}]
+                    }
+                },
+            },
+        }
+    </script>
+    <style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .glass-card {
+            background: rgba(17, 24, 39, 0.85);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .glass-card:hover {
+            border-color: rgba(0, 212, 255, 0.4);
+            box-shadow: 0 0 15px rgba(0, 212, 255, 0.15);
+        }
+        .glass-panel {
+            backdrop-filter: blur(12px);
+            background: rgba(17, 24, 39, 0.85);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        .ticker-wrap { overflow: hidden; white-space: nowrap; }
+        .ticker {
+            display: inline-block;
+            padding-left: 100%;
+            animation: ticker 30s linear infinite;
+        }
+        @@keyframes ticker {
+            0% { transform: translate3d(0, 0, 0); }
+            100% { transform: translate3d(-100%, 0, 0); }
+        }
+        .glow-cyan { text-shadow: 0 0 10px rgba(0, 212, 255, 0.5); }
+        .dot-matrix-glow {
+            text-shadow: 0 0 8px rgba(239, 68, 68, 0.8), 0 0 15px rgba(239, 68, 68, 0.4);
+            color: #ef4444;
+        }
+        .led-panel-bg {
+            background-image: radial-gradient(circle, #1a0505 1px, transparent 1px);
+            background-size: 3px 3px;
+        }
+        .radar-grid {
+            background-image:
+                linear-gradient(rgba(0, 212, 255, 0.05) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(0, 212, 255, 0.05) 1px, transparent 1px);
+            background-size: 40px 40px;
+        }
+        .radar-sweep {
+            background: conic-gradient(from 0deg, transparent 80%, rgba(239, 68, 68, 0.3) 100%);
+            border-radius: 50%;
+        }
+        .inner-glow-cyan { box-shadow: inset 0 0 15px rgba(0, 212, 255, 0.05); }
+        .glow-line { box-shadow: 0 0 8px rgba(0, 212, 255, 0.4); }
+    </style>
+    @await RenderSectionAsync("Styles", required: false)
+</head>
+<body class="bg-[#0A0E1A] text-on-surface font-body-md">
+
+<!-- SideNavBar -->
+<aside class="fixed left-0 top-0 h-screen w-20 flex flex-col items-center py-4 z-40 bg-[#0A0E1A] backdrop-blur-2xl border-r border-white/10 shadow-[10px_0_30px_rgba(0,0,0,0.3)]">
+    <div class="mb-8 flex flex-col items-center">
+        <span class="text-cyan-500 font-bold uppercase font-['Space_Grotesk'] text-[12px] tracking-tighter">SAMS</span>
+        <span class="text-slate-500 text-[8px] font-medium tracking-widest uppercase">T1</span>
+    </div>
+    <nav class="flex flex-col gap-2 w-full px-2">
+        <a asp-controller="Airport" asp-action="Index" class="flex flex-col items-center justify-center p-3 rounded-lg @(ViewContext.RouteData.Values["action"]?.ToString() == "Index" ? "bg-cyan-500/10 text-cyan-400 border-r-2 border-cyan-400 shadow-[0_0_15px_rgba(0,212,255,0.15)]" : "text-slate-500 opacity-60 hover:bg-white/5 hover:opacity-100") transition-all">
+            <span class="material-symbols-outlined mb-1 text-lg" style="font-variation-settings: 'FILL' 1;">dashboard</span>
+            <span class="font-['Space_Grotesk'] font-medium text-[9px]">Dashboard</span>
+        </a>
+        <a asp-controller="Airport" asp-action="CheckIn" class="flex flex-col items-center justify-center p-3 rounded-lg @(ViewContext.RouteData.Values["action"]?.ToString() == "CheckIn" ? "bg-cyan-500/10 text-cyan-400 border-r-2 border-cyan-400" : "text-slate-500 opacity-60 hover:bg-white/5 hover:opacity-100") transition-all">
+            <span class="material-symbols-outlined mb-1 text-lg">how_to_reg</span>
+            <span class="font-['Space_Grotesk'] font-medium text-[9px]">Check-In</span>
+        </a>
+        <a asp-controller="Airport" asp-action="BuilderDemo" class="flex flex-col items-center justify-center p-3 rounded-lg @(ViewContext.RouteData.Values["action"]?.ToString() == "BuilderDemo" ? "bg-cyan-500/10 text-cyan-400 border-r-2 border-cyan-400" : "text-slate-500 opacity-60 hover:bg-white/5 hover:opacity-100") transition-all">
+            <span class="material-symbols-outlined mb-1 text-lg">event_note</span>
+            <span class="font-['Space_Grotesk'] font-medium text-[9px]">Itinerary</span>
+        </a>
+        <a asp-controller="Airport" asp-action="AdapterDemo" class="flex flex-col items-center justify-center p-3 rounded-lg @(ViewContext.RouteData.Values["action"]?.ToString() == "AdapterDemo" ? "bg-cyan-500/10 text-cyan-400 border-r-2 border-cyan-400" : "text-slate-500 opacity-60 hover:bg-white/5 hover:opacity-100") transition-all">
+            <span class="material-symbols-outlined mb-1 text-lg">cloud</span>
+            <span class="font-['Space_Grotesk'] font-medium text-[9px]">Weather</span>
+        </a>
+        <a asp-controller="Airport" asp-action="CompositeDemo" class="flex flex-col items-center justify-center p-3 rounded-lg @(ViewContext.RouteData.Values["action"]?.ToString() == "CompositeDemo" ? "bg-cyan-500/10 text-cyan-400 border-r-2 border-cyan-400" : "text-slate-500 opacity-60 hover:bg-white/5 hover:opacity-100") transition-all">
+            <span class="material-symbols-outlined mb-1 text-lg">inventory_2</span>
+            <span class="font-['Space_Grotesk'] font-medium text-[9px]">Cargo</span>
+        </a>
+        <a asp-controller="Airport" asp-action="FacadeDemo" class="flex flex-col items-center justify-center p-3 rounded-lg @(ViewContext.RouteData.Values["action"]?.ToString() == "FacadeDemo" ? "bg-cyan-500/10 text-cyan-400 border-r-2 border-cyan-400" : "text-slate-500 opacity-60 hover:bg-white/5 hover:opacity-100") transition-all">
+            <span class="material-symbols-outlined mb-1 text-lg">settings_input_antenna</span>
+            <span class="font-['Space_Grotesk'] font-medium text-[9px]">Tower</span>
+        </a>
+        <a asp-controller="Airport" asp-action="FlyweightDemo" class="flex flex-col items-center justify-center p-3 rounded-lg @(ViewContext.RouteData.Values["action"]?.ToString() == "FlyweightDemo" ? "bg-cyan-500/10 text-cyan-400 border-r-2 border-cyan-400" : "text-slate-500 opacity-60 hover:bg-white/5 hover:opacity-100") transition-all">
+            <span class="material-symbols-outlined mb-1 text-lg">radar</span>
+            <span class="font-['Space_Grotesk'] font-medium text-[9px]">Radar</span>
+        </a>
+        <a asp-controller="Airport" asp-action="DecoratorDemo" class="flex flex-col items-center justify-center p-3 rounded-lg @(ViewContext.RouteData.Values["action"]?.ToString() == "DecoratorDemo" ? "bg-cyan-500/10 text-cyan-400 border-r-2 border-cyan-400" : "text-slate-500 opacity-60 hover:bg-white/5 hover:opacity-100") transition-all">
+            <span class="material-symbols-outlined mb-1 text-lg">notifications_active</span>
+            <span class="font-['Space_Grotesk'] font-medium text-[9px]">Alerts</span>
+        </a>
+        <a asp-controller="Airport" asp-action="BridgeDemo" class="flex flex-col items-center justify-center p-3 rounded-lg @(ViewContext.RouteData.Values["action"]?.ToString() == "BridgeDemo" ? "bg-cyan-500/10 text-cyan-400 border-r-2 border-cyan-400" : "text-slate-500 opacity-60 hover:bg-white/5 hover:opacity-100") transition-all">
+            <span class="material-symbols-outlined mb-1 text-lg">flight_takeoff</span>
+            <span class="font-['Space_Grotesk'] font-medium text-[9px]">Boards</span>
+        </a>
+        <a asp-controller="Airport" asp-action="ProxyDemo" class="flex flex-col items-center justify-center p-3 rounded-lg @(ViewContext.RouteData.Values["action"]?.ToString() == "ProxyDemo" ? "bg-cyan-500/10 text-cyan-400 border-r-2 border-cyan-400" : "text-slate-500 opacity-60 hover:bg-white/5 hover:opacity-100") transition-all">
+            <span class="material-symbols-outlined mb-1 text-lg">security</span>
+            <span class="font-['Space_Grotesk'] font-medium text-[9px]">Security</span>
+        </a>
+        <a asp-controller="Airport" asp-action="StrategyDemo" class="flex flex-col items-center justify-center p-3 rounded-lg @(ViewContext.RouteData.Values["action"]?.ToString() == "StrategyDemo" ? "bg-cyan-500/10 text-cyan-400 border-r-2 border-cyan-400" : "text-slate-500 opacity-60 hover:bg-white/5 hover:opacity-100") transition-all">
+            <span class="material-symbols-outlined mb-1 text-lg">payments</span>
+            <span class="font-['Space_Grotesk'] font-medium text-[9px]">Pricing</span>
+        </a>
+        <a asp-controller="Airport" asp-action="ObserverDemo" class="flex flex-col items-center justify-center p-3 rounded-lg @(ViewContext.RouteData.Values["action"]?.ToString() == "ObserverDemo" ? "bg-cyan-500/10 text-cyan-400 border-r-2 border-cyan-400" : "text-slate-500 opacity-60 hover:bg-white/5 hover:opacity-100") transition-all">
+            <span class="material-symbols-outlined mb-1 text-lg">cell_tower</span>
+            <span class="font-['Space_Grotesk'] font-medium text-[9px]">Observer</span>
+        </a>
+        <a asp-controller="Airport" asp-action="CommandDemo" class="flex flex-col items-center justify-center p-3 rounded-lg @(ViewContext.RouteData.Values["action"]?.ToString() == "CommandDemo" ? "bg-cyan-500/10 text-cyan-400 border-r-2 border-cyan-400" : "text-slate-500 opacity-60 hover:bg-white/5 hover:opacity-100") transition-all">
+            <span class="material-symbols-outlined mb-1 text-lg">keyboard_command_key</span>
+            <span class="font-['Space_Grotesk'] font-medium text-[9px]">Command</span>
+        </a>
+        <a asp-controller="Airport" asp-action="MementoDemo" class="flex flex-col items-center justify-center p-3 rounded-lg @(ViewContext.RouteData.Values["action"]?.ToString() == "MementoDemo" ? "bg-cyan-500/10 text-cyan-400 border-r-2 border-cyan-400" : "text-slate-500 opacity-60 hover:bg-white/5 hover:opacity-100") transition-all">
+            <span class="material-symbols-outlined mb-1 text-lg">history</span>
+            <span class="font-['Space_Grotesk'] font-medium text-[9px]">Memento</span>
+        </a>
+        <a asp-controller="Airport" asp-action="IteratorDemo" class="flex flex-col items-center justify-center p-3 rounded-lg @(ViewContext.RouteData.Values["action"]?.ToString() == "IteratorDemo" ? "bg-cyan-500/10 text-cyan-400 border-r-2 border-cyan-400" : "text-slate-500 opacity-60 hover:bg-white/5 hover:opacity-100") transition-all">
+            <span class="material-symbols-outlined mb-1 text-lg">data_object</span>
+            <span class="font-['Space_Grotesk'] font-medium text-[9px]">Iterator</span>
+        </a>
+    </nav>
+</aside>
+
+<!-- TopAppBar -->
+<header class="fixed top-0 left-20 right-0 h-14 z-50 flex justify-between items-center px-6 bg-slate-950/80 backdrop-blur-lg border-b border-white/10 shadow-[0_4px_30px_rgba(0,0,0,0.5)]">
+    <div class="flex items-center gap-4">
+        <span class="text-cyan-500 font-black tracking-tighter text-xl font-['Space_Grotesk']">AirportLogger</span>
+        <div class="h-4 w-px bg-white/20"></div>
+        <span class="font-['Space_Grotesk'] text-xs tracking-widest uppercase text-cyan-400">Smart Airport Management System v1.0</span>
+    </div>
+    <div class="flex-1 max-w-2xl mx-12 ticker-wrap border-x border-white/5 bg-black/20 py-1">
+        <div class="ticker font-['Space_Grotesk'] text-[10px] tracking-wider text-cyan-500/80 uppercase">
+            AirportLogger [Singleton]: Flight RO302 cloned | Itinerary built for Popescu | Weather 25°C OTP | System Integrity: Nominal | Control Center Ready
+        </div>
+    </div>
+    <div class="flex items-center gap-4 text-slate-500">
+        <span class="font-['Space_Grotesk'] text-[10px] tracking-widest uppercase">v4.8.2-ALPHA</span>
+        <div class="flex gap-2">
+            <span class="material-symbols-outlined text-sm hover:text-cyan-300 transition-all cursor-pointer">notifications_active</span>
+            <span class="material-symbols-outlined text-sm hover:text-cyan-300 transition-all cursor-pointer">terminal</span>
+        </div>
+    </div>
+</header>
+
+<!-- Main Content -->
+<main class="ml-20 mt-14 min-h-screen p-margin">
+    @RenderBody()
+</main>
+
+@await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>

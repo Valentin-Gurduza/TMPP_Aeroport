@@ -1,63 +1,115 @@
-@model dynamic
-
 @{
-    ViewData["Title"] = "Imbarcare";
+    ViewData["Title"] = "Check-In Terminal";
+    Layout = "_LayoutSAMS";
 }
+<header class="mb-xl">
+    <h1 class="font-headline-lg text-display-xl text-on-surface">Check-In Terminal</h1>
+    <p class="font-body-md text-on-surface-variant mt-1">Abstract Factory Pattern — Creating passenger, luggage, and boarding pass objects via a unified <span class="text-cyan-400 font-data-mono">ICheckInFactory</span></p>
+</header>
 
-<div class="text-center mb-5">
-    <h1 class="display-4">Check-In Pasager</h1>
-    <p>Demonstrație <strong>Abstract Factory Pattern</strong></p>
-</div>
-
-<div class="container">
-    <div class="row justify-content-center">
-        <!-- Controale pentru selectarea tipului de bilet (Schimbarea Fabricii) -->
-        <div class="col-md-12 text-center mb-4">
-            <p>Selectează tipul de bilet pentru a vedea cum se schimbă documentele generate:</p>
-            <a href="@Url.Action("CheckIn", "Airport", new { ticketType = "economy" })" class="btn btn-primary">Check-In ECONOMY</a>
-            <a href="@Url.Action("CheckIn", "Airport", new { ticketType = "business" })" class="btn btn-warning">Check-In BUSINESS</a>
+<div class="grid grid-cols-1 lg:grid-cols-2 gap-xl">
+    <!-- LEFT: Passenger Form -->
+    <section class="glass-card p-lg space-y-lg">
+        <div class="flex items-center gap-md border-b border-white/10 pb-lg">
+            <span class="material-symbols-outlined text-cyan-400 text-3xl">how_to_reg</span>
+            <div>
+                <h3 class="font-headline-md text-on-surface">Passenger Registration</h3>
+                <p class="font-body-sm text-slate-500">AbstractFactory creating passenger data objects</p>
+            </div>
         </div>
-    </div>
+        <div class="grid grid-cols-2 gap-md">
+            <div class="space-y-xs">
+                <label class="font-label-caps text-[10px] text-cyan-400/70 tracking-widest block">PASSENGER NAME</label>
+                <input class="w-full bg-[#05070A] border-b border-outline-variant py-3 text-white font-data-mono focus:outline-none focus:border-cyan-400" type="text" value="@(ViewBag.PassengerName ?? "Maria Popescu")" />
+            </div>
+            <div class="space-y-xs">
+                <label class="font-label-caps text-[10px] text-cyan-400/70 tracking-widest block">FLIGHT NUMBER</label>
+                <input class="w-full bg-[#05070A] border-b border-outline-variant py-3 text-white font-data-mono focus:outline-none focus:border-cyan-400" type="text" value="@(ViewBag.FlightNumber ?? "RO-302")" />
+            </div>
+            <div class="space-y-xs">
+                <label class="font-label-caps text-[10px] text-cyan-400/70 tracking-widest block">SEAT CLASS</label>
+                <select class="w-full bg-[#05070A] border-b border-outline-variant py-3 text-white font-data-mono focus:outline-none focus:border-cyan-400 appearance-none">
+                    <option>Economy</option>
+                    <option>Business</option>
+                    <option>First Class</option>
+                </select>
+            </div>
+            <div class="space-y-xs">
+                <label class="font-label-caps text-[10px] text-cyan-400/70 tracking-widest block">BAGGAGE (KG)</label>
+                <input class="w-full bg-[#05070A] border-b border-outline-variant py-3 text-white font-data-mono focus:outline-none focus:border-cyan-400" type="number" value="23" />
+            </div>
+        </div>
+        <a asp-controller="Airport" asp-action="CheckIn" class="w-full py-4 bg-primary-container text-on-primary-fixed font-headline-md tracking-widest flex items-center justify-center gap-2 hover:brightness-110 transition-all">
+            <span class="material-symbols-outlined">assignment_turned_in</span>
+            COMPLETE CHECK-IN
+        </a>
+    </section>
 
-    @if (Model != null)
-    {
-        <div class="row mt-4">
-            <!-- Produs A: Boarding Pass -->
-            <div class="col-md-6">
-                <div class="card shadow-sm h-100">
-                    <div class="card-header bg-info text-white">
-                        <h5>Tichet de Îmbarcare (Abstract Product A)</h5>
+    <!-- RIGHT: Result + Pattern Explanation -->
+    <section class="space-y-md">
+        <!-- Boarding Pass Card -->
+        @if (ViewBag.BoardingPass != null)
+        {
+            <div class="glass-card p-lg border border-cyan-400/40 shadow-[0_0_20px_rgba(0,212,255,0.1)]">
+                <div class="flex items-center justify-between mb-lg border-b border-white/10 pb-lg">
+                    <div>
+                        <p class="font-label-caps text-[10px] text-cyan-400">BOARDING PASS GENERATED</p>
+                        <p class="font-headline-md text-white mt-1">@ViewBag.BoardingPass.PassengerName</p>
                     </div>
-                    <div class="card-body">
-                        <p class="card-text">
-                            <strong>Detaliu Generat:</strong> <br />
-                            @Model.BoardingPass.GetTicketDetails()
-                        </p>
+                    <span class="material-symbols-outlined text-cyan-400 text-4xl" style="font-variation-settings: 'FILL' 1;">airplane_ticket</span>
+                </div>
+                <div class="grid grid-cols-3 gap-md text-center">
+                    <div>
+                        <p class="text-[10px] text-slate-500 font-label-caps">FLIGHT</p>
+                        <p class="font-data-mono text-white">@ViewBag.BoardingPass.FlightNumber</p>
+                    </div>
+                    <div>
+                        <p class="text-[10px] text-slate-500 font-label-caps">SEAT</p>
+                        <p class="font-data-mono text-white">@ViewBag.BoardingPass.SeatNumber</p>
+                    </div>
+                    <div>
+                        <p class="text-[10px] text-slate-500 font-label-caps">GATE</p>
+                        <p class="font-data-mono text-cyan-400">E@ViewBag.BoardingPass.Gate</p>
                     </div>
                 </div>
             </div>
+        }
 
-            <!-- Produs B: Baggage Tag -->
-            <div class="col-md-6">
-                <div class="card shadow-sm h-100">
-                    <div class="card-header bg-secondary text-white">
-                        <h5>Etichetă Bagaj (Abstract Product B)</h5>
+        <!-- Factory Diagram -->
+        <div class="glass-card p-lg">
+            <h4 class="font-headline-md text-on-surface mb-lg">Abstract Factory Flow</h4>
+            <div class="flex flex-col gap-3 font-data-mono text-sm">
+                <div class="bg-primary/5 border border-primary/20 p-3 rounded flex justify-between items-center">
+                    <span class="text-cyan-400">ICheckInFactory</span>
+                    <span class="text-slate-500 text-xs">«interface»</span>
+                </div>
+                <div class="flex justify-center"><span class="material-symbols-outlined text-slate-500">arrow_downward</span></div>
+                <div class="grid grid-cols-2 gap-3">
+                    <div class="bg-white/5 border border-white/10 p-3 rounded text-center">
+                        <p class="text-white text-xs">EconomyCheckInFactory</p>
+                        <p class="text-slate-500 text-[10px]">Economy products</p>
                     </div>
-                    <div class="card-body">
-                        <p class="card-text">
-                            <strong>Cod:</strong> @Model.BaggageTag.Code <br />
-                            <strong>Culoare (Specifică Familiei):</strong> @Model.BaggageTag.GetTagColor()
-                        </p>
+                    <div class="bg-white/5 border border-white/10 p-3 rounded text-center">
+                        <p class="text-white text-xs">BusinessCheckInFactory</p>
+                        <p class="text-slate-500 text-[10px]">Business products</p>
+                    </div>
+                </div>
+                <div class="flex justify-center"><span class="material-symbols-outlined text-slate-500">arrow_downward</span></div>
+                <div class="grid grid-cols-3 gap-2">
+                    <div class="bg-cyan-400/10 border border-cyan-400/20 p-2 rounded text-center text-[10px]">
+                        <span class="material-symbols-outlined text-cyan-400 text-base block">person</span>
+                        IPassenger
+                    </div>
+                    <div class="bg-cyan-400/10 border border-cyan-400/20 p-2 rounded text-center text-[10px]">
+                        <span class="material-symbols-outlined text-cyan-400 text-base block">luggage</span>
+                        ILuggage
+                    </div>
+                    <div class="bg-cyan-400/10 border border-cyan-400/20 p-2 rounded text-center text-[10px]">
+                        <span class="material-symbols-outlined text-cyan-400 text-base block">airplane_ticket</span>
+                        IBoardingPass
                     </div>
                 </div>
             </div>
         </div>
-
-        <div class="alert alert-success mt-4">
-            <strong>Observație:</strong>
-            Deși codul Controller-ului este identic (<code>factory.Create...</code>),
-            obiectele create sunt complet diferite în funcție de fabrica selectată (<span class="text-uppercase">@Model.TicketType</span>).
-            Asta demonstrează <strong>Abstract Factory</strong>: familii de obiecte compatibile.
-        </div>
-    }
+    </section>
 </div>

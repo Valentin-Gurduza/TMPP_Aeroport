@@ -282,5 +282,152 @@ namespace TMPP_Aeroport.Controllers
         {
             return View();
         }
+        // ==========================================
+        // LAB 6: Strategy, Observer, Command, Memento, Iterator
+        // ==========================================
+
+        // 1. Strategy Pattern Usage
+        public IActionResult StrategyDemo(double basePrice = 100, string strategyType = "regular")
+        {
+            TMPP_Aeroport.Domain.Strategy.ITicketPricingStrategy strategy;
+
+            switch (strategyType.ToLower())
+            {
+                case "vip":
+                    strategy = new TMPP_Aeroport.Domain.Strategy.VipPricingStrategy();
+                    break;
+                case "lastminute":
+                    strategy = new TMPP_Aeroport.Domain.Strategy.LastMinutePricingStrategy();
+                    break;
+                case "regular":
+                default:
+                    strategy = new TMPP_Aeroport.Domain.Strategy.RegularPricingStrategy();
+                    break;
+            }
+
+            var context = new TMPP_Aeroport.Domain.Strategy.TicketContext(strategy);
+            double finalPrice = context.GetFinalPrice(basePrice);
+
+            ViewBag.BasePrice = basePrice;
+            ViewBag.FinalPrice = finalPrice;
+            ViewBag.SelectedStrategy = strategyType;
+
+            return View();
+        }
+
+        // 2. Observer Pattern Usage
+        [HttpPost]
+        public IActionResult ObserverDemoExecute(string flightNumber, string newStatus)
+        {
+            // Setăm status inițial
+            var subject = new TMPP_Aeroport.Domain.Observer.FlightStatusSubject(flightNumber);
+            var logs = new List<string>();
+
+            // Adăugăm observatorii (pot fi adăugați/scoși dinamic)
+            subject.Attach(new TMPP_Aeroport.Domain.Observer.PassengerNotifier(logs));
+            subject.Attach(new TMPP_Aeroport.Domain.Observer.DisplayBoardUpdater(logs));
+
+            // Schimbarea stării va declanșa notificările automat
+            subject.Status = newStatus;
+
+            ViewBag.Logs = logs;
+            ViewBag.FlightNumber = flightNumber;
+            ViewBag.NewStatus = newStatus;
+
+            return View("ObserverDemo");
+        }
+
+        [HttpGet]
+        public IActionResult ObserverDemo()
+        {
+            return View();
+        }
+
+        // 3. Command Pattern Usage
+        // Instanțe statice pentru demo, pentru a păstra starea între requesturi
+        private static TMPP_Aeroport.Domain.Command.RunwayReceiver _receiver = new TMPP_Aeroport.Domain.Command.RunwayReceiver();
+        private static TMPP_Aeroport.Domain.Command.AtcInvoker _invoker = new TMPP_Aeroport.Domain.Command.AtcInvoker();
+        private static bool _lightsOn = false;
+
+        public IActionResult CommandDemo(string commandName)
+        {
+            if (!string.IsNullOrEmpty(commandName))
+            {
+                if (commandName == "ToggleLights")
+                {
+                    _invoker.ExecuteCommand(new TMPP_Aeroport.Domain.Command.ToggleLightsCommand(_receiver, _lightsOn));
+                    _lightsOn = !_lightsOn;
+                }
+                else if (commandName == "PrepareRunway")
+                {
+                    _invoker.ExecuteCommand(new TMPP_Aeroport.Domain.Command.PrepareRunwayCommand(_receiver));
+                    _lightsOn = true;
+                }
+                else if (commandName == "Undo")
+                {
+                    _invoker.UndoLastCommand();
+                }
+            }
+
+            ViewBag.Logs = _receiver.Logs;
+            return View();
+        }
+
+        // 4. Memento Pattern Usage
+        private static TMPP_Aeroport.Domain.Memento.FlightConfigurator _originator = new TMPP_Aeroport.Domain.Memento.FlightConfigurator() { Gate = "A1", DepartureTime = DateTime.Now.AddHours(2), AircraftModel = "Boeing 737" };
+        private static TMPP_Aeroport.Domain.Memento.FlightConfigHistory _caretaker = new TMPP_Aeroport.Domain.Memento.FlightConfigHistory();
+
+        public IActionResult MementoDemo(string actionType, string newGate, string newModel)
+        {
+            if (actionType == "Save")
+            {
+                _caretaker.Backup(_originator);
+            }
+            else if (actionType == "Update")
+            {
+                _originator.SetConfiguration(newGate ?? "A1", DateTime.Now.AddHours(3), newModel ?? "Airbus A320");
+            }
+            else if (actionType == "Undo")
+            {
+                _caretaker.Undo(_originator);
+            }
+
+            ViewBag.CurrentGate = _originator.Gate;
+            ViewBag.CurrentModel = _originator.AircraftModel;
+            ViewBag.Logs = _originator.ActionLogs;
+
+            return View();
+        }
+
+        // 5. Iterator Pattern Usage
+        public IActionResult IteratorDemo(string targetTerminal)
+        {
+            var collection = new TMPP_Aeroport.Domain.Iterator.FlightScheduleCollection();
+            collection.AddFlight(new TMPP_Aeroport.Domain.Iterator.FlightScheduleItem { FlightNumber = "RO101", Terminal = "T1", Status = "On Time" });
+            collection.AddFlight(new TMPP_Aeroport.Domain.Iterator.FlightScheduleItem { FlightNumber = "RO202", Terminal = "T2", Status = "Delayed" });
+            collection.AddFlight(new TMPP_Aeroport.Domain.Iterator.FlightScheduleItem { FlightNumber = "RO303", Terminal = "T1", Status = "Boarding" });
+            collection.AddFlight(new TMPP_Aeroport.Domain.Iterator.FlightScheduleItem { FlightNumber = "RO404", Terminal = "T3", Status = "On Time" });
+
+            TMPP_Aeroport.Domain.Iterator.IFlightIterator iterator;
+            if (string.IsNullOrEmpty(targetTerminal) || targetTerminal == "All")
+            {
+                iterator = collection.CreateIterator();
+            }
+            else
+            {
+                iterator = collection.CreateTerminalIterator(targetTerminal);
+            }
+
+            var resultFlights = new List<TMPP_Aeroport.Domain.Iterator.FlightScheduleItem>();
+            while (iterator.HasNext())
+            {
+                resultFlights.Add(iterator.Next());
+            }
+
+            ViewBag.Flights = resultFlights;
+            ViewBag.SelectedTerminal = targetTerminal ?? "All";
+
+            return View();
+        }
     }
 }
