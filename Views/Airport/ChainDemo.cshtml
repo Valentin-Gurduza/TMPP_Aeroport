@@ -1,0 +1,58 @@
+@{
+    ViewData["Title"] = "Baggage Security Scanner";
+    Layout = "_LayoutSAMS";
+}
+
+<header class="border-l-4 pl-lg mb-xl" style="border-color:#3cd7ff;">
+    <h1 class="font-headline-lg text-display-xl text-on-surface">Security Scanner</h1>
+    <p class="font-body-sm text-on-surface-variant max-w-2xl">Chain of Responsibility Pattern — Passes baggage through multiple security handler nodes.</p>
+</header>
+
+<div class="grid grid-cols-1 lg:grid-cols-2 gap-xl items-start">
+    <section class="glass-card p-lg rounded-lg shadow-2xl space-y-lg border-t-2" style="border-top-color:#3cd7ff;">
+        <h3 class="font-headline-md text-cyan-400">Scan Baggage</h3>
+        
+        <form asp-action="ChainDemo" method="get" class="space-y-md">
+            <div>
+                <label class="font-label-caps text-on-surface-variant block mb-1">BAGGAGE WEIGHT (KG)</label>
+                <input type="number" step="0.1" name="weight" value="@Context.Request.Query["weight"].ToString() ?? "20.5"" class="w-full bg-[#05070A] border border-white/20 rounded px-3 py-2 text-primary-container outline-none" required />
+            </div>
+            
+            <div class="flex items-center gap-2">
+                <input type="checkbox" name="hasSuspicious" value="true" @(Context.Request.Query["hasSuspicious"] == "true" ? "checked" : "") id="hasSuspicious" class="w-4 h-4 bg-transparent border-white/20 rounded accent-cyan-500" />
+                <label for="hasSuspicious" class="text-slate-300">Contains Suspicious Items (X-Ray)</label>
+            </div>
+
+            <div class="flex items-center gap-2">
+                <input type="checkbox" name="hasExplosive" value="true" @(Context.Request.Query["hasExplosive"] == "true" ? "checked" : "") id="hasExplosive" class="w-4 h-4 bg-transparent border-white/20 rounded accent-cyan-500" />
+                <label for="hasExplosive" class="text-slate-300">Contains Explosive Traces</label>
+            </div>
+
+            <button type="submit" class="w-full py-3 bg-cyan-600/20 text-cyan-400 border border-cyan-500/50 rounded hover:bg-cyan-500/30 transition-all font-label-caps tracking-widest mt-4">
+                INITIATE SCAN
+            </button>
+        </form>
+    </section>
+
+    <section class="bg-surface-container-low border border-white/10 rounded-lg shadow-2xl flex flex-col min-h-[300px]">
+        <div class="bg-surface-container-high px-lg py-md border-b border-white/10 flex justify-between items-center">
+            <h3 class="font-label-caps text-cyan-400 tracking-widest">SCANNER LOGS</h3>
+            <span class="material-symbols-outlined text-sm text-cyan-400 animate-pulse">radar</span>
+        </div>
+        <div class="p-lg flex-1 font-data-mono text-sm space-y-3 overflow-y-auto max-h-[300px]">
+            @if (ViewBag.BaggageLogs != null)
+            {
+                foreach (var log in ViewBag.BaggageLogs)
+                {
+                    <div class="@(log.Contains("❌") || log.Contains("🚨") ? "text-red-400" : "text-green-400")">
+                        @log
+                    </div>
+                }
+
+                <div class="mt-4 pt-4 border-t border-white/10 font-bold @(ViewBag.IsApproved ? "text-green-500" : "text-red-500")">
+                    FINAL STATUS: @(ViewBag.IsApproved ? "CLEARED FOR LOADING" : "BAGGAGE REJECTED")
+                </div>
+            }
+        </div>
+    </section>
+</div>

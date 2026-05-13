@@ -429,5 +429,153 @@ namespace TMPP_Aeroport.Controllers
 
             return View();
         }
+        // ==========================================
+        // LAB 7: Chain of Responsibility, State, Mediator, Template Method, Visitor
+        // ==========================================
+
+        // 1. Chain of Responsibility Pattern Usage
+        public IActionResult ChainDemo(double weight = 20, bool hasSuspicious = false, bool hasExplosive = false)
+        {
+            var baggage = new TMPP_Aeroport.Domain.ChainOfResponsibility.Baggage 
+            { 
+                Owner = "John Doe", 
+                Weight = weight, 
+                HasSuspiciousItems = hasSuspicious, 
+                HasExplosiveTraces = hasExplosive 
+            };
+
+            var weightHandler = new TMPP_Aeroport.Domain.ChainOfResponsibility.WeightCheckHandler();
+            var xrayHandler = new TMPP_Aeroport.Domain.ChainOfResponsibility.XRayScanHandler();
+            var explosiveHandler = new TMPP_Aeroport.Domain.ChainOfResponsibility.ExplosiveTraceHandler();
+
+            // Link the chain
+            weightHandler.SetNext(xrayHandler).SetNext(explosiveHandler);
+
+            bool isApproved = weightHandler.Handle(baggage);
+
+            ViewBag.BaggageLogs = baggage.CheckLogs;
+            ViewBag.IsApproved = isApproved;
+            return View();
+        }
+
+        // 2. State Pattern Usage
+        private static TMPP_Aeroport.Domain.State.TicketMachine _ticketMachine = new TMPP_Aeroport.Domain.State.TicketMachine();
+
+        public IActionResult StateDemo(string actionType, int amount = 0)
+        {
+            if (actionType == "Insert")
+            {
+                _ticketMachine.InsertMoney(amount);
+            }
+            else if (actionType == "Request")
+            {
+                _ticketMachine.RequestTicket();
+            }
+            else if (actionType == "Dispense")
+            {
+                _ticketMachine.Dispense();
+            }
+            else if (actionType == "ResetLogs")
+            {
+                _ticketMachine.Logs.Clear();
+            }
+
+            ViewBag.CurrentState = _ticketMachine.State.GetType().Name;
+            ViewBag.Balance = _ticketMachine.Balance;
+            ViewBag.Logs = _ticketMachine.Logs;
+
+            return View();
+        }
+
+        // 3. Mediator Pattern Usage
+        public IActionResult MediatorDemo(string actionType)
+        {
+            var tower = new TMPP_Aeroport.Domain.Mediator.ATCTower();
+            var flight1 = new TMPP_Aeroport.Domain.Mediator.CommercialFlight(tower, "TAROM-101");
+            var flight2 = new TMPP_Aeroport.Domain.Mediator.CommercialFlight(tower, "WIZZ-777");
+            var heli1 = new TMPP_Aeroport.Domain.Mediator.Helicopter(tower, "HELI-MEDEVAC");
+
+            if (actionType == "Broadcast")
+            {
+                flight1.Send("Encountering severe turbulence at FL350.");
+            }
+            else if (actionType == "Landing")
+            {
+                flight2.RequestLanding();
+            }
+            else
+            {
+                heli1.Send("Entering airspace.");
+            }
+
+            ViewBag.TowerLogs = tower.ATCLogs;
+            ViewBag.Flight1Logs = flight1.AircraftLogs;
+            ViewBag.Flight2Logs = flight2.AircraftLogs;
+            ViewBag.HeliLogs = heli1.AircraftLogs;
+
+            return View();
+        }
+
+        // 4. Template Method Pattern Usage
+        public IActionResult TemplateMethodDemo(string flightType = "passenger")
+        {
+            TMPP_Aeroport.Domain.TemplateMethod.FlightPreflightRoutine routine;
+
+            if (flightType == "cargo")
+            {
+                routine = new TMPP_Aeroport.Domain.TemplateMethod.CargoFlightRoutine();
+            }
+            else
+            {
+                routine = new TMPP_Aeroport.Domain.TemplateMethod.PassengerFlightRoutine();
+            }
+
+            routine.ExecuteRoutine();
+
+            ViewBag.RoutineLogs = routine.RoutineLogs;
+            ViewBag.FlightType = flightType;
+
+            return View();
+        }
+
+        // 5. Visitor Pattern Usage
+        public IActionResult VisitorDemo(string format = "json")
+        {
+            var elements = new List<TMPP_Aeroport.Domain.Visitor.IAirportElement>
+            {
+                new TMPP_Aeroport.Domain.Visitor.TerminalElement("Terminal 1", 15),
+                new TMPP_Aeroport.Domain.Visitor.AircraftElement("Boeing 737 MAX", 180),
+                new TMPP_Aeroport.Domain.Visitor.FlightElement("RO-302", "Frankfurt")
+            };
+
+            TMPP_Aeroport.Domain.Visitor.IVisitor visitor;
+            
+            if (format == "xml")
+            {
+                visitor = new TMPP_Aeroport.Domain.Visitor.XmlExportVisitor();
+            }
+            else
+            {
+                visitor = new TMPP_Aeroport.Domain.Visitor.JsonExportVisitor();
+            }
+
+            foreach (var element in elements)
+            {
+                element.Accept(visitor);
+            }
+
+            if (format == "xml")
+            {
+                ViewBag.ExportData = ((TMPP_Aeroport.Domain.Visitor.XmlExportVisitor)visitor).ExportedData;
+            }
+            else
+            {
+                ViewBag.ExportData = ((TMPP_Aeroport.Domain.Visitor.JsonExportVisitor)visitor).ExportedData;
+            }
+
+            ViewBag.Format = format;
+
+            return View();
+        }
     }
 }
