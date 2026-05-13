@@ -23,9 +23,9 @@
                     <label class="block font-label-caps text-slate-400 mb-3">AUTHENTICATED AS:</label>
                     <div class="relative">
                         <select class="w-full bg-[#05070A] border-0 border-b-2 border-outline-variant focus:border-cyan-400 focus:ring-0 text-on-background py-3 font-data-mono appearance-none cursor-pointer">
-                            <option @(ViewBag.SelectedRole == "BaggageHandler" ? "selected" : "")>Baggage Handler (No Clearance)</option>
-                            <option @(ViewBag.SelectedRole == "Passenger" ? "selected" : "")>Passenger (No Clearance)</option>
-                            <option @(ViewBag.SelectedRole == "ATC_Manager" ? "selected" : "")>ATC Manager (Authorized)</option>
+                            @if(ViewBag.SelectedRole == "BaggageHandler") { <option value="BaggageHandler" selected>Baggage Handler (No Clearance)</option> } else { <option value="BaggageHandler">Baggage Handler (No Clearance)</option> }
+                            @if(ViewBag.SelectedRole == "Passenger") { <option value="Passenger" selected>Passenger (No Clearance)</option> } else { <option value="Passenger">Passenger (No Clearance)</option> }
+                            @if(ViewBag.SelectedRole == "ATC_Manager") { <option value="ATC_Manager" selected>ATC Manager (Authorized)</option> } else { <option value="ATC_Manager">ATC Manager (Authorized)</option> }
                         </select>
                         <span class="material-symbols-outlined absolute right-3 top-3 pointer-events-none text-slate-500">expand_more</span>
                     </div>

@@ -1,0 +1,48 @@
+@{
+    ViewData["Title"] = "Data Export Visitor";
+    Layout = "_LayoutSAMS";
+}
+
+<header class="border-l-4 pl-lg mb-xl" style="border-color:#3cd7ff;">
+    <h1 class="font-headline-lg text-display-xl text-on-surface">Data Export Utility</h1>
+    <p class="font-body-sm text-on-surface-variant max-w-2xl">Visitor Pattern — Extends functionality of diverse class structures without altering their code.</p>
+</header>
+
+<div class="grid grid-cols-1 lg:grid-cols-2 gap-xl items-start">
+    <section class="glass-card p-lg rounded-lg shadow-2xl space-y-lg border-t-2" style="border-top-color:#3cd7ff;">
+        <h3 class="font-headline-md text-cyan-400">Export Mixed Collection</h3>
+        <p class="text-xs text-slate-400 mb-4">The internal collection contains: TerminalElement, AircraftElement, and FlightElement. Select a Visitor to traverse them.</p>
+
+        <form asp-action="VisitorDemo" method="get" class="grid grid-cols-2 gap-4">
+            <button type="submit" name="format" value="json" class="py-6 bg-[#05070A] border @(ViewBag.Format == "json" ? "border-green-500 shadow-[0_0_15px_rgba(34,197,94,0.3)]" : "border-white/10") rounded flex flex-col items-center hover:border-green-400 transition-all group">
+                <span class="material-symbols-outlined text-4xl mb-2 text-slate-400 group-hover:text-green-400">data_object</span>
+                <span class="font-label-caps text-slate-300">JSON EXPORT VISITOR</span>
+            </button>
+
+            <button type="submit" name="format" value="xml" class="py-6 bg-[#05070A] border @(ViewBag.Format == "xml" ? "border-amber-500 shadow-[0_0_15px_rgba(245,158,11,0.3)]" : "border-white/10") rounded flex flex-col items-center hover:border-amber-400 transition-all group">
+                <span class="material-symbols-outlined text-4xl mb-2 text-slate-400 group-hover:text-amber-400">code</span>
+                <span class="font-label-caps text-slate-300">XML EXPORT VISITOR</span>
+            </button>
+        </form>
+    </section>
+
+    <section class="bg-surface-container-low border border-white/10 rounded-lg shadow-2xl flex flex-col min-h-[300px]">
+        <div class="bg-surface-container-high px-lg py-md border-b border-white/10 flex justify-between items-center">
+            <h3 class="font-label-caps @(ViewBag.Format == "json" ? "text-green-400" : "text-amber-400") tracking-widest">
+                GENERATED @ViewBag.Format.ToString().ToUpper() OUTPUT
+            </h3>
+            <span class="material-symbols-outlined text-sm @(ViewBag.Format == "json" ? "text-green-400" : "text-amber-400")">output</span>
+        </div>
+        <div class="p-lg flex-1 font-data-mono text-sm space-y-2 overflow-y-auto max-h-[300px]">
+            @if (ViewBag.ExportData != null)
+            {
+                <div class="text-slate-300 p-4 bg-[#05070A] rounded border border-white/5 font-mono text-xs whitespace-pre-wrap leading-relaxed">
+                    @foreach (var line in ViewBag.ExportData)
+                    {
+@line<br/>
+                    }
+                </div>
+            }
+        </div>
+    </section>
+</div>

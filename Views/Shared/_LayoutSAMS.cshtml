@@ -224,6 +224,26 @@
             <span class="material-symbols-outlined mb-1 text-lg">data_object</span>
             <span class="font-['Space_Grotesk'] font-medium text-[9px]">Iterator</span>
         </a>
+        <a asp-controller="Airport" asp-action="ChainDemo" class="flex flex-col items-center justify-center p-3 rounded-lg @(ViewContext.RouteData.Values["action"]?.ToString() == "ChainDemo" ? "bg-cyan-500/10 text-cyan-400 border-r-2 border-cyan-400" : "text-slate-500 opacity-60 hover:bg-white/5 hover:opacity-100") transition-all">
+            <span class="material-symbols-outlined mb-1 text-lg">link</span>
+            <span class="font-['Space_Grotesk'] font-medium text-[9px]">Chain</span>
+        </a>
+        <a asp-controller="Airport" asp-action="StateDemo" class="flex flex-col items-center justify-center p-3 rounded-lg @(ViewContext.RouteData.Values["action"]?.ToString() == "StateDemo" ? "bg-cyan-500/10 text-cyan-400 border-r-2 border-cyan-400" : "text-slate-500 opacity-60 hover:bg-white/5 hover:opacity-100") transition-all">
+            <span class="material-symbols-outlined mb-1 text-lg">swap_horiz</span>
+            <span class="font-['Space_Grotesk'] font-medium text-[9px]">State</span>
+        </a>
+        <a asp-controller="Airport" asp-action="MediatorDemo" class="flex flex-col items-center justify-center p-3 rounded-lg @(ViewContext.RouteData.Values["action"]?.ToString() == "MediatorDemo" ? "bg-cyan-500/10 text-cyan-400 border-r-2 border-cyan-400" : "text-slate-500 opacity-60 hover:bg-white/5 hover:opacity-100") transition-all">
+            <span class="material-symbols-outlined mb-1 text-lg">hub</span>
+            <span class="font-['Space_Grotesk'] font-medium text-[9px]">Mediator</span>
+        </a>
+        <a asp-controller="Airport" asp-action="TemplateMethodDemo" class="flex flex-col items-center justify-center p-3 rounded-lg @(ViewContext.RouteData.Values["action"]?.ToString() == "TemplateMethodDemo" ? "bg-cyan-500/10 text-cyan-400 border-r-2 border-cyan-400" : "text-slate-500 opacity-60 hover:bg-white/5 hover:opacity-100") transition-all">
+            <span class="material-symbols-outlined mb-1 text-lg">list_alt</span>
+            <span class="font-['Space_Grotesk'] font-medium text-[9px]">Template</span>
+        </a>
+        <a asp-controller="Airport" asp-action="VisitorDemo" class="flex flex-col items-center justify-center p-3 rounded-lg @(ViewContext.RouteData.Values["action"]?.ToString() == "VisitorDemo" ? "bg-cyan-500/10 text-cyan-400 border-r-2 border-cyan-400" : "text-slate-500 opacity-60 hover:bg-white/5 hover:opacity-100") transition-all">
+            <span class="material-symbols-outlined mb-1 text-lg">transfer_within_a_station</span>
+            <span class="font-['Space_Grotesk'] font-medium text-[9px]">Visitor</span>
+        </a>
     </nav>
 </aside>
 
