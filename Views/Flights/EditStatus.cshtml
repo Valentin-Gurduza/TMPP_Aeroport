@@ -1,0 +1,56 @@
+@model TMPP_Aeroport.Models.Flight
+@{
+    ViewData["Title"] = "Update Flight Status";
+}
+
+<div class="max-w-xl mx-auto">
+    <div class="mb-6 flex items-center gap-4">
+        <a asp-action="Index" class="text-slate-400 hover:text-slate-600 transition">
+            <span class="material-symbols-outlined text-2xl">arrow_back</span>
+        </a>
+        <div>
+            <h1 class="text-2xl font-bold text-slate-800">Update ATC Status</h1>
+            <p class="text-sm text-slate-500">Flight @Model.FlightNumber to @Model.Destination</p>
+        </div>
+    </div>
+
+    <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-8 text-center">
+        <div class="inline-flex items-center justify-center w-16 h-16 bg-blue-50 text-blue-600 rounded-full mb-6">
+            <span class="material-symbols-outlined text-3xl">radar</span>
+        </div>
+        
+        <h3 class="text-lg font-bold text-slate-800 mb-2">@Model.FlightNumber</h3>
+        <p class="text-slate-500 mb-8">@Model.Aircraft?.RegistrationCode • @Model.DepartureTime.ToString("dd MMM HH:mm")</p>
+
+        <form asp-action="EditStatus" method="post">
+            <input type="hidden" asp-for="Id" />
+            
+            <div class="grid grid-cols-1 gap-3 max-w-xs mx-auto mb-8">
+                @{
+                    var statuses = new[] { "Scheduled", "Boarding", "Airborne", "Landed", "Cancelled" };
+                }
+                @foreach (var s in statuses)
+                {
+                    <label class="relative flex cursor-pointer rounded-lg border bg-white p-4 shadow-sm focus:outline-none transition @(Model.Status == s ? "border-blue-500 ring-1 ring-blue-500 bg-blue-50" : "border-slate-300 hover:bg-slate-50")">
+                        <input type="radio" name="status" value="@s" class="sr-only" @(Model.Status == s ? "checked" : "")>
+                        <span class="flex flex-1">
+                            <span class="flex flex-col">
+                                <span class="block text-sm font-medium text-slate-900 uppercase tracking-widest">@s</span>
+                            </span>
+                        </span>
+                        @if (Model.Status == s)
+                        {
+                            <span class="material-symbols-outlined text-blue-600">check_circle</span>
+                        }
+                    </label>
+                }
+            </div>
+
+            <div class="pt-6 border-t border-slate-100">
+                <button type="submit" class="w-full py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-bold tracking-widest uppercase text-sm transition shadow-sm">
+                    BROADCAST UPDATE
+                </button>
+            </div>
+        </form>
+    </div>
+</div>

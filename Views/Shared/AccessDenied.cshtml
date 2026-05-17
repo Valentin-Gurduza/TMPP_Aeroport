@@ -1,0 +1,36 @@
+@{
+    ViewData["Title"] = "Access Denied";
+    Layout = "_LayoutCorporate";
+}
+
+<div class="flex flex-col items-center justify-center min-h-[60vh] text-center">
+    <div class="w-20 h-20 rounded-full bg-red-100 flex items-center justify-center mb-6">
+        <span class="material-symbols-outlined text-red-500 text-4xl">lock</span>
+    </div>
+
+    <h1 class="text-3xl font-bold text-slate-900 mb-2">Access Denied</h1>
+    <p class="text-slate-500 text-base max-w-sm mb-8">
+        You don't have the required role to access this page. 
+        Contact your administrator to request access.
+    </p>
+
+    <div class="flex gap-3">
+        <a asp-controller="Airport" asp-action="Index"
+           class="px-5 py-2.5 bg-blue-600 text-white rounded-lg text-sm font-semibold hover:bg-blue-700 transition">
+            Go to Dashboard
+        </a>
+        <a asp-area="Identity" asp-page="/Account/Login"
+           class="px-5 py-2.5 border border-slate-300 text-slate-700 rounded-lg text-sm font-semibold hover:bg-slate-50 transition">
+            Switch Account
+        </a>
+    </div>
+
+    <div class="mt-10 p-4 bg-amber-50 border border-amber-200 rounded-xl max-w-sm text-left">
+        <p class="text-xs font-semibold text-amber-700 mb-2">Roles with access:</p>
+        <ul class="text-xs text-amber-600 space-y-1">
+            <li>• <strong>ATC Tower / Proxy / Mediator</strong> → Admin, ATC_Manager</li>
+            <li>• <strong>Baggage Scanner (Chain)</strong> → Admin, Ground_Staff</li>
+            <li>• <strong>Ticket Machine (State)</strong> → Any authenticated user</li>
+        </ul>
+    </div>
+</div>

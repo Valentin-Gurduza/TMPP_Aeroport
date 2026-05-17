@@ -1,0 +1,105 @@
+@model IEnumerable<TMPP_Aeroport.Models.Ticket>
+@{
+    ViewData["Title"] = "My Tickets";
+}
+
+<div class="mb-8">
+    <h1 class="text-2xl font-bold text-slate-800">My Tickets</h1>
+    <p class="text-sm text-slate-500">History of your bookings and current tickets.</p>
+</div>
+
+@if (!Model.Any())
+{
+    <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-12 text-center">
+        <div class="w-16 h-16 bg-slate-100 text-slate-400 rounded-full flex items-center justify-center mx-auto mb-4">
+            <span class="material-symbols-outlined text-3xl">confirmation_number</span>
+        </div>
+        <h3 class="text-lg font-bold text-slate-800 mb-2">No tickets found</h3>
+        <p class="text-slate-500 mb-6">You haven't booked any flights yet.</p>
+        <a asp-controller="Flights" asp-action="Index" class="inline-flex items-center justify-center px-6 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-semibold transition">
+            Browse Flights
+        </a>
+    </div>
+}
+else
+{
+    <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+        @foreach (var ticket in Model)
+        {
+            <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden flex flex-col transition hover:shadow-md">
+                <div class="bg-gradient-to-r from-blue-600 to-blue-800 p-5 text-white flex justify-between items-center relative overflow-hidden">
+                    <!-- Decor pattern -->
+                    <span class="material-symbols-outlined absolute -right-4 -bottom-4 text-[100px] opacity-10">flight</span>
+                    
+                    <div class="relative z-10">
+                        <span class="text-blue-200 text-xs font-semibold uppercase tracking-wider block mb-1">Flight</span>
+                        <span class="text-2xl font-bold tracking-tight">@ticket.Flight?.FlightNumber</span>
+                    </div>
+                    <div class="text-right relative z-10">
+                        <span class="text-blue-200 text-xs font-semibold uppercase tracking-wider block mb-1">Destination</span>
+                        <span class="text-lg font-bold truncate max-w-[120px] block">@ticket.Flight?.Destination</span>
+                    </div>
+                </div>
+                
+                <div class="p-5 flex-1 flex flex-col">
+                    <div class="grid grid-cols-2 gap-4 mb-6">
+                        <div>
+                            <span class="text-slate-400 text-xs uppercase font-semibold block mb-1">Departure</span>
+                            <span class="text-slate-800 font-bold">@ticket.Flight?.DepartureTime.ToString("dd MMM HH:mm")</span>
+                        </div>
+                        <div>
+                            <span class="text-slate-400 text-xs uppercase font-semibold block mb-1">Seat</span>
+                            <span class="text-slate-800 font-bold">@ticket.SeatNumber</span>
+                        </div>
+                        <div>
+                            <span class="text-slate-400 text-xs uppercase font-semibold block mb-1">Aircraft</span>
+                            <span class="text-slate-800 font-medium">@ticket.Flight?.Aircraft?.Model</span>
+                        </div>
+                        <div>
+                            <span class="text-slate-400 text-xs uppercase font-semibold block mb-1">Price</span>
+                            <span class="text-slate-800 font-bold">€@ticket.Price.ToString("0.00")</span>
+                        </div>
+                    </div>
+                    
+                    <div class="mt-auto pt-4 border-t border-slate-100 flex items-center justify-between">
+                        <div>
+                            @if (ticket.TicketState == "WaitingForPayment")
+                            {
+                                <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-amber-50 text-amber-700 text-xs font-bold border border-amber-200">
+                                    <span class="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse"></span>
+                                    Pending Payment
+                                </span>
+                            }
+                            else if (ticket.TicketState == "Issued")
+                            {
+                                <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-700 text-xs font-bold border border-emerald-200">
+                                    <span class="material-symbols-outlined text-[14px]">check_circle</span>
+                                    Issued
+                                </span>
+                            }
+                            else
+                            {
+                                <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-slate-50 text-slate-700 text-xs font-bold border border-slate-200">
+                                    @ticket.TicketState
+                                </span>
+                            }
+                        </div>
+                        
+                        @if (ticket.TicketState == "WaitingForPayment")
+                        {
+                            <a asp-action="Pay" asp-route-id="@ticket.Id" class="text-sm font-bold text-blue-600 hover:text-blue-800 transition">
+                                Pay Now →
+                            </a>
+                        }
+                        else if (ticket.TicketState == "Issued")
+                        {
+                            <button class="text-slate-400 hover:text-slate-600" title="Download PDF">
+                                <span class="material-symbols-outlined">download</span>
+                            </button>
+                        }
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+}

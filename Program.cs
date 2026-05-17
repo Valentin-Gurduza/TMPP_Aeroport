@@ -16,6 +16,12 @@ builder.Services.AddDefaultIdentity<ApplicationUser>(options => options.SignIn.R
     .AddRoles<IdentityRole>()
     .AddEntityFrameworkStores<ApplicationDbContext>();
 
+builder.Services.ConfigureApplicationCookie(options =>
+{
+    options.LoginPath = "/Identity/Account/Login";
+    options.AccessDeniedPath = "/Airport/AccessDenied";
+});
+
 builder.Services.AddControllersWithViews();
 
 // DIP (Dependency Inversion Principle): Modulele de nivel înalt (Controllers) nu trebuie să depindă de cele de nivel jos (Services), ci de abstracții.
