@@ -1,0 +1,105 @@
+@page
+@model LoginModel
+@{
+    ViewData["Title"] = "Sign In";
+    Layout = "_LayoutLogin";
+}
+
+<div class="flex min-h-screen bg-slate-50">
+    <!-- Left branding panel -->
+    <div class="hidden lg:flex lg:w-1/2 bg-blue-600 flex-col justify-between p-12">
+        <div class="flex items-center gap-3">
+            <span class="material-symbols-outlined text-white text-3xl">flight_takeoff</span>
+            <span class="text-white font-bold text-xl tracking-tight">SAMS Enterprise</span>
+        </div>
+        <div>
+            <h2 class="text-white text-4xl font-bold leading-tight mb-4">Smart Airport<br/>Management<br/>System</h2>
+            <p class="text-blue-200 text-base leading-relaxed">A comprehensive platform for managing airport operations, flights, passengers, and ground staff — all in one secure system.</p>
+        </div>
+        <div class="grid grid-cols-3 gap-4">
+            <div class="bg-blue-500/40 rounded-xl p-4 text-center">
+                <p class="text-white text-2xl font-bold">4</p>
+                <p class="text-blue-200 text-xs mt-1">Roles</p>
+            </div>
+            <div class="bg-blue-500/40 rounded-xl p-4 text-center">
+                <p class="text-white text-2xl font-bold">23</p>
+                <p class="text-blue-200 text-xs mt-1">Patterns</p>
+            </div>
+            <div class="bg-blue-500/40 rounded-xl p-4 text-center">
+                <p class="text-white text-2xl font-bold">SQL</p>
+                <p class="text-blue-200 text-xs mt-1">Live DB</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Right login panel -->
+    <div class="w-full lg:w-1/2 flex items-center justify-center p-8">
+        <div class="w-full max-w-sm">
+            <!-- Mobile logo -->
+            <div class="flex items-center gap-2 mb-8 lg:hidden">
+                <div class="w-9 h-9 bg-blue-600 rounded-lg flex items-center justify-center">
+                    <span class="material-symbols-outlined text-white text-lg">flight_takeoff</span>
+                </div>
+                <span class="font-bold text-slate-900">SAMS Enterprise</span>
+            </div>
+
+            <h1 class="text-2xl font-bold text-slate-900 mb-1">Welcome back</h1>
+            <p class="text-slate-500 text-sm mb-8">Sign in to your account to continue</p>
+
+            <form id="account" method="post" class="space-y-5">
+                <div asp-validation-summary="ModelOnly" class="p-3 bg-red-50 border border-red-200 rounded-lg text-sm text-red-700 hidden"></div>
+
+                <div>
+                    <label asp-for="Input.Email" class="block text-sm font-medium text-slate-700 mb-1.5">Email</label>
+                    <input asp-for="Input.Email"
+                           class="w-full px-3.5 py-2.5 rounded-lg border border-slate-300 bg-white text-slate-900 text-sm placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
+                           autocomplete="username"
+                           placeholder="admin@sams.local" />
+                    <span asp-validation-for="Input.Email" class="text-xs text-red-500 mt-1 block"></span>
+                </div>
+
+                <div>
+                    <div class="flex justify-between items-center mb-1.5">
+                        <label asp-for="Input.Password" class="text-sm font-medium text-slate-700">Password</label>
+                        <a href="#" class="text-xs text-blue-600 hover:underline">Forgot password?</a>
+                    </div>
+                    <input asp-for="Input.Password"
+                           class="w-full px-3.5 py-2.5 rounded-lg border border-slate-300 bg-white text-slate-900 text-sm placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
+                           autocomplete="current-password"
+                           placeholder="••••••••" />
+                    <span asp-validation-for="Input.Password" class="text-xs text-red-500 mt-1 block"></span>
+                </div>
+
+                <div class="flex items-center gap-2">
+                    <input asp-for="Input.RememberMe" type="checkbox"
+                           class="h-4 w-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500" />
+                    <label asp-for="Input.RememberMe" class="text-sm text-slate-600">Keep me signed in</label>
+                </div>
+
+                <button type="submit" id="login-submit"
+                        class="w-full py-2.5 bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white text-sm font-semibold rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 shadow-sm">
+                    Sign In
+                </button>
+            </form>
+
+            <p class="text-center text-sm text-slate-500 mt-6">
+                Don't have an account?
+                <a asp-page="./Register" asp-route-returnUrl="@Model.ReturnUrl" class="text-blue-600 font-semibold hover:underline">Create account</a>
+            </p>
+
+            <!-- Demo hint -->
+            <div class="mt-8 p-4 bg-slate-100 rounded-xl border border-slate-200">
+                <p class="text-xs font-semibold text-slate-600 mb-2 flex items-center gap-1">
+                    <span class="material-symbols-outlined text-sm text-slate-500">info</span>
+                    Demo Credentials
+                </p>
+                <div class="text-xs text-slate-500 font-mono space-y-1">
+                    <div class="flex justify-between">
+                        <span class="text-slate-700 font-semibold">Admin</span>
+                        <span>admin@sams.local / Admin123!</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

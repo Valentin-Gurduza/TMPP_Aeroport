@@ -1,0 +1,67 @@
+@model IEnumerable<TMPP_Aeroport.Models.Aircraft>
+@{
+    ViewData["Title"] = "Aircraft Fleet";
+}
+
+<div class="flex justify-between items-center mb-6">
+    <div>
+        <h1 class="text-2xl font-bold text-slate-800">Fleet Management</h1>
+        <p class="text-sm text-slate-500">Manage all aircraft registrations and details.</p>
+    </div>
+    @if (User.IsInRole("Admin"))
+    {
+        <a asp-action="Create" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-semibold transition flex items-center gap-2">
+            <span class="material-symbols-outlined text-[18px]">add</span>
+            Add Aircraft
+        </a>
+    }
+</div>
+
+<div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+    <table class="w-full text-left text-sm text-slate-600">
+        <thead class="bg-slate-50 text-slate-500 border-b border-slate-200 uppercase text-xs font-semibold">
+            <tr>
+                <th class="px-6 py-4">Registration</th>
+                <th class="px-6 py-4">Model</th>
+                <th class="px-6 py-4">Airline</th>
+                <th class="px-6 py-4 text-right">Capacity</th>
+                @if (User.IsInRole("Admin"))
+                {
+                    <th class="px-6 py-4 text-right">Actions</th>
+                }
+            </tr>
+        </thead>
+        <tbody class="divide-y divide-slate-100">
+            @if (!Model.Any())
+            {
+                <tr>
+                    <td colspan="5" class="px-6 py-8 text-center text-slate-400">
+                        No aircraft found in the database.
+                    </td>
+                </tr>
+            }
+            @foreach (var item in Model)
+            {
+                <tr class="hover:bg-slate-50 transition">
+                    <td class="px-6 py-4 font-mono text-blue-600 font-medium">@item.RegistrationCode</td>
+                    <td class="px-6 py-4 text-slate-800 font-medium">@item.Model</td>
+                    <td class="px-6 py-4">@item.Airline</td>
+                    <td class="px-6 py-4 text-right">@item.Capacity seats</td>
+                    @if (User.IsInRole("Admin"))
+                    {
+                        <td class="px-6 py-4 text-right space-x-2">
+                            <a asp-action="Edit" asp-route-id="@item.Id" class="text-slate-400 hover:text-blue-600 transition" title="Edit">
+                                <span class="material-symbols-outlined text-[20px]">edit</span>
+                            </a>
+                            <form asp-action="Delete" asp-route-id="@item.Id" method="post" class="inline" onsubmit="return confirm('Are you sure you want to delete this aircraft?');">
+                                <button type="submit" class="text-slate-400 hover:text-red-600 transition" title="Delete">
+                                    <span class="material-symbols-outlined text-[20px]">delete</span>
+                                </button>
+                            </form>
+                        </td>
+                    }
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>

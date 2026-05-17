@@ -69,8 +69,18 @@
                 </a>
             </nav>
 
+            <div class="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2 mt-6 px-3">Passenger</div>
+            <nav class="space-y-1">
+                <a asp-controller="Tickets" asp-action="MyTickets" class="sidebar-link flex items-center px-3 py-2 text-sm font-medium rounded-md text-slate-700 @(ViewContext.RouteData.Values["controller"]?.ToString() == "Tickets" ? "active" : "")">
+                    <span class="material-symbols-outlined mr-3 text-[20px]">confirmation_number</span> My Tickets
+                </a>
+            </nav>
+
             <div class="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2 mt-6 px-3">Operations</div>
             <nav class="space-y-1">
+                <a asp-controller="Flights" asp-action="Index" class="sidebar-link flex items-center px-3 py-2 text-sm font-medium rounded-md text-slate-700 @(ViewContext.RouteData.Values["controller"]?.ToString() == "Flights" ? "active" : "")">
+                    <span class="material-symbols-outlined mr-3 text-[20px]">flight_takeoff</span> Live FIDS Board
+                </a>
                 <a asp-controller="Airport" asp-action="FacadeDemo" class="sidebar-link flex items-center px-3 py-2 text-sm font-medium rounded-md text-slate-700 @(ViewContext.RouteData.Values["action"]?.ToString() == "FacadeDemo" ? "active" : "")">
                     <span class="material-symbols-outlined mr-3 text-[20px]">settings_input_antenna</span> ATC Tower
                 </a>
@@ -78,7 +88,7 @@
                     <span class="material-symbols-outlined mr-3 text-[20px]">hub</span> Air Traffic
                 </a>
                 <a asp-controller="Airport" asp-action="BridgeDemo" class="sidebar-link flex items-center px-3 py-2 text-sm font-medium rounded-md text-slate-700 @(ViewContext.RouteData.Values["action"]?.ToString() == "BridgeDemo" ? "active" : "")">
-                    <span class="material-symbols-outlined mr-3 text-[20px]">flight_takeoff</span> Flight Boards
+                    <span class="material-symbols-outlined mr-3 text-[20px]">tv</span> Hardware Displays
                 </a>
             </nav>
             
@@ -89,6 +99,9 @@
                 </a>
                 <a asp-controller="Airport" asp-action="VisitorDemo" class="sidebar-link flex items-center px-3 py-2 text-sm font-medium rounded-md text-slate-700 @(ViewContext.RouteData.Values["action"]?.ToString() == "VisitorDemo" ? "active" : "")">
                     <span class="material-symbols-outlined mr-3 text-[20px]">transfer_within_a_station</span> Export Data
+                </a>
+                <a asp-controller="Fleet" asp-action="Index" class="sidebar-link flex items-center px-3 py-2 text-sm font-medium rounded-md text-slate-700 @(ViewContext.RouteData.Values["controller"]?.ToString() == "Fleet" ? "active" : "")">
+                    <span class="material-symbols-outlined mr-3 text-[20px]">flight</span> Fleet
                 </a>
             </nav>
         </div>

@@ -1,0 +1,79 @@
+@model IEnumerable<TMPP_Aeroport.Models.Flight>
+@{
+    ViewData["Title"] = "Flight Departures";
+}
+
+<div class="flex justify-between items-center mb-6">
+    <div>
+        <h1 class="text-2xl font-bold text-slate-800">Flight Departures Board</h1>
+        <p class="text-sm text-slate-500">Live monitoring of all scheduled and active flights.</p>
+    </div>
+    @if (User.IsInRole("Admin") || User.IsInRole("ATC_Manager"))
+    {
+        <a asp-action="Create" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-semibold transition flex items-center gap-2 shadow-sm">
+            <span class="material-symbols-outlined text-[18px]">flight_takeoff</span>
+            Schedule Flight
+        </a>
+    }
+</div>
+
+<div class="bg-slate-900 rounded-xl shadow-xl overflow-hidden border border-slate-700">
+    <table class="w-full text-left text-sm">
+        <thead class="bg-slate-950 text-slate-400 border-b border-slate-800 uppercase text-xs font-semibold tracking-widest">
+            <tr>
+                <th class="px-6 py-4">Time</th>
+                <th class="px-6 py-4">Flight</th>
+                <th class="px-6 py-4">Destination</th>
+                <th class="px-6 py-4">Aircraft</th>
+                <th class="px-6 py-4">Status</th>
+                <th class="px-6 py-4 text-right">Actions</th>
+            </tr>
+        </thead>
+        <tbody class="divide-y divide-slate-800 font-mono" id="flightsTableBody">
+            @if (!Model.Any())
+            {
+                <tr>
+                    <td colspan="6" class="px-6 py-12 text-center text-slate-500 font-sans">
+                        <span class="material-symbols-outlined text-4xl block mb-2 opacity-50">flight_off</span>
+                        No flights scheduled.
+                    </td>
+                </tr>
+            }
+            @foreach (var item in Model.OrderBy(f => f.DepartureTime))
+            {
+                string statusColor = item.Status switch {
+                    "Scheduled" => "text-blue-400",
+                    "Boarding" => "text-amber-400 animate-pulse",
+                    "Airborne" => "text-emerald-400",
+                    "Landed" => "text-slate-400",
+                    "Cancelled" => "text-red-500",
+                    _ => "text-white"
+                };
+
+                <tr class="hover:bg-slate-800/50 transition">
+                    <td class="px-6 py-4 text-amber-500">@item.DepartureTime.ToString("HH:mm")</td>
+                    <td class="px-6 py-4 text-white font-bold tracking-wider">@item.FlightNumber</td>
+                    <td class="px-6 py-4 text-white uppercase tracking-wider">@item.Destination</td>
+                    <td class="px-6 py-4 text-slate-400 text-xs">@item.Aircraft?.RegistrationCode</td>
+                    <td class="px-6 py-4 font-bold tracking-widest uppercase @statusColor">
+                        @item.Status
+                    </td>
+                    <td class="px-6 py-4 text-right">
+                        @if (User.IsInRole("Admin") || User.IsInRole("ATC_Manager"))
+                        {
+                            <a asp-action="EditStatus" asp-route-id="@item.Id" class="inline-flex items-center justify-center bg-slate-800 hover:bg-slate-700 text-slate-300 rounded px-3 py-1.5 transition text-xs font-sans tracking-normal border border-slate-700 hover:border-slate-500" title="Update Status">
+                                <span class="material-symbols-outlined text-[14px] mr-1">update</span> ATC
+                            </a>
+                        }
+                        @if (User.IsInRole("Passenger") && item.Status == "Scheduled")
+                        {
+                            <a asp-controller="Tickets" asp-action="Buy" asp-route-flightId="@item.Id" class="inline-flex items-center justify-center bg-blue-600/20 text-blue-400 border border-blue-500/30 hover:bg-blue-600/40 rounded px-3 py-1.5 transition text-xs font-sans tracking-normal ml-2">
+                                Book Ticket
+                            </a>
+                        }
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>

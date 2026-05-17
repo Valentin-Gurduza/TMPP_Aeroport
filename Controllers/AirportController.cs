@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Authorization;
 using System.Dynamic;
 using TMPP_Aeroport.Domain.Interfaces;
 using TMPP_Aeroport.Domain.Composite;
@@ -155,7 +156,8 @@ namespace TMPP_Aeroport.Controllers
             return View();
         }
 
-        // Facade Pattern Usage
+        // Facade Pattern Usage — ATC Tower (ATC_Manager or Admin only)
+        [Authorize(Roles = "Admin,ATC_Manager")]
         [HttpPost]
         public IActionResult FacadeDemoExecute(string flightNumber, string runway)
         {
@@ -170,6 +172,7 @@ namespace TMPP_Aeroport.Controllers
             return View("FacadeDemo");
         }
 
+        [Authorize(Roles = "Admin,ATC_Manager")]
         [HttpGet]
         public IActionResult FacadeDemo()
         {
@@ -255,7 +258,8 @@ namespace TMPP_Aeroport.Controllers
             return View();
         }
 
-        // 4. Proxy Pattern Usage
+        // 4. Proxy Pattern Usage — Security Control (Admin or ATC_Manager)
+        [Authorize(Roles = "Admin,ATC_Manager")]
         [HttpPost]
         public IActionResult ProxyDemoExecute(string role, string actionType)
         {
@@ -277,6 +281,7 @@ namespace TMPP_Aeroport.Controllers
             return View("ProxyDemo");
         }
 
+        [Authorize(Roles = "Admin,ATC_Manager")]
         [HttpGet]
         public IActionResult ProxyDemo()
         {
@@ -433,7 +438,8 @@ namespace TMPP_Aeroport.Controllers
         // LAB 7: Chain of Responsibility, State, Mediator, Template Method, Visitor
         // ==========================================
 
-        // 1. Chain of Responsibility Pattern Usage
+        // 1. Chain of Responsibility Pattern Usage — Baggage (Ground_Staff or Admin)
+        [Authorize(Roles = "Admin,Ground_Staff")]
         public IActionResult ChainDemo(double weight = 20, bool hasSuspicious = false, bool hasExplosive = false)
         {
             var baggage = new TMPP_Aeroport.Domain.ChainOfResponsibility.Baggage 
@@ -458,9 +464,10 @@ namespace TMPP_Aeroport.Controllers
             return View();
         }
 
-        // 2. State Pattern Usage
+        // 2. State Pattern Usage — Ticket machine (any logged in user)
         private static TMPP_Aeroport.Domain.State.TicketMachine _ticketMachine = new TMPP_Aeroport.Domain.State.TicketMachine();
 
+        [Authorize]
         public IActionResult StateDemo(string actionType, int amount = 0)
         {
             if (actionType == "Insert")
@@ -487,7 +494,8 @@ namespace TMPP_Aeroport.Controllers
             return View();
         }
 
-        // 3. Mediator Pattern Usage
+        // 3. Mediator Pattern Usage — ATC Tower (ATC_Manager or Admin)
+        [Authorize(Roles = "Admin,ATC_Manager")]
         public IActionResult MediatorDemo(string actionType)
         {
             var tower = new TMPP_Aeroport.Domain.Mediator.ATCTower();
