@@ -23,6 +23,7 @@ builder.Services.ConfigureApplicationCookie(options =>
 });
 
 builder.Services.AddControllersWithViews();
+builder.Services.AddSignalR(); // Adăugat pentru Faza 4 (Real-time WebSockets)
 
 // DIP (Dependency Inversion Principle): Modulele de nivel înalt (Controllers) nu trebuie să depindă de cele de nivel jos (Services), ci de abstracții.
 builder.Services.AddSingleton<TMPP_Aeroport.Domain.Interfaces.IFlightService, TMPP_Aeroport.Services.FlightService>();
@@ -56,6 +57,7 @@ app.MapControllerRoute(
     .WithStaticAssets();
 
 app.MapRazorPages();
+app.MapHub<TMPP_Aeroport.Hubs.FlightHub>("/flightHub"); // Endpoint-ul pentru WebSockets
 
 // Seed Database
 using (var scope = app.Services.CreateScope())
