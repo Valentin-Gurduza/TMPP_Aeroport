@@ -1,8 +1,10 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
+using Microsoft.AspNetCore.SignalR;
 using Microsoft.EntityFrameworkCore;
 using TMPP_Aeroport.Data;
+using TMPP_Aeroport.Hubs;
 using TMPP_Aeroport.Models;
 
 namespace TMPP_Aeroport.Controllers
@@ -11,10 +13,12 @@ namespace TMPP_Aeroport.Controllers
     public class FlightsController : Controller
     {
         private readonly ApplicationDbContext _context;
+        private readonly IHubContext<FlightHub> _hubContext;
 
-        public FlightsController(ApplicationDbContext context)
+        public FlightsController(ApplicationDbContext context, IHubContext<FlightHub> hubContext)
         {
             _context = context;
+            _hubContext = hubContext;
         }
 
         // GET: Flights
@@ -70,14 +74,13 @@ namespace TMPP_Aeroport.Controllers
             var flight = await _context.Flights.FindAsync(id);
             if (flight == null) return NotFound();
 
-            if (!string.IsNullOrEmpty(status))
+            if (!string.IsNullOrEmpty(status) && flight.Status != status)
             {
                 flight.Status = status;
-                
-                // TODO: Integrate SignalR notification in Phase 4
-                // await _hubContext.Clients.All.SendAsync("ReceiveFlightUpdate", flight.FlightNumber, flight.Status);
-                
                 await _context.SaveChangesAsync();
+                
+                // SignalR: Observer Pattern - Notificăm toți clienții conectați!
+                await _hubContext.Clients.All.SendAsync("ReceiveFlightUpdate", flight.Id, flight.Status);
             }
 
             return RedirectToAction(nameof(Index));

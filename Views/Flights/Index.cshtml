@@ -55,7 +55,7 @@
                     <td class="px-6 py-4 text-white font-bold tracking-wider">@item.FlightNumber</td>
                     <td class="px-6 py-4 text-white uppercase tracking-wider">@item.Destination</td>
                     <td class="px-6 py-4 text-slate-400 text-xs">@item.Aircraft?.RegistrationCode</td>
-                    <td class="px-6 py-4 font-bold tracking-widest uppercase @statusColor">
+                    <td class="px-6 py-4 font-bold tracking-widest uppercase @statusColor" id="status-@item.Id">
                         @item.Status
                     </td>
                     <td class="px-6 py-4 text-right">
@@ -77,3 +77,47 @@
         </tbody>
     </table>
 </div>
+
+@section Scripts {
+    <!-- SignalR Client -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/8.0.0/signalr.min.js"></script>
+    <script>
+        const connection = new signalR.HubConnectionBuilder()
+            .withUrl("/flightHub")
+            .build();
+
+        connection.on("ReceiveFlightUpdate", function (flightId, newStatus) {
+            console.log("Real-time update received for flight ID: " + flightId + " - Status: " + newStatus);
+            
+            // Gasim elementul TD corespunzator acelui zbor
+            const statusCell = document.getElementById("status-" + flightId);
+            if (statusCell) {
+                // Modificam textul
+                statusCell.innerText = newStatus;
+                
+                // Actualizam culorile pe baza noului status
+                statusCell.className = "px-6 py-4 font-bold tracking-widest uppercase transition-colors duration-500 ";
+                
+                if (newStatus === "Scheduled") statusCell.className += "text-blue-400";
+                else if (newStatus === "Boarding") statusCell.className += "text-amber-400 animate-pulse";
+                else if (newStatus === "Airborne") statusCell.className += "text-emerald-400";
+                else if (newStatus === "Landed") statusCell.className += "text-slate-400";
+                else if (newStatus === "Cancelled") statusCell.className += "text-red-500";
+                
+                // Efect vizual de blitz pe intregul rand pentru a atrage atentia
+                const row = statusCell.parentElement;
+                const oldBg = row.className;
+                row.className = "bg-blue-900/40 transition-colors duration-1000";
+                setTimeout(() => {
+                    row.className = oldBg;
+                }, 1000);
+            }
+        });
+
+        connection.start().then(function () {
+            console.log("Connected to FIDS Live Updates via SignalR!");
+        }).catch(function (err) {
+            return console.error(err.toString());
+        });
+    </script>
+}
