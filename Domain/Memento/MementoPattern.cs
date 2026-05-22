@@ -21,9 +21,9 @@ namespace TMPP_Aeroport.Domain.Memento
     // 2. Originator (obiectul a cărui stare o salvăm)
     public class FlightConfigurator
     {
-        public string Gate { get; set; }
+        public string Gate { get; set; } = string.Empty;
         public DateTime DepartureTime { get; set; }
-        public string AircraftModel { get; set; }
+        public string AircraftModel { get; set; } = string.Empty;
         public List<string> ActionLogs { get; } = new List<string>();
 
         public void SetConfiguration(string gate, DateTime departureTime, string aircraftModel)

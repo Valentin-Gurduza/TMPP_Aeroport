@@ -7,16 +7,16 @@ namespace TMPP_Aeroport.Domain.Iterator
     // Modelul pe care îl vom itera
     public class FlightScheduleItem
     {
-        public string FlightNumber { get; set; }
-        public string Terminal { get; set; }
-        public string Status { get; set; }
+        public string FlightNumber { get; set; } = string.Empty;
+        public string Terminal { get; set; } = string.Empty;
+        public string Status { get; set; } = string.Empty;
     }
 
     // 1. Interfața Iterator
     public interface IFlightIterator
     {
         bool HasNext();
-        FlightScheduleItem Next();
+        FlightScheduleItem? Next();
     }
 
     // 2. Interfața Colecției
@@ -68,7 +68,7 @@ namespace TMPP_Aeroport.Domain.Iterator
             return _position < _collection.GetItems().Count - 1;
         }
 
-        public FlightScheduleItem Next()
+        public FlightScheduleItem? Next()
         {
             _position++;
             return _collection.GetItems()[_position];
@@ -102,7 +102,7 @@ namespace TMPP_Aeroport.Domain.Iterator
             return false;
         }
 
-        public FlightScheduleItem Next()
+        public FlightScheduleItem? Next()
         {
             _position++;
             while (_position < _collection.GetItems().Count)

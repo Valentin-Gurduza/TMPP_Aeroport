@@ -1,322 +1,167 @@
+@model dynamic
 @{
-    ViewData["Title"] = "Control Center";
+    ViewData["Title"] = "Dashboard";
 }
 
-<!-- Header HUD -->
-<div class="mb-xl flex justify-between items-end">
-    <div>
-        <h1 class="font-display-xl text-display-xl text-primary-container tracking-tight">Control Center</h1>
-        <div class="flex items-center gap-2 mt-2">
-            <span class="w-2 h-2 rounded-full bg-cyan-400 animate-pulse"></span>
-            <p class="font-body-md text-on-surface-variant opacity-80">Design Patterns: Lab 2-5 Active</p>
+<div class="mb-8">
+    <h1 class="text-3xl font-bold text-slate-800">Airport Overview</h1>
+    <p class="text-slate-500 mt-1">Real-time statistics and operational metrics for SAMS.</p>
+</div>
+
+<!-- Key Metrics Grid -->
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+    <!-- Active Flights -->
+    <div class="bg-white rounded-2xl p-6 shadow-sm border border-slate-200 flex items-center">
+        <div class="w-14 h-14 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center mr-4">
+            <span class="material-symbols-outlined text-3xl">flight_takeoff</span>
+        </div>
+        <div>
+            <p class="text-sm font-semibold text-slate-500 uppercase tracking-wider">Active Flights</p>
+            <h3 class="text-2xl font-bold text-slate-800">@Model.ActiveFlights</h3>
         </div>
     </div>
-    <div class="flex gap-sm">
-        <div class="glass-card px-4 py-2 flex items-center gap-3">
-            <span class="text-xs font-['Space_Grotesk'] text-slate-400 uppercase tracking-tighter">System Status</span>
-            <span class="px-2 py-0.5 rounded-full bg-cyan-500/10 text-cyan-400 text-[10px] font-bold border border-cyan-500/30">ONLINE</span>
+
+    <!-- Total Passengers -->
+    <div class="bg-white rounded-2xl p-6 shadow-sm border border-slate-200 flex items-center">
+        <div class="w-14 h-14 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center mr-4">
+            <span class="material-symbols-outlined text-3xl">groups</span>
         </div>
-        <div class="glass-card px-4 py-2 flex items-center gap-3">
-            <span class="text-xs font-['Space_Grotesk'] text-slate-400 uppercase tracking-tighter">Latency</span>
-            <span class="font-['Space_Grotesk'] text-[10px] text-cyan-400">14MS</span>
+        <div>
+            <p class="text-sm font-semibold text-slate-500 uppercase tracking-wider">Registered Pax</p>
+            <h3 class="text-2xl font-bold text-slate-800">@Model.TotalPassengers</h3>
+        </div>
+    </div>
+
+    <!-- Total Revenue -->
+    <div class="bg-white rounded-2xl p-6 shadow-sm border border-slate-200 flex items-center">
+        <div class="w-14 h-14 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center mr-4">
+            <span class="material-symbols-outlined text-3xl">payments</span>
+        </div>
+        <div>
+            <p class="text-sm font-semibold text-slate-500 uppercase tracking-wider">Revenue</p>
+            <h3 class="text-2xl font-bold text-slate-800">€@Model.TotalRevenue.ToString("N0")</h3>
+        </div>
+    </div>
+
+    <!-- Total Aircrafts -->
+    <div class="bg-white rounded-2xl p-6 shadow-sm border border-slate-200 flex items-center">
+        <div class="w-14 h-14 rounded-xl bg-purple-50 text-purple-600 flex items-center justify-center mr-4">
+            <span class="material-symbols-outlined text-3xl">airlines</span>
+        </div>
+        <div>
+            <p class="text-sm font-semibold text-slate-500 uppercase tracking-wider">Fleet Size</p>
+            <h3 class="text-2xl font-bold text-slate-800">@Model.TotalAircrafts</h3>
         </div>
     </div>
 </div>
 
-<!-- Module Cards Grid -->
-<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-md">
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+    
+    <!-- Recent Activity -->
+    <div class="lg:col-span-2 bg-white rounded-2xl shadow-sm border border-slate-200">
+        <div class="px-6 py-5 border-b border-slate-200 flex justify-between items-center">
+            <h3 class="text-lg font-bold text-slate-800">Recent Flights</h3>
+            <a asp-controller="Flights" asp-action="Index" class="text-sm font-semibold text-blue-600 hover:text-blue-800">View All</a>
+        </div>
+        <div class="p-0 overflow-x-auto">
+            <table class="w-full text-left border-collapse">
+                <thead>
+                    <tr class="bg-slate-50">
+                        <th class="px-6 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wider">Flight</th>
+                        <th class="px-6 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wider">Destination</th>
+                        <th class="px-6 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wider">Time</th>
+                        <th class="px-6 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wider">Status</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-100">
+                    @foreach (var flight in Model.RecentFlights)
+                    {
+                        var statusColor = flight.Status switch
+                        {
+                            "Scheduled" => "text-blue-600 bg-blue-50",
+                            "Boarding" => "text-amber-600 bg-amber-50",
+                            "Airborne" => "text-emerald-600 bg-emerald-50",
+                            "Landed" => "text-slate-600 bg-slate-100",
+                            "Cancelled" => "text-red-600 bg-red-50",
+                            _ => "text-slate-600 bg-slate-50"
+                        };
 
-    <!-- Card 1: Check-In -->
-    <a asp-controller="Airport" asp-action="CheckIn" class="glass-card p-6 flex flex-col justify-between group cursor-pointer min-h-[180px] no-underline">
-        <div class="flex justify-between items-start">
-            <span class="material-symbols-outlined text-cyan-400 text-3xl group-hover:scale-110 transition-transform">how_to_reg</span>
-            <span class="font-['Space_Grotesk'] text-[10px] text-slate-500 border border-slate-700 px-2 py-0.5 rounded">LAB 2</span>
-        </div>
-        <div class="mt-4">
-            <h3 class="font-headline-md text-on-surface group-hover:text-cyan-400 transition-colors">Check-In Terminal</h3>
-            <p class="text-xs font-['Space_Grotesk'] text-slate-400 uppercase tracking-widest mt-1">Abstract Factory</p>
-        </div>
-    </a>
-
-    <!-- Card 2: Itinerary Builder -->
-    <a asp-controller="Airport" asp-action="BuilderDemo" class="glass-card p-6 flex flex-col justify-between group cursor-pointer min-h-[180px] no-underline">
-        <div class="flex justify-between items-start">
-            <span class="material-symbols-outlined text-cyan-400 text-3xl group-hover:scale-110 transition-transform">event_note</span>
-            <span class="font-['Space_Grotesk'] text-[10px] text-slate-500 border border-slate-700 px-2 py-0.5 rounded">LAB 3</span>
-        </div>
-        <div class="mt-4">
-            <h3 class="font-headline-md text-on-surface group-hover:text-cyan-400 transition-colors">Itinerary Planner</h3>
-            <p class="text-xs font-['Space_Grotesk'] text-slate-400 uppercase tracking-widest mt-1">Builder Pattern</p>
-        </div>
-    </a>
-
-    <!-- Card 3: Prototype -->
-    <a asp-controller="Airport" asp-action="PrototypeDemo" class="glass-card p-6 flex flex-col justify-between group cursor-pointer min-h-[180px] no-underline">
-        <div class="flex justify-between items-start">
-            <span class="material-symbols-outlined text-cyan-400 text-3xl group-hover:scale-110 transition-transform">content_copy</span>
-            <span class="font-['Space_Grotesk'] text-[10px] text-slate-500 border border-slate-700 px-2 py-0.5 rounded">LAB 3</span>
-        </div>
-        <div class="mt-4">
-            <h3 class="font-headline-md text-on-surface group-hover:text-cyan-400 transition-colors">Schedule Cloner</h3>
-            <p class="text-xs font-['Space_Grotesk'] text-slate-400 uppercase tracking-widest mt-1">Prototype Pattern</p>
-        </div>
-    </a>
-
-    <!-- Card 4: Weather / Adapter -->
-    <a asp-controller="Airport" asp-action="AdapterDemo" class="glass-card p-6 flex flex-col justify-between group cursor-pointer min-h-[180px] no-underline">
-        <div class="flex justify-between items-start">
-            <span class="material-symbols-outlined text-cyan-400 text-3xl group-hover:scale-110 transition-transform">thermostat</span>
-            <span class="font-['Space_Grotesk'] text-[10px] text-slate-500 border border-slate-700 px-2 py-0.5 rounded">LAB 4</span>
-        </div>
-        <div class="mt-4">
-            <h3 class="font-headline-md text-on-surface group-hover:text-cyan-400 transition-colors">Weather Station</h3>
-            <p class="text-xs font-['Space_Grotesk'] text-slate-400 uppercase tracking-widest mt-1">Adapter Pattern</p>
-        </div>
-    </a>
-
-    <!-- Card 5: Cargo / Composite -->
-    <a asp-controller="Airport" asp-action="CompositeDemo" class="glass-card p-6 flex flex-col justify-between group cursor-pointer min-h-[180px] no-underline">
-        <div class="flex justify-between items-start">
-            <span class="material-symbols-outlined text-cyan-400 text-3xl group-hover:scale-110 transition-transform">inventory_2</span>
-            <span class="font-['Space_Grotesk'] text-[10px] text-slate-500 border border-slate-700 px-2 py-0.5 rounded">LAB 4</span>
-        </div>
-        <div class="mt-4">
-            <h3 class="font-headline-md text-on-surface group-hover:text-cyan-400 transition-colors">Cargo Logistics</h3>
-            <p class="text-xs font-['Space_Grotesk'] text-slate-400 uppercase tracking-widest mt-1">Composite Pattern</p>
-        </div>
-    </a>
-
-    <!-- Card 6: Tower / Facade -->
-    <a asp-controller="Airport" asp-action="FacadeDemo" class="glass-card p-6 flex flex-col justify-between group cursor-pointer min-h-[180px] no-underline">
-        <div class="flex justify-between items-start">
-            <span class="material-symbols-outlined text-cyan-400 text-3xl group-hover:scale-110 transition-transform">settings_input_antenna</span>
-            <span class="font-['Space_Grotesk'] text-[10px] text-slate-500 border border-slate-700 px-2 py-0.5 rounded">LAB 4</span>
-        </div>
-        <div class="mt-4">
-            <h3 class="font-headline-md text-on-surface group-hover:text-cyan-400 transition-colors">Tower Control</h3>
-            <p class="text-xs font-['Space_Grotesk'] text-slate-400 uppercase tracking-widest mt-1">Facade Pattern</p>
-        </div>
-    </a>
-
-    <!-- Card 7: Radar / Flyweight -->
-    <a asp-controller="Airport" asp-action="FlyweightDemo" class="glass-card p-6 flex flex-col justify-between group cursor-pointer min-h-[180px] no-underline">
-        <div class="flex justify-between items-start">
-            <span class="material-symbols-outlined text-cyan-400 text-3xl group-hover:scale-110 transition-transform">radar</span>
-            <span class="font-['Space_Grotesk'] text-[10px] text-slate-500 border border-slate-700 px-2 py-0.5 rounded">LAB 5</span>
-        </div>
-        <div class="mt-4">
-            <h3 class="font-headline-md text-on-surface group-hover:text-cyan-400 transition-colors">Radar Tracking</h3>
-            <p class="text-xs font-['Space_Grotesk'] text-slate-400 uppercase tracking-widest mt-1">Flyweight Pattern</p>
-        </div>
-    </a>
-
-    <!-- Card 8: Alerts / Decorator -->
-    <a asp-controller="Airport" asp-action="DecoratorDemo" class="glass-card p-6 flex flex-col justify-between group cursor-pointer min-h-[180px] no-underline">
-        <div class="flex justify-between items-start">
-            <span class="material-symbols-outlined text-cyan-400 text-3xl group-hover:scale-110 transition-transform">notifications_active</span>
-            <span class="font-['Space_Grotesk'] text-[10px] text-slate-500 border border-slate-700 px-2 py-0.5 rounded">LAB 5</span>
-        </div>
-        <div class="mt-4">
-            <h3 class="font-headline-md text-on-surface group-hover:text-cyan-400 transition-colors">Alert System</h3>
-            <p class="text-xs font-['Space_Grotesk'] text-slate-400 uppercase tracking-widest mt-1">Decorator Pattern</p>
-        </div>
-    </a>
-
-    <!-- Card 9: Flight Boards / Bridge -->
-    <a asp-controller="Airport" asp-action="BridgeDemo" class="glass-card p-6 flex flex-col justify-between group cursor-pointer min-h-[180px] no-underline">
-        <div class="flex justify-between items-start">
-            <span class="material-symbols-outlined text-cyan-400 text-3xl group-hover:scale-110 transition-transform">flight_takeoff</span>
-            <span class="font-['Space_Grotesk'] text-[10px] text-slate-500 border border-slate-700 px-2 py-0.5 rounded">LAB 5</span>
-        </div>
-        <div class="mt-4">
-            <h3 class="font-headline-md text-on-surface group-hover:text-cyan-400 transition-colors">Flight Boards</h3>
-            <p class="text-xs font-['Space_Grotesk'] text-slate-400 uppercase tracking-widest mt-1">Bridge Pattern</p>
-        </div>
-    </a>
-
-    <!-- Card 10: Security / Proxy -->
-    <a asp-controller="Airport" asp-action="ProxyDemo" class="glass-card p-6 flex flex-col justify-between group cursor-pointer min-h-[180px] no-underline">
-        <div class="flex justify-between items-start">
-            <span class="material-symbols-outlined text-cyan-400 text-3xl group-hover:scale-110 transition-transform">security</span>
-            <span class="font-['Space_Grotesk'] text-[10px] text-slate-500 border border-slate-700 px-2 py-0.5 rounded">LAB 5</span>
-        </div>
-        <div class="mt-4">
-            <h3 class="font-headline-md text-on-surface group-hover:text-cyan-400 transition-colors">Security Ops</h3>
-            <p class="text-xs font-['Space_Grotesk'] text-slate-400 uppercase tracking-widest mt-1">Proxy Pattern</p>
-        </div>
-    </a>
-
-    <!-- Card 11: Pricing / Strategy -->
-    <a asp-controller="Airport" asp-action="StrategyDemo" class="glass-card p-6 flex flex-col justify-between group cursor-pointer min-h-[180px] no-underline">
-        <div class="flex justify-between items-start">
-            <span class="material-symbols-outlined text-cyan-400 text-3xl group-hover:scale-110 transition-transform">payments</span>
-            <span class="font-['Space_Grotesk'] text-[10px] text-slate-500 border border-slate-700 px-2 py-0.5 rounded">LAB 6</span>
-        </div>
-        <div class="mt-4">
-            <h3 class="font-headline-md text-on-surface group-hover:text-cyan-400 transition-colors">Dynamic Pricing</h3>
-            <p class="text-xs font-['Space_Grotesk'] text-slate-400 uppercase tracking-widest mt-1">Strategy Pattern</p>
-        </div>
-    </a>
-
-    <!-- Card 12: Observer -->
-    <a asp-controller="Airport" asp-action="ObserverDemo" class="glass-card p-6 flex flex-col justify-between group cursor-pointer min-h-[180px] no-underline">
-        <div class="flex justify-between items-start">
-            <span class="material-symbols-outlined text-cyan-400 text-3xl group-hover:scale-110 transition-transform">cell_tower</span>
-            <span class="font-['Space_Grotesk'] text-[10px] text-slate-500 border border-slate-700 px-2 py-0.5 rounded">LAB 6</span>
-        </div>
-        <div class="mt-4">
-            <h3 class="font-headline-md text-on-surface group-hover:text-cyan-400 transition-colors">Flight Updates</h3>
-            <p class="text-xs font-['Space_Grotesk'] text-slate-400 uppercase tracking-widest mt-1">Observer Pattern</p>
-        </div>
-    </a>
-
-    <!-- Card 13: Command -->
-    <a asp-controller="Airport" asp-action="CommandDemo" class="glass-card p-6 flex flex-col justify-between group cursor-pointer min-h-[180px] no-underline">
-        <div class="flex justify-between items-start">
-            <span class="material-symbols-outlined text-cyan-400 text-3xl group-hover:scale-110 transition-transform">keyboard_command_key</span>
-            <span class="font-['Space_Grotesk'] text-[10px] text-slate-500 border border-slate-700 px-2 py-0.5 rounded">LAB 6</span>
-        </div>
-        <div class="mt-4">
-            <h3 class="font-headline-md text-on-surface group-hover:text-cyan-400 transition-colors">ATC Commands</h3>
-            <p class="text-xs font-['Space_Grotesk'] text-slate-400 uppercase tracking-widest mt-1">Command Pattern</p>
-        </div>
-    </a>
-
-    <!-- Card 14: Memento -->
-    <a asp-controller="Airport" asp-action="MementoDemo" class="glass-card p-6 flex flex-col justify-between group cursor-pointer min-h-[180px] no-underline">
-        <div class="flex justify-between items-start">
-            <span class="material-symbols-outlined text-cyan-400 text-3xl group-hover:scale-110 transition-transform">history</span>
-            <span class="font-['Space_Grotesk'] text-[10px] text-slate-500 border border-slate-700 px-2 py-0.5 rounded">LAB 6</span>
-        </div>
-        <div class="mt-4">
-            <h3 class="font-headline-md text-on-surface group-hover:text-cyan-400 transition-colors">Config Backup</h3>
-            <p class="text-xs font-['Space_Grotesk'] text-slate-400 uppercase tracking-widest mt-1">Memento Pattern</p>
-        </div>
-    </a>
-
-    <!-- Card 15: Iterator -->
-    <a asp-controller="Airport" asp-action="IteratorDemo" class="glass-card p-6 flex flex-col justify-between group cursor-pointer min-h-[180px] no-underline">
-        <div class="flex justify-between items-start">
-            <span class="material-symbols-outlined text-cyan-400 text-3xl group-hover:scale-110 transition-transform">data_object</span>
-            <span class="font-['Space_Grotesk'] text-[10px] text-slate-500 border border-slate-700 px-2 py-0.5 rounded">LAB 6</span>
-        </div>
-        <div class="mt-4">
-            <h3 class="font-headline-md text-on-surface group-hover:text-cyan-400 transition-colors">Flight Iterator</h3>
-            <p class="text-xs font-['Space_Grotesk'] text-slate-400 uppercase tracking-widest mt-1">Iterator Pattern</p>
-        </div>
-    </a>
-
-    <!-- Card 16: Chain of Responsibility -->
-    <a asp-controller="Airport" asp-action="ChainDemo" class="glass-card p-6 flex flex-col justify-between group cursor-pointer min-h-[180px] no-underline">
-        <div class="flex justify-between items-start">
-            <span class="material-symbols-outlined text-cyan-400 text-3xl group-hover:scale-110 transition-transform">link</span>
-            <span class="font-['Space_Grotesk'] text-[10px] text-slate-500 border border-slate-700 px-2 py-0.5 rounded">LAB 7</span>
-        </div>
-        <div class="mt-4">
-            <h3 class="font-headline-md text-on-surface group-hover:text-cyan-400 transition-colors">Baggage Scanner</h3>
-            <p class="text-xs font-['Space_Grotesk'] text-slate-400 uppercase tracking-widest mt-1">Chain Pattern</p>
-        </div>
-    </a>
-
-    <!-- Card 17: State -->
-    <a asp-controller="Airport" asp-action="StateDemo" class="glass-card p-6 flex flex-col justify-between group cursor-pointer min-h-[180px] no-underline">
-        <div class="flex justify-between items-start">
-            <span class="material-symbols-outlined text-cyan-400 text-3xl group-hover:scale-110 transition-transform">swap_horiz</span>
-            <span class="font-['Space_Grotesk'] text-[10px] text-slate-500 border border-slate-700 px-2 py-0.5 rounded">LAB 7</span>
-        </div>
-        <div class="mt-4">
-            <h3 class="font-headline-md text-on-surface group-hover:text-cyan-400 transition-colors">Ticket Vending</h3>
-            <p class="text-xs font-['Space_Grotesk'] text-slate-400 uppercase tracking-widest mt-1">State Pattern</p>
-        </div>
-    </a>
-
-    <!-- Card 18: Mediator -->
-    <a asp-controller="Airport" asp-action="MediatorDemo" class="glass-card p-6 flex flex-col justify-between group cursor-pointer min-h-[180px] no-underline">
-        <div class="flex justify-between items-start">
-            <span class="material-symbols-outlined text-cyan-400 text-3xl group-hover:scale-110 transition-transform">hub</span>
-            <span class="font-['Space_Grotesk'] text-[10px] text-slate-500 border border-slate-700 px-2 py-0.5 rounded">LAB 7</span>
-        </div>
-        <div class="mt-4">
-            <h3 class="font-headline-md text-on-surface group-hover:text-cyan-400 transition-colors">ATC Coordinator</h3>
-            <p class="text-xs font-['Space_Grotesk'] text-slate-400 uppercase tracking-widest mt-1">Mediator Pattern</p>
-        </div>
-    </a>
-
-    <!-- Card 19: Template Method -->
-    <a asp-controller="Airport" asp-action="TemplateMethodDemo" class="glass-card p-6 flex flex-col justify-between group cursor-pointer min-h-[180px] no-underline">
-        <div class="flex justify-between items-start">
-            <span class="material-symbols-outlined text-cyan-400 text-3xl group-hover:scale-110 transition-transform">list_alt</span>
-            <span class="font-['Space_Grotesk'] text-[10px] text-slate-500 border border-slate-700 px-2 py-0.5 rounded">LAB 7</span>
-        </div>
-        <div class="mt-4">
-            <h3 class="font-headline-md text-on-surface group-hover:text-cyan-400 transition-colors">Pre-flight Checks</h3>
-            <p class="text-xs font-['Space_Grotesk'] text-slate-400 uppercase tracking-widest mt-1">Template Method</p>
-        </div>
-    </a>
-
-    <!-- Card 20: Visitor -->
-    <a asp-controller="Airport" asp-action="VisitorDemo" class="glass-card p-6 flex flex-col justify-between group cursor-pointer min-h-[180px] no-underline">
-        <div class="flex justify-between items-start">
-            <span class="material-symbols-outlined text-cyan-400 text-3xl group-hover:scale-110 transition-transform">transfer_within_a_station</span>
-            <span class="font-['Space_Grotesk'] text-[10px] text-slate-500 border border-slate-700 px-2 py-0.5 rounded">LAB 7</span>
-        </div>
-        <div class="mt-4">
-            <h3 class="font-headline-md text-on-surface group-hover:text-cyan-400 transition-colors">Data Export</h3>
-            <p class="text-xs font-['Space_Grotesk'] text-slate-400 uppercase tracking-widest mt-1">Visitor Pattern</p>
-        </div>
-    </a>
-
-</div>
-
-<!-- Live Airspace Section -->
-<div class="mt-xl grid grid-cols-1 lg:grid-cols-3 gap-lg">
-    <div class="lg:col-span-2 glass-card h-[300px] relative overflow-hidden flex items-center justify-center bg-black/40">
-        <div class="absolute inset-0 radar-grid opacity-30"></div>
-        <div class="absolute inset-0 flex items-center justify-center">
-            <div class="absolute w-[450px] h-[450px] radar-sweep opacity-30 animate-[spin_4s_linear_infinite]"></div>
-        </div>
-        <div class="relative z-10 flex flex-col items-center text-center p-xl">
-            <span class="material-symbols-outlined text-cyan-500 text-6xl mb-4 animate-pulse">radar</span>
-            <h2 class="text-headline-lg font-headline-lg text-primary-container">Live Airspace Monitoring</h2>
-            <p class="text-body-md text-on-surface-variant max-w-md mt-4">Real-time telemetry and flight path prediction active. Proxy and Flyweight patterns managing data flow across the terminal cluster.</p>
+                        <tr class="hover:bg-slate-50 transition">
+                            <td class="px-6 py-4">
+                                <div class="flex items-center">
+                                    <div class="w-8 h-8 rounded bg-slate-100 text-slate-500 flex items-center justify-center mr-3">
+                                        <span class="material-symbols-outlined text-[18px]">flight</span>
+                                    </div>
+                                    <span class="font-bold text-slate-800">@flight.FlightNumber</span>
+                                </div>
+                            </td>
+                            <td class="px-6 py-4 text-slate-600 font-medium">@flight.Destination</td>
+                            <td class="px-6 py-4 text-slate-500 text-sm">@flight.DepartureTime.ToString("dd MMM HH:mm")</td>
+                            <td class="px-6 py-4">
+                                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold @statusColor">
+                                    @flight.Status
+                                </span>
+                            </td>
+                        </tr>
+                    }
+                    @if (((IEnumerable<dynamic>)Model.RecentFlights).Count() == 0)
+                    {
+                        <tr>
+                            <td colspan="4" class="px-6 py-8 text-center text-slate-500">
+                                No recent flights found.
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
         </div>
     </div>
-
-    <div class="glass-card p-lg flex flex-col">
-        <h3 class="font-headline-md text-primary-container mb-md border-b border-white/10 pb-sm">Pattern Health Indicators</h3>
-        <div class="space-y-md">
-            <div>
-                <div class="flex justify-between items-center mb-1">
-                    <span class="text-body-sm font-['Space_Grotesk'] uppercase text-slate-400">Singleton Instance</span>
-                    <span class="text-cyan-400 font-bold text-xs tracking-widest">ACTIVE [0x01]</span>
-                </div>
-                <div class="w-full bg-white/5 h-1 rounded-full overflow-hidden">
-                    <div class="bg-cyan-500 h-full w-[98%] shadow-[0_0_10px_rgba(0,212,255,0.8)]"></div>
-                </div>
-            </div>
-            <div>
-                <div class="flex justify-between items-center mb-1">
-                    <span class="text-body-sm font-['Space_Grotesk'] uppercase text-slate-400">Flyweight Cache</span>
-                    <span class="text-cyan-400 font-bold text-xs tracking-widest">2 MODELS / 50K BLIPS</span>
-                </div>
-                <div class="w-full bg-white/5 h-1 rounded-full overflow-hidden">
-                    <div class="bg-cyan-500 h-full w-[100%] shadow-[0_0_10px_rgba(0,212,255,0.8)]"></div>
-                </div>
-            </div>
-            <div>
-                <div class="flex justify-between items-center mb-1">
-                    <span class="text-body-sm font-['Space_Grotesk'] uppercase text-slate-400">Proxy Security</span>
-                    <span class="text-cyan-400 font-bold text-xs tracking-widest">2.4ms NOMINAL</span>
-                </div>
-                <div class="w-full bg-white/5 h-1 rounded-full overflow-hidden">
-                    <div class="bg-cyan-500 h-full w-[85%] shadow-[0_0_10px_rgba(0,212,255,0.8)]"></div>
-                </div>
+    
+    <!-- System Status & Quick Actions -->
+    <div class="space-y-8">
+        <!-- Quick Actions -->
+        <div class="bg-gradient-to-br from-slate-800 to-slate-900 rounded-2xl p-6 shadow-sm text-white">
+            <h3 class="text-lg font-bold mb-4">Quick Actions</h3>
+            <div class="space-y-3">
+                <a asp-controller="Flights" asp-action="Index" class="flex items-center p-3 rounded-xl bg-white/10 hover:bg-white/20 transition border border-white/5">
+                    <span class="material-symbols-outlined mr-3">calendar_month</span>
+                    <span class="font-medium">Manage Schedule</span>
+                </a>
+                <a asp-controller="Fleet" asp-action="Index" class="flex items-center p-3 rounded-xl bg-white/10 hover:bg-white/20 transition border border-white/5">
+                    <span class="material-symbols-outlined mr-3">settings_applications</span>
+                    <span class="font-medium">Fleet Maintenance</span>
+                </a>
+                <a asp-controller="Airport" asp-action="CheckIn" class="flex items-center p-3 rounded-xl bg-white/10 hover:bg-white/20 transition border border-white/5">
+                    <span class="material-symbols-outlined mr-3">how_to_reg</span>
+                    <span class="font-medium">Passenger Check-in</span>
+                </a>
             </div>
         </div>
-        <div class="mt-auto pt-lg">
-            <a asp-controller="Airport" asp-action="SingletonDemo" class="block w-full py-3 bg-primary-container text-on-primary-container font-['Space_Grotesk'] font-bold text-xs tracking-widest uppercase text-center hover:shadow-[0_0_20px_rgba(0,212,255,0.4)] transition-all rounded">
-                View System Logs (Singleton)
-            </a>
+        
+        <!-- Environment Stats -->
+        <div class="bg-white rounded-2xl p-6 shadow-sm border border-slate-200">
+            <h3 class="text-lg font-bold text-slate-800 mb-4">System Capacity</h3>
+            <div class="space-y-4">
+                <div>
+                    <div class="flex justify-between items-center mb-1">
+                        <span class="text-sm font-medium text-slate-600">Total Tickets Sold</span>
+                        <span class="text-sm font-bold text-slate-800">@Model.TotalTickets</span>
+                    </div>
+                    <div class="w-full bg-slate-100 rounded-full h-2">
+                        <div class="bg-blue-500 h-2 rounded-full" style="width: @(Model.TotalTickets > 1000 ? 100 : (Model.TotalTickets * 100 / 1000))%"></div>
+                    </div>
+                </div>
+                
+                <div>
+                    <div class="flex justify-between items-center mb-1">
+                        <span class="text-sm font-medium text-slate-600">Active Fleet Usage</span>
+                        <span class="text-sm font-bold text-slate-800">@(Model.TotalAircrafts > 0 ? (Model.ActiveFlights * 100 / Model.TotalAircrafts) : 0)%</span>
+                    </div>
+                    <div class="w-full bg-slate-100 rounded-full h-2">
+                        <div class="bg-emerald-500 h-2 rounded-full" style="width: @(Model.TotalAircrafts > 0 ? (Model.ActiveFlights * 100 / Model.TotalAircrafts) : 0)%"></div>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
 </div>

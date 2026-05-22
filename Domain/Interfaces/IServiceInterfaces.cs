@@ -12,7 +12,7 @@ namespace TMPP_Aeroport.Domain.Interfaces
         void ScheduleFlight(Flight flight);
         
         // Prototype Pattern Demo
-        Flight CloneFlight(Guid flightId);
+        Flight? CloneFlight(Guid flightId);
     }
 
     public interface IAircraftService

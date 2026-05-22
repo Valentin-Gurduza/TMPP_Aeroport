@@ -16,9 +16,21 @@ namespace TMPP_Aeroport.Controllers
             return View();
         }
 
+        [Route("Home/Error/{statusCode?}")]
         [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]
-        public IActionResult Error()
+        public IActionResult Error(int? statusCode = null)
         {
+            if (statusCode.HasValue)
+            {
+                if (statusCode.Value == 404)
+                {
+                    return View("Error404");
+                }
+                if (statusCode.Value == 403)
+                {
+                    return View("~/Views/Shared/AccessDenied.cshtml");
+                }
+            }
             return View(new ErrorViewModel { RequestId = Activity.Current?.Id ?? HttpContext.TraceIdentifier });
         }
     }

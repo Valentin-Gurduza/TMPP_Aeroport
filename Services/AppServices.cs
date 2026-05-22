@@ -33,7 +33,7 @@ namespace TMPP_Aeroport.Services
         }
 
         // Prototype Pattern: Clonarea unui zbor existent
-        public Flight CloneFlight(Guid flightId)
+        public Flight? CloneFlight(Guid flightId)
         {
             var original = _flights.Find(f => f.Id == flightId);
             if (original == null) return null;

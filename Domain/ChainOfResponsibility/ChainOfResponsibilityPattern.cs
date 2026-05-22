@@ -4,7 +4,7 @@ namespace TMPP_Aeroport.Domain.ChainOfResponsibility
 {
     public class Baggage
     {
-        public string Owner { get; set; }
+        public string Owner { get; set; } = string.Empty;
         public double Weight { get; set; }
         public bool HasSuspiciousItems { get; set; }
         public bool HasExplosiveTraces { get; set; }
@@ -21,7 +21,7 @@ namespace TMPP_Aeroport.Domain.ChainOfResponsibility
     // 2. Base Handler
     public abstract class BaseBaggageHandler : IBaggageHandler
     {
-        private IBaggageHandler _nextHandler;
+        private IBaggageHandler? _nextHandler;
 
         public IBaggageHandler SetNext(IBaggageHandler handler)
         {
