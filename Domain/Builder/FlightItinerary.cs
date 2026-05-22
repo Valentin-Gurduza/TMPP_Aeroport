@@ -6,9 +6,9 @@ namespace TMPP_Aeroport.Domain.Builder
     // Un obiect complex cu mulți parametri (unele opționale).
     public class FlightItinerary
     {
-        public string PassengerName { get; set; }
-        public string TicketType { get; set; }
-        public string SeatAssigned { get; set; }
+        public string PassengerName { get; set; } = string.Empty;
+        public string TicketType { get; set; } = string.Empty;
+        public string SeatAssigned { get; set; } = string.Empty;
         public int CheckedBags { get; set; }
         public List<string> Meals { get; set; } = new List<string>();
         public bool HasLoungeAccess { get; set; }

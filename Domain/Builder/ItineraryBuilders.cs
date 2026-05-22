@@ -6,7 +6,6 @@ namespace TMPP_Aeroport.Domain.Builder
     public class EconomyItineraryBuilder : IItineraryBuilder
     {
         private FlightItinerary _itinerary = new FlightItinerary();
-        private string _passengerName;
 
         public EconomyItineraryBuilder()
         {

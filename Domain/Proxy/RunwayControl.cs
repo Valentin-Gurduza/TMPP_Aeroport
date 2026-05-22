@@ -39,7 +39,7 @@ namespace TMPP_Aeroport.Domain.Proxy
     // dar de fapt blochează apelurile dacă user-ul nu are permisiuni de Manager.
     public class RunwayControlProxy : IRunwayControl
     {
-        private RunwayControlService _realSubject;
+        private RunwayControlService? _realSubject;
         private string _userRole;
 
         public RunwayControlProxy(string currentUserRole)

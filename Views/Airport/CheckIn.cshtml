@@ -1,114 +1,121 @@
 @{
     ViewData["Title"] = "Check-In Terminal";
 }
-<header class="mb-xl">
-    <h1 class="font-headline-lg text-display-xl text-on-surface">Check-In Terminal</h1>
-    <p class="font-body-md text-on-surface-variant mt-1">Abstract Factory Pattern — Creating passenger, luggage, and boarding pass objects via a unified <span class="text-cyan-400 font-data-mono">ICheckInFactory</span></p>
-</header>
+<div class="mb-8">
+    <h1 class="text-3xl font-bold text-slate-800">Check-In Terminal</h1>
+    <p class="text-slate-500 mt-1">Abstract Factory Pattern — Creating passenger, luggage, and boarding pass objects via a unified <span class="font-mono bg-slate-100 text-blue-600 px-2 py-0.5 rounded text-sm">ICheckInFactory</span></p>
+</div>
 
-<div class="grid grid-cols-1 lg:grid-cols-2 gap-xl">
+<div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
     <!-- LEFT: Passenger Form -->
-    <section class="glass-card p-lg space-y-lg">
-        <div class="flex items-center gap-md border-b border-white/10 pb-lg">
-            <span class="material-symbols-outlined text-cyan-400 text-3xl">how_to_reg</span>
+    <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
+        <div class="bg-slate-50 px-6 py-5 border-b border-slate-200 flex items-center gap-4">
+            <div class="w-12 h-12 bg-blue-100 text-blue-600 rounded-xl flex items-center justify-center">
+                <span class="material-symbols-outlined text-2xl">how_to_reg</span>
+            </div>
             <div>
-                <h3 class="font-headline-md text-on-surface">Passenger Registration</h3>
-                <p class="font-body-sm text-slate-500">AbstractFactory creating passenger data objects</p>
+                <h3 class="text-lg font-bold text-slate-800">Passenger Registration</h3>
+                <p class="text-sm text-slate-500">AbstractFactory creating passenger data objects</p>
             </div>
         </div>
-        <div class="grid grid-cols-2 gap-md">
-            <div class="space-y-xs">
-                <label class="font-label-caps text-[10px] text-cyan-400/70 tracking-widest block">PASSENGER NAME</label>
-                <input class="w-full bg-[#05070A] border-b border-outline-variant py-3 text-white font-data-mono focus:outline-none focus:border-cyan-400" type="text" value="@(ViewBag.PassengerName ?? "Maria Popescu")" />
-            </div>
-            <div class="space-y-xs">
-                <label class="font-label-caps text-[10px] text-cyan-400/70 tracking-widest block">FLIGHT NUMBER</label>
-                <input class="w-full bg-[#05070A] border-b border-outline-variant py-3 text-white font-data-mono focus:outline-none focus:border-cyan-400" type="text" value="@(ViewBag.FlightNumber ?? "RO-302")" />
-            </div>
-            <div class="space-y-xs">
-                <label class="font-label-caps text-[10px] text-cyan-400/70 tracking-widest block">SEAT CLASS</label>
-                <select class="w-full bg-[#05070A] border-b border-outline-variant py-3 text-white font-data-mono focus:outline-none focus:border-cyan-400 appearance-none">
-                    <option>Economy</option>
-                    <option>Business</option>
-                    <option>First Class</option>
-                </select>
-            </div>
-            <div class="space-y-xs">
-                <label class="font-label-caps text-[10px] text-cyan-400/70 tracking-widest block">BAGGAGE (KG)</label>
-                <input class="w-full bg-[#05070A] border-b border-outline-variant py-3 text-white font-data-mono focus:outline-none focus:border-cyan-400" type="number" value="23" />
-            </div>
+        <div class="p-6">
+            <form action="/Airport/CheckIn" method="get" class="space-y-6">
+                <div class="grid grid-cols-2 gap-6">
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">Passenger Name</label>
+                        <input name="passengerName" type="text" class="w-full px-4 py-2.5 rounded-lg border border-slate-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition outline-none" value="@(ViewBag.PassengerName ?? "Maria Popescu")" />
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">Flight Number</label>
+                        <input name="flightNumber" type="text" class="w-full px-4 py-2.5 rounded-lg border border-slate-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition outline-none" value="@(ViewBag.FlightNumber ?? "RO-302")" />
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">Seat Class</label>
+                        <select name="ticketType" class="w-full px-4 py-2.5 rounded-lg border border-slate-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition outline-none bg-white">
+                            <option value="Economy" selected="@(ViewBag.TicketType == "Economy")">Economy</option>
+                            <option value="Business" selected="@(ViewBag.TicketType == "Business")">Business</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">Baggage (KG)</label>
+                        <input name="baggageKg" type="number" class="w-full px-4 py-2.5 rounded-lg border border-slate-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition outline-none" value="23" />
+                    </div>
+                </div>
+                <button type="submit" class="w-full py-3.5 bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white rounded-xl font-bold tracking-wide transition shadow-lg shadow-blue-600/30 flex justify-center items-center gap-2">
+                    <span class="material-symbols-outlined">assignment_turned_in</span>
+                    GENERATE BOARDING PASS
+                </button>
+            </form>
         </div>
-        <a asp-controller="Airport" asp-action="CheckIn" class="w-full py-4 bg-primary-container text-on-primary-fixed font-headline-md tracking-widest flex items-center justify-center gap-2 hover:brightness-110 transition-all">
-            <span class="material-symbols-outlined">assignment_turned_in</span>
-            COMPLETE CHECK-IN
-        </a>
-    </section>
+    </div>
 
     <!-- RIGHT: Result + Pattern Explanation -->
-    <section class="space-y-md">
+    <div class="space-y-8">
         <!-- Boarding Pass Card -->
         @if (ViewBag.BoardingPass != null)
         {
-            <div class="glass-card p-lg border border-cyan-400/40 shadow-[0_0_20px_rgba(0,212,255,0.1)]">
-                <div class="flex items-center justify-between mb-lg border-b border-white/10 pb-lg">
+            <div class="bg-gradient-to-r from-blue-600 to-indigo-700 rounded-2xl p-6 shadow-lg shadow-blue-900/20 text-white relative overflow-hidden">
+                <span class="material-symbols-outlined absolute -right-6 -bottom-6 text-[120px] opacity-10">airplane_ticket</span>
+                <div class="flex items-start justify-between mb-8 relative z-10">
                     <div>
-                        <p class="font-label-caps text-[10px] text-cyan-400">BOARDING PASS GENERATED</p>
-                        <p class="font-headline-md text-white mt-1">@ViewBag.BoardingPass.PassengerName</p>
+                        <p class="text-blue-200 text-xs font-semibold uppercase tracking-wider mb-1">Boarding Pass Issued</p>
+                        <p class="text-2xl font-bold">@ViewBag.BoardingPass.PassengerName</p>
                     </div>
-                    <span class="material-symbols-outlined text-cyan-400 text-4xl" style="font-variation-settings: 'FILL' 1;">airplane_ticket</span>
+                    <div class="bg-white/20 px-3 py-1 rounded-full text-sm font-bold border border-white/30 backdrop-blur-sm">
+                        @ViewBag.TicketType Class
+                    </div>
                 </div>
-                <div class="grid grid-cols-3 gap-md text-center">
+                <div class="grid grid-cols-3 gap-4 text-center relative z-10 bg-black/10 rounded-xl p-4 border border-white/10">
                     <div>
-                        <p class="text-[10px] text-slate-500 font-label-caps">FLIGHT</p>
-                        <p class="font-data-mono text-white">@ViewBag.BoardingPass.FlightNumber</p>
+                        <p class="text-xs text-blue-200 font-semibold uppercase tracking-wider mb-1">Flight</p>
+                        <p class="font-bold text-lg">@ViewBag.BoardingPass.FlightNumber</p>
                     </div>
                     <div>
-                        <p class="text-[10px] text-slate-500 font-label-caps">SEAT</p>
-                        <p class="font-data-mono text-white">@ViewBag.BoardingPass.SeatNumber</p>
+                        <p class="text-xs text-blue-200 font-semibold uppercase tracking-wider mb-1">Seat</p>
+                        <p class="font-bold text-lg">@ViewBag.BoardingPass.SeatNumber</p>
                     </div>
                     <div>
-                        <p class="text-[10px] text-slate-500 font-label-caps">GATE</p>
-                        <p class="font-data-mono text-cyan-400">E@ViewBag.BoardingPass.Gate</p>
+                        <p class="text-xs text-blue-200 font-semibold uppercase tracking-wider mb-1">Gate</p>
+                        <p class="font-bold text-lg text-yellow-400">E@ViewBag.BoardingPass.Gate</p>
                     </div>
                 </div>
             </div>
         }
 
         <!-- Factory Diagram -->
-        <div class="glass-card p-lg">
-            <h4 class="font-headline-md text-on-surface mb-lg">Abstract Factory Flow</h4>
-            <div class="flex flex-col gap-3 font-data-mono text-sm">
-                <div class="bg-primary/5 border border-primary/20 p-3 rounded flex justify-between items-center">
-                    <span class="text-cyan-400">ICheckInFactory</span>
-                    <span class="text-slate-500 text-xs">«interface»</span>
+        <div class="bg-white rounded-2xl p-6 shadow-sm border border-slate-200">
+            <h4 class="text-lg font-bold text-slate-800 mb-6 flex items-center gap-2">
+                <span class="material-symbols-outlined text-blue-600">account_tree</span>
+                Abstract Factory Flow
+            </h4>
+            <div class="flex flex-col gap-3 font-mono text-sm">
+                <div class="bg-slate-50 border border-slate-200 p-3 rounded-lg flex justify-between items-center text-slate-700">
+                    <span class="font-bold text-blue-700">IFlightDocumentFactory</span>
+                    <span class="text-slate-400 text-xs">«interface»</span>
                 </div>
-                <div class="flex justify-center"><span class="material-symbols-outlined text-slate-500">arrow_downward</span></div>
-                <div class="grid grid-cols-2 gap-3">
-                    <div class="bg-white/5 border border-white/10 p-3 rounded text-center">
-                        <p class="text-white text-xs">EconomyCheckInFactory</p>
+                <div class="flex justify-center"><span class="material-symbols-outlined text-slate-300">arrow_downward</span></div>
+                <div class="grid grid-cols-2 gap-4">
+                    <div class="bg-white border border-slate-200 p-3 rounded-lg text-center shadow-sm">
+                        <p class="font-bold text-slate-800 text-xs mb-1">EconomyFactory</p>
                         <p class="text-slate-500 text-[10px]">Economy products</p>
                     </div>
-                    <div class="bg-white/5 border border-white/10 p-3 rounded text-center">
-                        <p class="text-white text-xs">BusinessCheckInFactory</p>
+                    <div class="bg-white border border-slate-200 p-3 rounded-lg text-center shadow-sm">
+                        <p class="font-bold text-slate-800 text-xs mb-1">BusinessFactory</p>
                         <p class="text-slate-500 text-[10px]">Business products</p>
                     </div>
                 </div>
-                <div class="flex justify-center"><span class="material-symbols-outlined text-slate-500">arrow_downward</span></div>
-                <div class="grid grid-cols-3 gap-2">
-                    <div class="bg-cyan-400/10 border border-cyan-400/20 p-2 rounded text-center text-[10px]">
-                        <span class="material-symbols-outlined text-cyan-400 text-base block">person</span>
-                        IPassenger
+                <div class="flex justify-center"><span class="material-symbols-outlined text-slate-300">arrow_downward</span></div>
+                <div class="grid grid-cols-2 gap-4">
+                    <div class="bg-blue-50 border border-blue-100 p-3 rounded-lg text-center text-xs text-blue-700 font-semibold">
+                        <span class="material-symbols-outlined text-blue-500 text-xl block mb-1">airplane_ticket</span>
+                        BoardingPass
                     </div>
-                    <div class="bg-cyan-400/10 border border-cyan-400/20 p-2 rounded text-center text-[10px]">
-                        <span class="material-symbols-outlined text-cyan-400 text-base block">luggage</span>
-                        ILuggage
-                    </div>
-                    <div class="bg-cyan-400/10 border border-cyan-400/20 p-2 rounded text-center text-[10px]">
-                        <span class="material-symbols-outlined text-cyan-400 text-base block">airplane_ticket</span>
-                        IBoardingPass
+                    <div class="bg-blue-50 border border-blue-100 p-3 rounded-lg text-center text-xs text-blue-700 font-semibold">
+                        <span class="material-symbols-outlined text-blue-500 text-xl block mb-1">luggage</span>
+                        BaggageTag
                     </div>
                 </div>
             </div>
         </div>
-    </section>
+    </div>
 </div>

@@ -1,12 +1,14 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Authorization;
 using System.Dynamic;
+using Microsoft.EntityFrameworkCore;
 using TMPP_Aeroport.Domain.Interfaces;
 using TMPP_Aeroport.Domain.Composite;
 using TMPP_Aeroport.Domain.Flyweight;
 using TMPP_Aeroport.Domain.Decorator;
 using TMPP_Aeroport.Domain.Bridge;
 using TMPP_Aeroport.Domain.Proxy;
+using TMPP_Aeroport.Data;
 
 namespace TMPP_Aeroport.Controllers
 {
@@ -15,21 +17,45 @@ namespace TMPP_Aeroport.Controllers
         private readonly IFlightService _flightService;
         private readonly IAircraftService _aircraftService;
         private readonly TMPP_Aeroport.Domain.Adapter.IAirportWeatherService _weatherService;
+        private readonly ApplicationDbContext _dbContext;
 
         // DIP: Controller-ul depinde de abstracții (Interfețe), nu de clase concrete.
-        public AirportController(IFlightService flightService, IAircraftService aircraftService, TMPP_Aeroport.Domain.Adapter.IAirportWeatherService weatherService)
+        public AirportController(IFlightService flightService, IAircraftService aircraftService, TMPP_Aeroport.Domain.Adapter.IAirportWeatherService weatherService, ApplicationDbContext dbContext)
         {
             _flightService = flightService;
             _aircraftService = aircraftService;
             _weatherService = weatherService;
+            _dbContext = dbContext;
         }
 
-        public IActionResult Index()
+        public async Task<IActionResult> Index()
         {
-            // Using ExpandoObject to pass multiple models to the view for simplicity in Lab 1
             dynamic model = new ExpandoObject();
-            model.Flights = _flightService.GetAllFlights();
-            model.Aircrafts = _aircraftService.GetAllAircraft();
+            
+            // Extragem statistici reale din Baza de Date
+            model.TotalFlights = await _dbContext.Flights.CountAsync();
+            model.ActiveFlights = await _dbContext.Flights.CountAsync(f => f.Status == "Airborne" || f.Status == "Boarding");
+            model.TotalAircrafts = await _dbContext.Aircrafts.CountAsync();
+            
+            var passengersRole = await _dbContext.Roles.FirstOrDefaultAsync(r => r.Name == "Passenger");
+            if (passengersRole != null)
+            {
+                model.TotalPassengers = await _dbContext.UserRoles.CountAsync(ur => ur.RoleId == passengersRole.Id);
+            }
+            else
+            {
+                model.TotalPassengers = 0;
+            }
+
+            model.TotalTickets = await _dbContext.Tickets.CountAsync();
+            model.TotalRevenue = await _dbContext.Tickets.Where(t => t.TicketState == "Issued").SumAsync(t => (double?)t.Price) ?? 0.0;
+            
+            // Ultimele zboruri pentru activitate recentă
+            model.RecentFlights = await _dbContext.Flights
+                .Include(f => f.Aircraft)
+                .OrderByDescending(f => f.DepartureTime)
+                .Take(5)
+                .ToListAsync();
 
             return View(model);
         }
@@ -426,7 +452,11 @@ namespace TMPP_Aeroport.Controllers
             var resultFlights = new List<TMPP_Aeroport.Domain.Iterator.FlightScheduleItem>();
             while (iterator.HasNext())
             {
-                resultFlights.Add(iterator.Next());
+                var nextItem = iterator.Next();
+                if (nextItem != null)
+                {
+                    resultFlights.Add(nextItem);
+                }
             }
 
             ViewBag.Flights = resultFlights;

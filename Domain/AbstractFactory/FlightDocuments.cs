@@ -6,8 +6,8 @@ namespace TMPP_Aeroport.Domain.AbstractFactory
     // Definește comportamentul comun pentru tichetele de îmbarcare.
     public abstract class BoardingPass
     {
-        public string PassengerName { get; set; }
-        public string FlightNumber { get; set; }
+        public string PassengerName { get; set; } = string.Empty;
+        public string FlightNumber { get; set; } = string.Empty;
         
         // Metodă abstractă pentru afișarea detaliilor specifice clasei (Economy/Business)
         public abstract string GetTicketDetails();
@@ -35,7 +35,7 @@ namespace TMPP_Aeroport.Domain.AbstractFactory
     // Definește comportamentul comun pentru etichetele de bagaj.
     public abstract class BaggageTag
     {
-        public string Code { get; set; }
+        public string Code { get; set; } = string.Empty;
         public abstract string GetTagColor();
     }
 

@@ -1,25 +1,43 @@
-﻿@model ErrorViewModel
+@model ErrorViewModel
 @{
-    ViewData["Title"] = "Error";
+    ViewData["Title"] = "System Error";
+    Layout = "_LayoutCorporate";
 }
 
-<h1 class="text-danger">Error.</h1>
-<h2 class="text-danger">An error occurred while processing your request.</h2>
+<div class="flex flex-col items-center justify-center min-h-[60vh] text-center">
+    <div class="w-24 h-24 rounded-full bg-red-50 flex items-center justify-center mb-6 border border-red-100">
+        <span class="material-symbols-outlined text-red-500 text-5xl">warning</span>
+    </div>
 
-@if (Model.ShowRequestId)
-{
-    <p>
-        <strong>Request ID:</strong> <code>@Model.RequestId</code>
-    </p>
-}
+    <h1 class="text-3xl font-extrabold text-slate-900 mb-2 tracking-tight">System Error</h1>
+    <h2 class="text-xl font-medium text-slate-600 mb-6">An unexpected error occurred while processing your request.</h2>
+    
+    @if (Model?.ShowRequestId == true)
+    {
+        <div class="bg-slate-50 border border-slate-200 rounded-lg p-4 mb-8 inline-block text-left">
+            <p class="text-sm text-slate-500 font-mono">
+                <strong class="text-slate-700">Request ID:</strong> @Model.RequestId
+            </p>
+        </div>
+    }
 
-<h3>Development Mode</h3>
-<p>
-    Swapping to <strong>Development</strong> environment will display more detailed information about the error that occurred.
-</p>
-<p>
-    <strong>The Development environment shouldn't be enabled for deployed applications.</strong>
-    It can result in displaying sensitive information from exceptions to end users.
-    For local debugging, enable the <strong>Development</strong> environment by setting the <strong>ASPNETCORE_ENVIRONMENT</strong> environment variable to <strong>Development</strong>
-    and restarting the app.
-</p>
+    <div class="flex gap-4 mb-10">
+        <a asp-controller="Airport" asp-action="Index"
+           class="px-6 py-2.5 bg-primary-600 text-white rounded-lg text-sm font-semibold shadow-sm hover:bg-primary-700 hover:shadow transition-all flex items-center">
+            <span class="material-symbols-outlined text-[18px] mr-2">home</span>
+            Return to Dashboard
+        </a>
+    </div>
+
+    @if (Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") == "Development")
+    {
+        <div class="mt-4 p-4 bg-amber-50 border border-amber-200 rounded-xl max-w-2xl text-left">
+            <p class="text-sm font-semibold text-amber-800 mb-2">Development Mode</p>
+            <p class="text-xs text-amber-700 leading-relaxed">
+                Swapping to <strong>Development</strong> environment will display more detailed information about the error that occurred.<br/>
+                <strong>The Development environment shouldn't be enabled for deployed applications.</strong>
+                It can result in displaying sensitive information from exceptions to end users.
+            </p>
+        </div>
+    }
+</div>

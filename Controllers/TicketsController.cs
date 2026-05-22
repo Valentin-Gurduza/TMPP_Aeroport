@@ -25,9 +25,9 @@ namespace TMPP_Aeroport.Controllers
             var userId = _userManager.GetUserId(User);
             var tickets = await _context.Tickets
                 .Include(t => t.Flight)
-                .ThenInclude(f => f.Aircraft)
+                .ThenInclude(f => f!.Aircraft)
                 .Where(t => t.UserId == userId)
-                .OrderByDescending(t => t.Flight.DepartureTime)
+                .OrderByDescending(t => t.Flight!.DepartureTime)
                 .ToListAsync();
 
             return View(tickets);
