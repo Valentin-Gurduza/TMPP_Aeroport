@@ -29,6 +29,9 @@ builder.Services.AddSignalR(); // Adăugat pentru Faza 4 (Real-time WebSockets)
 builder.Services.AddSingleton<TMPP_Aeroport.Domain.Interfaces.IFlightService, TMPP_Aeroport.Services.FlightService>();
 builder.Services.AddSingleton<TMPP_Aeroport.Domain.Interfaces.IAircraftService, TMPP_Aeroport.Services.AircraftService>();
 
+// Global Background Simulation
+builder.Services.AddHostedService<TMPP_Aeroport.Services.FlightSimulationService>();
+
 // Register Adapter Pattern Services
 builder.Services.AddSingleton<TMPP_Aeroport.Domain.Adapter.LegacyWeatherSystem>();
 builder.Services.AddSingleton<TMPP_Aeroport.Domain.Adapter.IAirportWeatherService, TMPP_Aeroport.Domain.Adapter.WeatherAdapter>();
@@ -54,7 +57,7 @@ app.MapStaticAssets();
 
 app.MapControllerRoute(
     name: "default",
-    pattern: "{controller=Home}/{action=Index}/{id?}")
+    pattern: "{controller=Airport}/{action=Index}/{id?}")
     .WithStaticAssets();
 
 app.MapRazorPages();

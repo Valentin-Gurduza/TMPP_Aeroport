@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using TMPP_Aeroport.Models;
 
 namespace TMPP_Aeroport.Domain.Bridge
 {
@@ -11,7 +12,7 @@ namespace TMPP_Aeroport.Domain.Bridge
     public interface IDisplayRenderer
     {
         string RenderHeader(string title);
-        string RenderRow(string flightInfo);
+        string RenderRow(Flight flight);
         string RenderFooter();
     }
 
@@ -19,16 +20,34 @@ namespace TMPP_Aeroport.Domain.Bridge
     public class LEDRenderer : IDisplayRenderer
     {
         public string RenderHeader(string title) => $"[LED MATRIX] ---- {title.ToUpper()} ----";
-        public string RenderRow(string info) => $"[LED RED] > {info}";
+        public string RenderRow(Flight flight) => $"[LED RED] > {flight.FlightNumber} | {flight.Destination} | {flight.DepartureTime:HH:mm} | {flight.Status.ToUpper()}";
         public string RenderFooter() => $"[LED MATRIX] ------------------------\n";
     }
 
     // Concrete Implementation 2: Monitor Smart TV LCD
     public class WebRenderer : IDisplayRenderer
     {
-        public string RenderHeader(string title) => $"<h3>🌐 {title}</h3>\n<ul>";
-        public string RenderRow(string info) => $"   <li>{info}</li>";
-        public string RenderFooter() => $"</ul>\n";
+        public string RenderHeader(string title) => $"<div class='bg-slate-800 text-white rounded-xl overflow-hidden shadow-lg border border-slate-700'><div class='bg-slate-900 px-4 py-3 border-b border-slate-700 font-bold uppercase tracking-wider text-sm flex items-center gap-2'><span class='material-symbols-outlined text-blue-400'>monitor</span> {title}</div><div class='divide-y divide-slate-700'>";
+        
+        public string RenderRow(Flight flight) 
+        {
+            string statusColor = flight.Status == "Airborne" ? "text-emerald-400" : 
+                                 flight.Status == "Boarding" ? "text-amber-400" : "text-slate-300";
+            
+            return $@"
+                <div class='px-4 py-3 flex justify-between items-center hover:bg-slate-750 transition'>
+                    <div class='flex flex-col'>
+                        <span class='font-bold text-slate-100'>{flight.FlightNumber}</span>
+                        <span class='text-xs text-slate-400'>{flight.Destination}</span>
+                    </div>
+                    <div class='flex flex-col items-end'>
+                        <span class='font-mono text-sm text-blue-300'>{flight.DepartureTime:HH:mm}</span>
+                        <span class='text-xs font-bold uppercase {statusColor}'>{flight.Status}</span>
+                    </div>
+                </div>";
+        }
+        
+        public string RenderFooter() => $"</div></div>\n";
     }
 
     // =========================================================
@@ -46,7 +65,7 @@ namespace TMPP_Aeroport.Domain.Bridge
             this.renderer = renderer;
         }
 
-        public abstract string ShowBoard(List<string> flights);
+        public abstract string ShowBoard(IEnumerable<Flight> flights);
     }
 
     // Refined Abstraction 1: Tabel pentru Plecări
@@ -54,13 +73,12 @@ namespace TMPP_Aeroport.Domain.Bridge
     {
         public DeparturesBoard(IDisplayRenderer renderer) : base(renderer) { }
 
-        public override string ShowBoard(List<string> flights)
+        public override string ShowBoard(IEnumerable<Flight> flights)
         {
-            var output = renderer.RenderHeader("Plecări Imediat (Departures)");
+            var output = renderer.RenderHeader("Plecări Curente (Departures)");
             foreach (var f in flights)
             {
-                // Aici aplicăm o scurtă logică de business specifică 'Plecărilor'
-                output += "\n" + renderer.RenderRow($"{f} - TAKEOFF READY");
+                output += "\n" + renderer.RenderRow(f);
             }
             output += "\n" + renderer.RenderFooter();
             return output;
@@ -72,12 +90,12 @@ namespace TMPP_Aeroport.Domain.Bridge
     {
         public ArrivalsBoard(IDisplayRenderer renderer) : base(renderer) { }
 
-        public override string ShowBoard(List<string> flights)
+        public override string ShowBoard(IEnumerable<Flight> flights)
         {
-            var output = renderer.RenderHeader("Sosiri Curente (Arrivals)");
+            var output = renderer.RenderHeader("Afișaj Secundar (Hardware Test)");
             foreach (var f in flights)
             {
-                output += "\n" + renderer.RenderRow($"{f} - LANDED / BAGGAGE GATE 4");
+                output += "\n" + renderer.RenderRow(f);
             }
             output += "\n" + renderer.RenderFooter();
             return output;

@@ -30,9 +30,14 @@
                     <div>
                         <label class="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">Flight Number</label>
                         <select name="flightNumber" class="w-full px-4 py-3 rounded-lg border border-slate-300 focus:border-amber-500 focus:ring-2 focus:ring-amber-200 transition outline-none bg-white font-mono text-slate-700">
-                            <option value="TAROM-301">TAROM-301 (Bucharest - London)</option>
-                            <option value="WIZZ-882">WIZZ-882 (Bucharest - Rome)</option>
-                            <option value="LH-1652">LH-1652 (Bucharest - Munich)</option>
+                            @if (ViewBag.Flights != null)
+                            {
+                                foreach (var flight in ViewBag.Flights)
+                                {
+                                    var isSelected = ViewBag.FlightNumber == flight.FlightNumber ? "selected" : null;
+                                    <option value="@flight.FlightNumber" selected="@isSelected">@flight.FlightNumber (@flight.Destination)</option>
+                                }
+                            }
                         </select>
                     </div>
                     <div>

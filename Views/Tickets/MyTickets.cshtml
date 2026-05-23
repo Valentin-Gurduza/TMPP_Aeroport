@@ -26,7 +26,7 @@ else
     <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
         @foreach (var ticket in Model)
         {
-            <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden flex flex-col transition hover:shadow-md">
+            <div id="ticket-@ticket.Id" class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden flex flex-col transition hover:shadow-md">
                 <div class="bg-gradient-to-r from-blue-600 to-blue-800 p-5 text-white flex justify-between items-center relative overflow-hidden">
                     <!-- Decor pattern -->
                     <span class="material-symbols-outlined absolute -right-4 -bottom-4 text-[100px] opacity-10">flight</span>
@@ -93,7 +93,7 @@ else
                         }
                         else if (ticket.TicketState == "Issued")
                         {
-                            <button class="text-slate-400 hover:text-slate-600" title="Download PDF">
+                            <button onclick="downloadTicketAsPdf('ticket-@ticket.Id', '@ticket.Flight?.FlightNumber')" class="text-slate-400 hover:text-blue-600 transition-colors" title="Download PDF">
                                 <span class="material-symbols-outlined">download</span>
                             </button>
                         }
@@ -102,4 +102,27 @@ else
             </div>
         }
     </div>
+}
+
+@section Scripts {
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    <script>
+        function downloadTicketAsPdf(elementId, flightNumber) {
+            const element = document.getElementById(elementId);
+            const opt = {
+                margin:       10,
+                filename:     `Ticket_${flightNumber}.pdf`,
+                image:        { type: 'jpeg', quality: 0.98 },
+                html2canvas:  { scale: 2 },
+                jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
+            };
+            
+            const downloadBtn = element.querySelector('button[title="Download PDF"]');
+            if(downloadBtn) downloadBtn.style.display = 'none';
+
+            html2pdf().set(opt).from(element).save().then(() => {
+                if(downloadBtn) downloadBtn.style.display = 'block';
+            });
+        }
+    </script>
 }

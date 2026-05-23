@@ -31,18 +31,15 @@
                 }
                 @foreach (var s in statuses)
                 {
-                    <label class="relative flex cursor-pointer rounded-lg border bg-white p-4 shadow-sm focus:outline-none transition @(Model.Status == s ? "border-blue-500 ring-1 ring-blue-500 bg-blue-50" : "border-slate-300 hover:bg-slate-50")">
-                        <input type="radio" name="status" value="@s" class="sr-only" @(Model.Status == s ? "checked" : "")>
-                        <span class="flex flex-1">
+                    <div class="relative">
+                        <input type="radio" name="status" value="@s" id="status_@s" class="peer sr-only" @(Model.Status == s ? "checked" : "")>
+                        <label for="status_@s" class="flex cursor-pointer rounded-lg border bg-white p-4 shadow-sm focus:outline-none transition-all peer-checked:border-blue-500 peer-checked:ring-1 peer-checked:ring-blue-500 peer-checked:bg-blue-50 border-slate-300 hover:bg-slate-50 items-center justify-between">
                             <span class="flex flex-col">
                                 <span class="block text-sm font-medium text-slate-900 uppercase tracking-widest">@s</span>
                             </span>
-                        </span>
-                        @if (Model.Status == s)
-                        {
-                            <span class="material-symbols-outlined text-blue-600">check_circle</span>
-                        }
-                    </label>
+                            <span class="material-symbols-outlined text-slate-200 peer-checked:text-blue-600 transition-colors">check_circle</span>
+                        </label>
+                    </div>
                 }
             </div>
 

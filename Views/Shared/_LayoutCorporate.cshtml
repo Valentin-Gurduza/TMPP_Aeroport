@@ -50,6 +50,10 @@
         .text-cyan-400, .text-cyan-500 { color: #2563eb !important; }
         .glow-cyan { text-shadow: none !important; }
     </style>
+    
+    <!-- Toastr Notifications -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.css" rel="stylesheet" />
+
     @await RenderSectionAsync("Styles", required: false)
 </head>
 <body class="text-slate-800 antialiased h-screen flex overflow-hidden">
@@ -106,6 +110,9 @@
                 <a asp-controller="Fleet" asp-action="Index" class="sidebar-link flex items-center px-3 py-2 text-sm font-medium rounded-md text-slate-700 @(ViewContext.RouteData.Values["controller"]?.ToString() == "Fleet" ? "active" : "")">
                     <span class="material-symbols-outlined mr-3 text-[20px]">flight</span> Fleet
                 </a>
+                <a asp-controller="Airport" asp-action="Radar" class="sidebar-link flex items-center px-3 py-2 text-sm font-medium rounded-md text-slate-700 @(ViewContext.RouteData.Values["action"]?.ToString() == "Radar" ? "active" : "")">
+                    <span class="material-symbols-outlined mr-3 text-[20px]">radar</span> Live Radar <span class="ml-auto w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+                </a>
                 @if (User.IsInRole("Admin"))
                 {
                     <a asp-controller="Admin" asp-action="Index" class="sidebar-link flex items-center px-3 py-2 text-sm font-medium rounded-md text-slate-700 @(ViewContext.RouteData.Values["controller"]?.ToString() == "Admin" ? "active" : "")">
@@ -137,13 +144,14 @@
                 <h1 class="text-xl font-semibold text-slate-800">@ViewData["Title"]</h1>
             </div>
             <div class="flex items-center space-x-4">
-                <button class="text-slate-400 hover:text-slate-500">
-                    <span class="material-symbols-outlined">search</span>
-                </button>
-                <button class="text-slate-400 hover:text-slate-500 relative">
-                    <span class="material-symbols-outlined">notifications</span>
-                    <span class="absolute top-0 right-0 block h-2 w-2 rounded-full bg-red-500 ring-2 ring-white"></span>
-                </button>
+                <!-- Virtual Clock -->
+                <div class="flex items-center bg-slate-50 px-3 py-1.5 rounded-lg border border-slate-200">
+                    <span class="material-symbols-outlined text-slate-400 mr-2 text-[18px]">schedule</span>
+                    <div class="flex flex-col">
+                        <span class="text-[10px] font-bold text-slate-400 uppercase leading-none mb-0.5">VIRTUAL TIME <span id="clock-speed" class="text-blue-500 ml-1">1x</span></span>
+                        <span id="virtual-clock" class="text-sm font-bold text-slate-700 leading-none" style="font-variant-numeric: tabular-nums;">Syncing...</span>
+                    </div>
+                </div>
             </div>
         </header>
 
@@ -154,6 +162,44 @@
             </div>
         </main>
     </div>
+
+    <!-- Global Notification System (SignalR + Toastr) -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/7.0.5/signalr.min.js"></script>
+    
+    <script>
+        toastr.options = {
+            "closeButton": true,
+            "progressBar": true,
+            "positionClass": "toast-top-right",
+            "timeOut": "5000",
+        };
+
+        window.globalConnection = new signalR.HubConnectionBuilder()
+            .withUrl("/flightHub")
+            .build();
+
+        window.globalConnection.on("TimeUpdate", function (data) {
+            document.getElementById("virtual-clock").innerText = data.virtualTime;
+            document.getElementById("clock-speed").innerText = data.speed + "x";
+        });
+
+        window.globalConnection.on("FlightStateChanged", function (data) {
+            let msg = `Flight <b>${data.flightNumber}</b> status changed: <br/> ${data.oldStatus} &rarr; <b>${data.newStatus}</b>`;
+            if (data.newStatus === "Airborne") {
+                toastr.info(`✈️ Departed from ${data.origin}! <br/> ${msg}`, "Takeoff Detected");
+            } else if (data.newStatus === "Landed") {
+                toastr.success(`🛬 Arrived at ${data.destination}! <br/> ${msg}`, "Landing Detected");
+            } else if (data.newStatus === "Boarding") {
+                toastr.warning(`📢 Boarding started! <br/> ${msg}`, "Boarding");
+            } else {
+                toastr.info(msg, "Flight Update");
+            }
+        });
+
+        window.globalConnection.start().catch(err => console.error(err.toString()));
+    </script>
 
     @await RenderSectionAsync("Scripts", required: false)
 </body>
