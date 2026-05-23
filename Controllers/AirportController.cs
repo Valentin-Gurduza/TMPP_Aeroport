@@ -28,6 +28,7 @@ namespace TMPP_Aeroport.Controllers
             _dbContext = dbContext;
         }
 
+        [Authorize]
         public async Task<IActionResult> Index()
         {
             dynamic model = new ExpandoObject();
@@ -193,8 +194,17 @@ namespace TMPP_Aeroport.Controllers
             var facade = new TMPP_Aeroport.Domain.Facade.FlightDepartureFacade();
             var flightLog = facade.AuthoriseDeparture(flightNumber, runway);
 
+            // Update Database actually!
+            var flight = _dbContext.Flights.FirstOrDefault(f => f.FlightNumber == flightNumber);
+            if (flight != null)
+            {
+                flight.Status = "Airborne";
+                _dbContext.SaveChanges();
+            }
+
             ViewBag.FlightLog = flightLog;
             ViewBag.FlightNumber = flightNumber;
+            ViewBag.Flights = _dbContext.Flights.Where(f => f.Status == "Scheduled" || f.Status == "Boarding").ToList();
             return View("FacadeDemo");
         }
 
@@ -202,6 +212,7 @@ namespace TMPP_Aeroport.Controllers
         [HttpGet]
         public IActionResult FacadeDemo()
         {
+            ViewBag.Flights = _dbContext.Flights.Where(f => f.Status == "Scheduled" || f.Status == "Boarding").ToList();
             return View();
         }
 
@@ -267,15 +278,15 @@ namespace TMPP_Aeroport.Controllers
         // 3. Bridge Pattern Usage
         public IActionResult BridgeDemo(string hardware = "led")
         {
-            // Listă falsă de zboruri pentru display
-            var flights = new List<string> { "RO-302", "WZZ-15K", "LH-1652", "BA-092" };
+            // Preluăm zborurile REALE din Baza de Date pentru ecranele hardware
+            var flights = _dbContext.Flights.Take(6).ToList();
 
             // 1) Alegem Implementarea Hardware (LED sau Web/SmartTV)
-            IDisplayRenderer renderer = (hardware == "web") ? new WebRenderer() : new LEDRenderer();
+            TMPP_Aeroport.Domain.Bridge.IDisplayRenderer renderer = (hardware == "web") ? new TMPP_Aeroport.Domain.Bridge.WebRenderer() : new TMPP_Aeroport.Domain.Bridge.LEDRenderer();
 
             // 2) Alegem Abstractizarea de Business (Plecări sau Sosiri)
-            FlightBoard departures = new DeparturesBoard(renderer);
-            FlightBoard arrivals = new ArrivalsBoard(renderer);
+            TMPP_Aeroport.Domain.Bridge.FlightBoard departures = new TMPP_Aeroport.Domain.Bridge.DeparturesBoard(renderer);
+            TMPP_Aeroport.Domain.Bridge.FlightBoard arrivals = new TMPP_Aeroport.Domain.Bridge.ArrivalsBoard(renderer);
 
             ViewBag.Hardware = hardware;
             ViewBag.DeparturesRender = departures.ShowBoard(flights);
@@ -287,15 +298,17 @@ namespace TMPP_Aeroport.Controllers
         // 4. Proxy Pattern Usage — Security Control (Admin or ATC_Manager)
         [Authorize(Roles = "Admin,ATC_Manager")]
         [HttpPost]
-        public IActionResult ProxyDemoExecute(string role, string actionType)
+        public IActionResult ProxyDemoExecute(string flightNumber, string role, string actionType)
         {
+            if (string.IsNullOrEmpty(flightNumber)) flightNumber = "TAROM-102"; // Fallback
+
             // Creăm interfața Proxy, nu instanțiem direct serviciul periculos.
-            IRunwayControl runwayProxy = new RunwayControlProxy(role);
+            TMPP_Aeroport.Domain.Proxy.IRunwayControl runwayProxy = new TMPP_Aeroport.Domain.Proxy.RunwayControlProxy(role);
             string result = "";
 
             if (actionType == "clearance")
             {
-                result = runwayProxy.GrantClearance("TAROM-102", "Pista Nord 01L");
+                result = runwayProxy.GrantClearance(flightNumber, "Pista Nord 01L");
             }
             else if (actionType == "lock")
             {
@@ -304,6 +317,7 @@ namespace TMPP_Aeroport.Controllers
 
             ViewBag.RoleAttempted = role;
             ViewBag.Result = result;
+            ViewBag.Flights = _dbContext.Flights.ToList();
             return View("ProxyDemo");
         }
 
@@ -311,6 +325,7 @@ namespace TMPP_Aeroport.Controllers
         [HttpGet]
         public IActionResult ProxyDemo()
         {
+            ViewBag.Flights = _dbContext.Flights.ToList();
             return View();
         }
         // ==========================================
@@ -350,7 +365,15 @@ namespace TMPP_Aeroport.Controllers
         [HttpPost]
         public IActionResult ObserverDemoExecute(string flightNumber, string newStatus)
         {
-            // Setăm status inițial
+            // Update Database physically
+            var flight = _dbContext.Flights.FirstOrDefault(f => f.FlightNumber == flightNumber);
+            if (flight != null)
+            {
+                flight.Status = newStatus;
+                _dbContext.SaveChanges();
+            }
+
+            // Setăm status inițial (Design Pattern logic)
             var subject = new TMPP_Aeroport.Domain.Observer.FlightStatusSubject(flightNumber);
             var logs = new List<string>();
 
@@ -364,6 +387,7 @@ namespace TMPP_Aeroport.Controllers
             ViewBag.Logs = logs;
             ViewBag.FlightNumber = flightNumber;
             ViewBag.NewStatus = newStatus;
+            ViewBag.Flights = _dbContext.Flights.ToList();
 
             return View("ObserverDemo");
         }
@@ -371,6 +395,7 @@ namespace TMPP_Aeroport.Controllers
         [HttpGet]
         public IActionResult ObserverDemo()
         {
+            ViewBag.Flights = _dbContext.Flights.ToList();
             return View();
         }
 
@@ -434,10 +459,15 @@ namespace TMPP_Aeroport.Controllers
         public IActionResult IteratorDemo(string targetTerminal)
         {
             var collection = new TMPP_Aeroport.Domain.Iterator.FlightScheduleCollection();
-            collection.AddFlight(new TMPP_Aeroport.Domain.Iterator.FlightScheduleItem { FlightNumber = "RO101", Terminal = "T1", Status = "On Time" });
-            collection.AddFlight(new TMPP_Aeroport.Domain.Iterator.FlightScheduleItem { FlightNumber = "RO202", Terminal = "T2", Status = "Delayed" });
-            collection.AddFlight(new TMPP_Aeroport.Domain.Iterator.FlightScheduleItem { FlightNumber = "RO303", Terminal = "T1", Status = "Boarding" });
-            collection.AddFlight(new TMPP_Aeroport.Domain.Iterator.FlightScheduleItem { FlightNumber = "RO404", Terminal = "T3", Status = "On Time" });
+            
+            // Populam cu zboruri REALE din BD
+            var realFlights = _dbContext.Flights.ToList();
+            foreach (var f in realFlights)
+            {
+                // Terminal simulat
+                string t = f.Id % 2 == 0 ? "T1" : "T2";
+                collection.AddFlight(new TMPP_Aeroport.Domain.Iterator.FlightScheduleItem { FlightNumber = f.FlightNumber, Terminal = t, Status = f.Status });
+            }
 
             TMPP_Aeroport.Domain.Iterator.IFlightIterator iterator;
             if (string.IsNullOrEmpty(targetTerminal) || targetTerminal == "All")
@@ -528,9 +558,13 @@ namespace TMPP_Aeroport.Controllers
         [Authorize(Roles = "Admin,ATC_Manager")]
         public IActionResult MediatorDemo(string actionType)
         {
+            var flights = _dbContext.Flights.Take(2).ToList();
+            string fn1 = flights.Count > 0 ? flights[0].FlightNumber : "TAROM-101";
+            string fn2 = flights.Count > 1 ? flights[1].FlightNumber : "WIZZ-777";
+
             var tower = new TMPP_Aeroport.Domain.Mediator.ATCTower();
-            var flight1 = new TMPP_Aeroport.Domain.Mediator.CommercialFlight(tower, "TAROM-101");
-            var flight2 = new TMPP_Aeroport.Domain.Mediator.CommercialFlight(tower, "WIZZ-777");
+            var flight1 = new TMPP_Aeroport.Domain.Mediator.CommercialFlight(tower, fn1);
+            var flight2 = new TMPP_Aeroport.Domain.Mediator.CommercialFlight(tower, fn2);
             var heli1 = new TMPP_Aeroport.Domain.Mediator.Helicopter(tower, "HELI-MEDEVAC");
 
             if (actionType == "Broadcast")
@@ -541,10 +575,13 @@ namespace TMPP_Aeroport.Controllers
             {
                 flight2.RequestLanding();
             }
-            else
+            else if (actionType == "Heli")
             {
                 heli1.Send("Entering airspace.");
             }
+
+            ViewBag.Flight1Name = fn1;
+            ViewBag.Flight2Name = fn2;
 
             ViewBag.TowerLogs = tower.ATCLogs;
             ViewBag.Flight1Logs = flight1.AircraftLogs;
@@ -613,6 +650,45 @@ namespace TMPP_Aeroport.Controllers
 
             ViewBag.Format = format;
 
+            return View();
+        }
+
+        // Action for downloading the visitor pattern data
+        public IActionResult DownloadVisitorData(string format = "json")
+        {
+            var elements = new List<TMPP_Aeroport.Domain.Visitor.IAirportElement>
+            {
+                new TMPP_Aeroport.Domain.Visitor.TerminalElement("Terminal 1", 15),
+                new TMPP_Aeroport.Domain.Visitor.AircraftElement("Boeing 737 MAX", 180),
+                new TMPP_Aeroport.Domain.Visitor.FlightElement("RO-302", "Frankfurt")
+            };
+
+            string exportData = "";
+            string contentType = "application/json";
+            string fileName = "airport_export.json";
+
+            if (format == "xml")
+            {
+                var visitor = new TMPP_Aeroport.Domain.Visitor.XmlExportVisitor();
+                foreach (var element in elements) element.Accept(visitor);
+                exportData = string.Join(Environment.NewLine, visitor.ExportedData);
+                contentType = "application/xml";
+                fileName = "airport_export.xml";
+            }
+            else
+            {
+                var visitor = new TMPP_Aeroport.Domain.Visitor.JsonExportVisitor();
+                foreach (var element in elements) element.Accept(visitor);
+                exportData = string.Join(Environment.NewLine, visitor.ExportedData);
+            }
+
+            var bytes = System.Text.Encoding.UTF8.GetBytes(exportData);
+            return File(bytes, contentType, fileName);
+        }
+
+        // Live Radar Simulation Feature
+        public IActionResult Radar()
+        {
             return View();
         }
     }

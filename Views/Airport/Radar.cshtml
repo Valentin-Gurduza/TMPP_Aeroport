@@ -1,0 +1,335 @@
+@{
+    ViewData["Title"] = "Advanced Live Radar";
+}
+
+@section Styles {
+    <!-- Leaflet CSS for Map -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
+    <style>
+        #radar-map {
+            height: calc(100vh - 12rem);
+            min-height: 600px;
+            width: 100%;
+            border-radius: 1rem;
+            z-index: 1;
+        }
+        
+        .plane-icon {
+            transition: none; /* Removed transition for smoother JS control */
+            filter: drop-shadow(0px 4px 6px rgba(0,0,0,0.5));
+        }
+
+        .plane-svg {
+            width: 32px;
+            height: 32px;
+            transform-origin: center center;
+        }
+
+        .control-btn.active {
+            background-color: #3b82f6 !important;
+            color: white !important;
+            border-color: #2563eb !important;
+        }
+    </style>
+}
+
+<div class="mb-6 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+    <div>
+        <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-100 text-emerald-800 text-xs font-bold mb-3 border border-emerald-200">
+            <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+            LIVE TRACKING SYSTEM
+        </div>
+        <h1 class="text-3xl font-bold text-slate-800">Advanced European Radar</h1>
+        <p class="text-slate-500 mt-1">Observer, Mediator & Flyweight Pattern — Real-time physics simulation.</p>
+    </div>
+    
+    <div class="flex items-center gap-4">
+        <!-- Speed Controls -->
+        <div class="bg-white px-2 py-1.5 rounded-lg border border-slate-200 shadow-sm flex items-center gap-1">
+            <span class="text-xs font-bold text-slate-400 uppercase mr-2 ml-2">Time:</span>
+            <button class="control-btn px-3 py-1.5 rounded-md text-sm font-bold border border-transparent text-slate-600 hover:bg-slate-100 transition active" data-speed="1">1x</button>
+            <button class="control-btn px-3 py-1.5 rounded-md text-sm font-bold border border-transparent text-slate-600 hover:bg-slate-100 transition" data-speed="20">20x</button>
+            <button class="control-btn px-3 py-1.5 rounded-md text-sm font-bold border border-transparent text-slate-600 hover:bg-slate-100 transition" data-speed="50">50x</button>
+            <button class="control-btn px-3 py-1.5 rounded-md text-sm font-bold border border-transparent text-slate-600 hover:bg-slate-100 transition" data-speed="100">100x</button>
+        </div>
+
+        <div class="bg-white px-4 py-3 rounded-lg border border-slate-200 shadow-sm flex items-center gap-4">
+            <div class="text-center">
+                <p class="text-xs text-slate-400 font-semibold uppercase">Airborne</p>
+                <p class="text-xl font-bold text-blue-600" id="active-count">0</p>
+            </div>
+            <div class="w-px h-8 bg-slate-200"></div>
+            <div class="text-center">
+                <p class="text-xs text-slate-400 font-semibold uppercase">Server Sync</p>
+                <p class="text-sm font-bold text-emerald-500 mt-1 flex items-center justify-center gap-1">
+                    <span class="material-symbols-outlined text-[16px]">wifi</span> LIVE
+                </p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-2 relative">
+    <div id="radar-map"></div>
+    
+    <!-- Legend -->
+    <div class="absolute bottom-6 right-6 z-[1000] bg-white/90 backdrop-blur-sm p-4 rounded-xl border border-slate-200 shadow-lg pointer-events-none">
+        <h4 class="text-xs font-bold text-slate-700 uppercase tracking-wider mb-3">Map Legend</h4>
+        <div class="space-y-2">
+            <div class="flex items-center gap-2">
+                <div class="w-6 h-6 flex items-center justify-center bg-blue-100 rounded-md">
+                    <span class="w-3 h-3 block bg-blue-500" style="clip-path: polygon(50% 0%, 100% 50%, 50% 100%, 0% 50%);"></span>
+                </div>
+                <span class="text-sm text-slate-600 font-medium">Commercial Flight</span>
+            </div>
+            <div class="flex items-center gap-2">
+                <span class="w-3 h-3 rounded-full bg-red-500 border-2 border-white shadow-sm ml-1.5"></span>
+                <span class="text-sm text-slate-600 font-medium ml-1.5">Major Airport (Hub)</span>
+            </div>
+            <div class="flex items-center gap-2 mt-2 pt-2 border-t border-slate-200">
+                <span class="text-xs text-slate-500">Tip: Click on a plane to view its trajectory.</span>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <!-- Leaflet JS -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+    
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // ==========================================
+            // 1. Map Initialization
+            // ==========================================
+            const map = L.map('radar-map', {
+                center: [48.0, 14.0],
+                zoom: 5,
+                zoomControl: false // Custom position if needed
+            });
+            L.control.zoom({ position: 'topright' }).addTo(map);
+            
+            // Dark Theme Tiles
+            L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+                attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OSM</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>',
+                subdomains: 'abcd',
+                maxZoom: 20
+            }).addTo(map);
+
+            // ==========================================
+            // 2. Airports Data
+            // ==========================================
+            const airports = {
+                OTP: { lat: 44.5722, lng: 26.1022, name: 'Bucharest (OTP)' },
+                CDG: { lat: 49.0097, lng: 2.5479, name: 'Paris (CDG)' },
+                FRA: { lat: 50.0379, lng: 8.5622, name: 'Frankfurt (FRA)' },
+                LHR: { lat: 51.4700, lng: -0.4543, name: 'London (LHR)' },
+                AMS: { lat: 52.3105, lng: 4.7683, name: 'Amsterdam (AMS)' },
+                FCO: { lat: 41.7999, lng: 12.2462, name: 'Rome (FCO)' },
+                MAD: { lat: 40.4983, lng: -3.5676, name: 'Madrid (MAD)' },
+                BER: { lat: 52.3667, lng: 13.5033, name: 'Berlin (BER)' }
+            };
+
+            for (const key in airports) {
+                const apt = airports[key];
+                L.circleMarker([apt.lat, apt.lng], {
+                    radius: 5,
+                    fillColor: "#ef4444", // red-500
+                    color: "#ffffff",
+                    weight: 2,
+                    opacity: 1,
+                    fillOpacity: 1
+                }).bindPopup(`<div class="font-bold">${apt.name}</div><div class="text-xs text-slate-500">Major European Hub</div>`).addTo(map);
+            }
+
+            // ==========================================
+            // 3. Flyweight Pattern for Icons
+            // ==========================================
+            // Instead of generating complex SVG logic for every single marker,
+            // we use a Factory that returns the same shared Icon instance for a specific type.
+            class AircraftIconFactory {
+                constructor() {
+                    this.cache = {};
+                    
+                    // Base SVG graphic representing a commercial jet
+                    this.svgTemplate = `
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="plane-svg" style="transform: rotate(C_ROTdeg);">
+                            <path fill="C_COLOR" stroke="#ffffff" stroke-width="0.5" d="M21,16V14L13,9V3.5A1.5,1.5 0 0,0 11.5,2A1.5,1.5 0 0,0 10,3.5V9L2,14V16L10,13.5V19L8,20.5V22L11.5,21L15,22V20.5L13,19V13.5L21,16Z" />
+                        </svg>
+                    `;
+                }
+
+                getIcon(color, rotation) {
+                    // Cache key
+                    const key = `${color}_${rotation}`;
+                    if (!this.cache[key]) {
+                        const svg = this.svgTemplate.replace('C_COLOR', color).replace('C_ROTdeg', rotation);
+                        this.cache[key] = L.divIcon({
+                            html: svg,
+                            className: 'plane-icon',
+                            iconSize: [32, 32],
+                            iconAnchor: [16, 16],
+                            popupAnchor: [0, -16]
+                        });
+                    }
+                    return this.cache[key];
+                }
+            }
+            
+            const iconFactory = new AircraftIconFactory();
+
+            // ==========================================
+            // 4. Physical Calculations & Helpers
+            // ==========================================
+            const EARTH_RADIUS_KM = 6371;
+            const DEFAULT_SPEED_KMH = 900; // Commercial jet speed
+            
+            // Haversine formula to calculate exact distance in KM
+            function calculateDistance(lat1, lon1, lat2, lon2) {
+                const dLat = (lat2 - lat1) * Math.PI / 180;
+                const dLon = (lon2 - lon1) * Math.PI / 180;
+                const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
+                          Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+                          Math.sin(dLon/2) * Math.sin(dLon/2);
+                const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+                return EARTH_RADIUS_KM * c;
+            }
+
+            // Calculate bearing (angle)
+            function calculateBearing(startLat, startLng, destLat, destLng) {
+                const startLatRad = startLat * Math.PI / 180;
+                const startLngRad = startLng * Math.PI / 180;
+                const destLatRad = destLat * Math.PI / 180;
+                const destLngRad = destLng * Math.PI / 180;
+
+                const y = Math.sin(destLngRad - startLngRad) * Math.cos(destLatRad);
+                const x = Math.cos(startLatRad) * Math.sin(destLatRad) - Math.sin(startLatRad) * Math.cos(destLatRad) * Math.cos(destLngRad - startLngRad);
+                let brng = Math.atan2(y, x) * 180 / Math.PI;
+                return (brng + 360) % 360;
+            }
+
+            // ==========================================
+            // 5. SignalR Listener (Observer Pattern)
+            // ==========================================
+            const markers = {};
+            let activeLine = null;
+            let activeLineFlightId = null;
+
+            function generatePopupContent(f) {
+                const statusColor = f.status === 'Airborne' ? 'text-blue-500' : 'text-emerald-500';
+                return `
+                    <div class="min-w-[180px] p-1">
+                        <div class="font-black text-lg text-slate-800 border-b border-slate-200 pb-1 mb-2">${f.flightNumber}</div>
+                        <div class="flex flex-col gap-1 text-sm mb-2 bg-slate-50 p-2 rounded border border-slate-100">
+                            <div class="flex justify-between items-center w-full">
+                                <span class="text-slate-600 font-bold whitespace-nowrap overflow-hidden text-ellipsis">${f.originName}</span>
+                            </div>
+                            <div class="flex justify-center my-1">
+                                <span class="material-symbols-outlined text-[16px] text-blue-400 rotate-90">flight</span>
+                            </div>
+                            <div class="flex justify-between items-center w-full">
+                                <span class="text-slate-600 font-bold whitespace-nowrap overflow-hidden text-ellipsis">${f.destName}</span>
+                            </div>
+                        </div>
+                        <div class="text-xs font-semibold ${statusColor} bg-slate-100 px-2 py-1.5 rounded inline-block w-full text-center mt-1 border border-slate-200 uppercase tracking-widest shadow-sm">
+                            ${f.status}
+                        </div>
+                    </div>
+                `;
+            }
+
+            // If user clicks anywhere else on map, remove trajectory
+            map.on('click', () => {
+                if (activeLine) {
+                    map.removeLayer(activeLine);
+                    activeLine = null;
+                    activeLineFlightId = null;
+                }
+            });
+
+            // Use the globalConnection established in _LayoutCorporate.cshtml
+            if (window.globalConnection) {
+                window.globalConnection.on("RadarUpdate", function (flightsData) {
+                    
+                    document.getElementById('active-count').innerText = flightsData.length;
+
+                    // Update or Create Markers
+                    flightsData.forEach(f => {
+                        const bearing = Math.round(calculateBearing(f.currentLat, f.currentLng, f.destLat, f.destLng));
+                        const iconColor = f.flightNumber.startsWith('RO') ? '#3b82f6' : '#94a3b8';
+                        
+                        if (!markers[f.flightNumber]) {
+                            // Create new marker
+                            markers[f.flightNumber] = L.marker([f.currentLat, f.currentLng], { 
+                                icon: iconFactory.getIcon(iconColor, bearing)
+                            }).addTo(map);
+
+                            markers[f.flightNumber].bindPopup(generatePopupContent(f));
+
+                            markers[f.flightNumber].on('click', () => {
+                                if (activeLine) map.removeLayer(activeLine);
+                                activeLineFlightId = f.flightNumber;
+                                activeLine = L.polyline([
+                                    [f.originLat, f.originLng],
+                                    [f.destLat, f.destLng]
+                                ], {
+                                    color: '#60a5fa',
+                                    weight: 2,
+                                    dashArray: '5, 10',
+                                    opacity: 0.8
+                                }).addTo(map);
+                            });
+                        } else {
+                            // Update existing marker
+                            markers[f.flightNumber].setLatLng([f.currentLat, f.currentLng]);
+                            
+                            // Only update icon if bearing changed significantly to avoid constant DOM updates
+                            // (Simplified: just setting it is fine because Flyweight caches the DOM object)
+                            markers[f.flightNumber].setIcon(iconFactory.getIcon(iconColor, bearing));
+
+                            if (markers[f.flightNumber].isPopupOpen()) {
+                                markers[f.flightNumber].setPopupContent(generatePopupContent(f));
+                            }
+                        }
+                    });
+
+                    // Remove landed flights
+                    const activeIds = flightsData.map(f => f.flightNumber);
+                    for (const id in markers) {
+                        if (!activeIds.includes(id)) {
+                            map.removeLayer(markers[id]);
+                            delete markers[id];
+                            if (activeLineFlightId === id && activeLine) {
+                                map.removeLayer(activeLine);
+                                activeLine = null;
+                            }
+                        }
+                    }
+                });
+            } else {
+                console.error("Global SignalR connection not found.");
+            }
+
+            // ==========================================
+            // 6. UI Controls (Speed Multiplier)
+            // ==========================================
+            const buttons = document.querySelectorAll('.control-btn');
+            buttons.forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    buttons.forEach(b => b.classList.remove('active'));
+                    e.target.classList.add('active');
+                    
+                    const speed = parseInt(e.target.getAttribute('data-speed'));
+                    
+                    if (window.globalConnection && window.globalConnection.state === signalR.HubConnectionState.Connected) {
+                        window.globalConnection.invoke("SetSpeedMultiplier", speed)
+                            .catch(err => console.error(err.toString()));
+                        toastr.success(`Simulation speed set to ${speed}x`, "Time Sync");
+                    } else {
+                        toastr.error("Cannot change speed, disconnected from server.", "Error");
+                    }
+                });
+            });
+        });
+    </script>
+}

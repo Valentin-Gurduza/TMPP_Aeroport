@@ -24,9 +24,22 @@
                 <div>
                     <label class="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">Simulate Authenticated Role</label>
                     <select name="role" class="w-full px-4 py-3 rounded-lg border border-slate-300 focus:border-red-500 focus:ring-2 focus:ring-red-200 transition outline-none bg-white font-mono text-slate-700">
-                        <option value="BaggageHandler" selected="@(ViewBag.RoleAttempted == "BaggageHandler")">Baggage Handler (No Clearance)</option>
-                        <option value="Passenger" selected="@(ViewBag.RoleAttempted == "Passenger")">Passenger (No Clearance)</option>
-                        <option value="ATC_Manager" selected="@(ViewBag.RoleAttempted == "ATC_Manager")">ATC Manager (Authorized)</option>
+                        <option value="BaggageHandler" selected="@(ViewBag.RoleAttempted == "BaggageHandler" ? "selected" : null)">Baggage Handler (No Clearance)</option>
+                        <option value="Passenger" selected="@(ViewBag.RoleAttempted == "Passenger" ? "selected" : null)">Passenger (No Clearance)</option>
+                        <option value="ATC_Manager" selected="@(ViewBag.RoleAttempted == "ATC_Manager" ? "selected" : null)">ATC Manager (Authorized)</option>
+                    </select>
+                </div>
+                
+                <div>
+                    <label class="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">Target Flight</label>
+                    <select name="flightNumber" class="w-full px-4 py-3 rounded-lg border border-slate-300 focus:border-red-500 focus:ring-2 focus:ring-red-200 transition outline-none bg-white font-mono text-slate-700">
+                        @if (ViewBag.Flights != null)
+                        {
+                            foreach (var flight in ViewBag.Flights)
+                            {
+                                <option value="@flight.FlightNumber">@flight.FlightNumber (@flight.Destination) - @flight.Status</option>
+                            }
+                        }
                     </select>
                 </div>
                 

@@ -43,39 +43,9 @@
         <div class="bg-slate-900 p-6 rounded-2xl border border-slate-700 shadow-xl relative overflow-hidden h-[320px]">
             <div class="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-cyan-500 to-transparent opacity-50"></div>
             <div class="font-mono text-sm space-y-3 leading-relaxed text-cyan-400">
-                <div class="text-center border-b border-cyan-500/30 pb-3 mb-4 font-bold text-cyan-300">✈ DEPARTURES INFORMATION</div>
-                @if (ViewBag.DepartureFlights != null)
+                @if (ViewBag.DeparturesRender != null)
                 {
-                    foreach (var flight in (List<string>)ViewBag.DepartureFlights)
-                    {
-                        <div class="flex items-center gap-4 bg-cyan-900/20 p-2 rounded border border-cyan-500/10">
-                            <span class="flex-1">&gt; @flight</span>
-                            <span class="bg-cyan-500/20 text-cyan-300 px-2 py-0.5 rounded text-xs font-bold border border-cyan-500/30">TAKEOFF READY</span>
-                        </div>
-                    }
-                }
-                else
-                {
-                    <div class="flex items-center gap-4 bg-cyan-900/20 p-2 rounded border border-cyan-500/10">
-                        <span class="text-xs opacity-60">09:15</span>
-                        <span class="flex-1 font-bold text-white">&gt; RO-302 - BUCHAREST</span>
-                        <span class="bg-cyan-500/20 text-cyan-300 px-2 py-0.5 rounded text-xs font-bold border border-cyan-500/30 animate-pulse">TAKEOFF READY</span>
-                    </div>
-                    <div class="flex items-center gap-4 bg-cyan-900/20 p-2 rounded border border-cyan-500/10">
-                        <span class="text-xs opacity-60">09:30</span>
-                        <span class="flex-1 font-bold text-white">&gt; WZZ-15K - LONDON LTN</span>
-                        <span class="bg-cyan-500/20 text-cyan-300 px-2 py-0.5 rounded text-xs font-bold border border-cyan-500/30 animate-pulse">TAKEOFF READY</span>
-                    </div>
-                    <div class="flex items-center gap-4 bg-cyan-900/20 p-2 rounded border border-cyan-500/10">
-                        <span class="text-xs opacity-60">09:45</span>
-                        <span class="flex-1 font-bold text-white">&gt; LH-1652 - MUNICH</span>
-                        <span class="bg-cyan-500/20 text-cyan-300 px-2 py-0.5 rounded text-xs font-bold border border-cyan-500/30 animate-pulse">TAKEOFF READY</span>
-                    </div>
-                    <div class="flex items-center gap-4 bg-cyan-900/20 p-2 rounded border border-cyan-500/10">
-                        <span class="text-xs opacity-60">10:00</span>
-                        <span class="flex-1 font-bold text-white">&gt; BA-092 - LONDON LHR</span>
-                        <span class="bg-cyan-500/20 text-cyan-300 px-2 py-0.5 rounded text-xs font-bold border border-cyan-500/30 animate-pulse">TAKEOFF READY</span>
-                    </div>
+                    @Html.Raw(ViewBag.DeparturesRender)
                 }
             </div>
         </div>
@@ -90,23 +60,9 @@
         <div class="bg-slate-900 p-6 rounded-2xl border border-slate-700 shadow-xl relative overflow-hidden h-[320px]">
             <div class="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-emerald-500 to-transparent opacity-50"></div>
             <div class="font-mono text-sm space-y-3 leading-relaxed text-emerald-400">
-                <div class="text-center border-b border-emerald-500/30 pb-3 mb-4 font-bold text-emerald-300">✈ ARRIVALS INFORMATION</div>
-                @if (ViewBag.ArrivalFlights != null)
+                @if (ViewBag.ArrivalsRender != null)
                 {
-                    foreach (var flight in (List<string>)ViewBag.ArrivalFlights)
-                    {
-                        <div class="flex items-center gap-4 bg-emerald-900/20 p-2 rounded border border-emerald-500/10">
-                            <span class="flex-1">&gt; @flight</span>
-                            <span class="text-xs text-emerald-300">BAGGAGE GATE 4</span>
-                        </div>
-                    }
-                }
-                else
-                {
-                    <div class="flex items-center gap-4 bg-emerald-900/20 p-2 rounded border border-emerald-500/10"><span class="text-xs opacity-60">08:55</span><span class="flex-1 font-bold text-white">&gt; RO-302 - LANDED</span><span class="text-xs text-emerald-300">BAGGAGE GATE 4</span></div>
-                    <div class="flex items-center gap-4 bg-emerald-900/20 p-2 rounded border border-emerald-500/10"><span class="text-xs opacity-60">09:05</span><span class="flex-1 font-bold text-white">&gt; WZZ-15K - LANDED</span><span class="text-xs text-emerald-300">BAGGAGE GATE 4</span></div>
-                    <div class="flex items-center gap-4 bg-emerald-900/20 p-2 rounded border border-emerald-500/10"><span class="text-xs opacity-60">09:20</span><span class="flex-1 font-bold text-white">&gt; LH-1652 - LANDED</span><span class="text-xs text-emerald-300">BAGGAGE GATE 4</span></div>
-                    <div class="flex items-center gap-4 bg-slate-800 p-2 rounded border border-slate-700 text-amber-400/80"><span class="text-xs opacity-60">09:40</span><span class="flex-1 font-bold">&gt; KL-1382 - ON APPROACH</span><span class="text-xs">--</span></div>
+                    @Html.Raw(ViewBag.ArrivalsRender)
                 }
             </div>
         </div>

@@ -13,7 +13,16 @@
         <form asp-action="ObserverDemoExecute" method="post" class="space-y-md">
             <div>
                 <label class="font-label-caps text-on-surface-variant block mb-1">FLIGHT NUMBER</label>
-                <input type="text" name="flightNumber" value="@(ViewBag.FlightNumber ?? "TAROM-301")" class="w-full bg-[#05070A] border border-white/20 rounded px-3 py-2 text-primary-container outline-none" readonly />
+                <select name="flightNumber" class="w-full bg-[#05070A] border border-white/20 rounded px-3 py-2 text-primary-container outline-none">
+                    @if (ViewBag.Flights != null)
+                    {
+                        foreach (var flight in ViewBag.Flights)
+                        {
+                            var isSelected = ViewBag.FlightNumber == flight.FlightNumber ? "selected" : null;
+                            <option value="@flight.FlightNumber" selected="@isSelected">@flight.FlightNumber (@flight.Destination) - @flight.Status</option>
+                        }
+                    }
+                </select>
             </div>
             
             <div class="grid grid-cols-3 gap-2">

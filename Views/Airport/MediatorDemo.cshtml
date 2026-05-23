@@ -22,7 +22,7 @@
             <form action="/Airport/MediatorDemo" method="get" class="space-y-4">
                 <button type="submit" name="actionType" value="Broadcast" class="w-full p-4 bg-white border border-red-200 rounded-xl flex items-center justify-between hover:bg-red-50 hover:border-red-300 transition shadow-sm group">
                     <div class="text-left">
-                        <div class="font-bold text-red-700 text-sm tracking-wide">TAROM-101 BROADCASTS ISSUE</div>
+                        <div class="font-bold text-red-700 text-sm tracking-wide">@(ViewBag.Flight1Name ?? "FLIGHT-1") BROADCASTS ISSUE</div>
                         <div class="text-xs mt-1 text-slate-500 font-mono">"Encountering severe turbulence at FL350."</div>
                     </div>
                     <div class="w-10 h-10 rounded-full bg-red-100 text-red-600 flex items-center justify-center group-hover:scale-110 transition-transform">
@@ -32,7 +32,7 @@
     
                 <button type="submit" name="actionType" value="Landing" class="w-full p-4 bg-white border border-amber-200 rounded-xl flex items-center justify-between hover:bg-amber-50 hover:border-amber-300 transition shadow-sm group">
                     <div class="text-left">
-                        <div class="font-bold text-amber-700 text-sm tracking-wide">WIZZ-777 REQUESTS LANDING</div>
+                        <div class="font-bold text-amber-700 text-sm tracking-wide">@(ViewBag.Flight2Name ?? "FLIGHT-2") REQUESTS LANDING</div>
                         <div class="text-xs mt-1 text-slate-500 font-mono">"Requesting landing clearance on Runway 09."</div>
                     </div>
                     <div class="w-10 h-10 rounded-full bg-amber-100 text-amber-600 flex items-center justify-center group-hover:scale-110 transition-transform">
@@ -79,28 +79,37 @@
 
         <!-- Aircraft Logs -->
         <div class="grid grid-cols-2 gap-4">
-            <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
-                <div class="bg-slate-50 px-4 py-2 border-b border-slate-200 flex items-center gap-2">
-                    <span class="material-symbols-outlined text-slate-400 text-[16px]">flight</span>
-                    <h3 class="text-xs font-bold text-slate-700 uppercase tracking-widest">TAROM-101</h3>
-                </div>
-                <div class="p-4 font-mono text-[10px] space-y-1 text-slate-600 min-h-[100px] bg-slate-50/50">
-                    @if(ViewBag.Flight1Logs != null) {
-                        foreach(var log in ViewBag.Flight1Logs) { <div>@log</div> }
-                    }
+            <div class="bg-slate-800 px-4 py-3 border-b border-slate-700 flex justify-between items-center mt-6 rounded-t-2xl">
+                <div class="flex items-center gap-2">
+                    <span class="material-symbols-outlined text-blue-400 text-[18px]">flight</span>
+                    <h3 class="text-xs font-bold text-slate-300 uppercase tracking-widest">@(ViewBag.Flight1Name) Logs</h3>
                 </div>
             </div>
-            
-            <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
-                <div class="bg-slate-50 px-4 py-2 border-b border-slate-200 flex items-center gap-2">
-                    <span class="material-symbols-outlined text-slate-400 text-[16px]">flight</span>
-                    <h3 class="text-xs font-bold text-slate-700 uppercase tracking-widest">WIZZ-777</h3>
-                </div>
-                <div class="p-4 font-mono text-[10px] space-y-1 text-slate-600 min-h-[100px] bg-slate-50/50">
-                    @if(ViewBag.Flight2Logs != null) {
-                        foreach(var log in ViewBag.Flight2Logs) { <div>@log</div> }
+            <div class="p-4 font-mono text-xs space-y-2 max-h-[150px] overflow-y-auto bg-slate-900 rounded-b-2xl border border-t-0 border-slate-700">
+                @if (ViewBag.Flight1Logs != null)
+                {
+                    foreach (var log in ViewBag.Flight1Logs)
+                    {
+                        <div class="text-blue-300 border-l-2 border-blue-500/30 pl-2">@log</div>
                     }
+                }
+            </div>
+
+            <!-- Flight 2 Logs -->
+            <div class="bg-slate-800 px-4 py-3 border-b border-slate-700 flex justify-between items-center mt-6 rounded-t-2xl">
+                <div class="flex items-center gap-2">
+                    <span class="material-symbols-outlined text-purple-400 text-[18px]">flight</span>
+                    <h3 class="text-xs font-bold text-slate-300 uppercase tracking-widest">@(ViewBag.Flight2Name) Logs</h3>
                 </div>
+            </div>
+            <div class="p-4 font-mono text-xs space-y-2 max-h-[150px] overflow-y-auto bg-slate-900 rounded-b-2xl border border-t-0 border-slate-700">
+                @if (ViewBag.Flight2Logs != null)
+                {
+                    foreach (var log in ViewBag.Flight2Logs)
+                    {
+                        <div class="text-purple-300 border-l-2 border-purple-500/30 pl-2">@log</div>
+                    }
+                }
             </div>
         </div>
     </div>
