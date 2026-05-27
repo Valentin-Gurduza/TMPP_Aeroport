@@ -1,0 +1,114 @@
+@model dynamic
+@{
+    ViewData["Title"] = "Gate Assignments";
+    Layout = "~/Views/Shared/_LayoutCorporate.cshtml";
+    
+    var currentGate = ViewBag.CurrentGate as string;
+    var currentModel = ViewBag.CurrentModel as string;
+    var logs = ViewBag.Logs as List<string>;
+}
+
+<div class="max-w-4xl mx-auto space-y-6 animate-fade-in-up">
+    <!-- Header -->
+    <div class="flex items-center justify-between mb-8">
+        <div>
+            <h1 class="text-3xl font-extrabold text-slate-800 tracking-tight flex items-center">
+                <span class="material-symbols-outlined mr-3 text-4xl text-blue-600">storefront</span>
+                Gate Assignment Manager
+            </h1>
+            <p class="text-slate-500 mt-2 text-lg">Memento Pattern: State Backup and Restoration</p>
+        </div>
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <!-- Editor -->
+        <div class="bg-white border border-slate-200 rounded-2xl shadow-sm overflow-hidden h-full">
+            <div class="bg-slate-50 border-b border-slate-200 px-6 py-4 flex items-center justify-between">
+                <h2 class="text-lg font-bold text-slate-800">Current Configuration</h2>
+                <span class="bg-blue-100 text-blue-700 font-bold px-3 py-1 rounded-full text-xs">Originator</span>
+            </div>
+            
+            <div class="p-6 space-y-6">
+                <!-- Display Current State -->
+                <div class="flex items-center p-4 bg-slate-50 rounded-xl border border-slate-200">
+                    <div class="h-12 w-12 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center mr-4">
+                        <span class="material-symbols-outlined text-2xl">flight</span>
+                    </div>
+                    <div>
+                        <div class="text-xs font-semibold text-slate-500 uppercase">Assigned Gate</div>
+                        <div class="text-2xl font-black text-slate-800">@currentGate</div>
+                    </div>
+                    <div class="ml-auto text-right">
+                        <div class="text-xs font-semibold text-slate-500 uppercase">Aircraft Model</div>
+                        <div class="font-bold text-slate-700">@currentModel</div>
+                    </div>
+                </div>
+
+                <hr class="border-slate-200" />
+
+                <!-- Edit Form -->
+                <form action="/GroundOps/GateAssignments" method="get" class="space-y-4">
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">New Gate Assignment</label>
+                        <select name="newGate" class="w-full px-4 py-2.5 rounded-lg border border-slate-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition outline-none font-medium text-slate-700">
+                            <option value="A1" selected="@(currentGate == "A1")">Gate A1</option>
+                            <option value="A2" selected="@(currentGate == "A2")">Gate A2</option>
+                            <option value="B1" selected="@(currentGate == "B1")">Gate B1</option>
+                            <option value="C4" selected="@(currentGate == "C4")">Gate C4</option>
+                        </select>
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">Aircraft Model</label>
+                        <select name="newModel" class="w-full px-4 py-2.5 rounded-lg border border-slate-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition outline-none font-medium text-slate-700">
+                            <option value="Boeing 737 MAX" selected="@(currentModel == "Boeing 737 MAX")">Boeing 737 MAX</option>
+                            <option value="Airbus A320" selected="@(currentModel == "Airbus A320")">Airbus A320</option>
+                            <option value="Boeing 777" selected="@(currentModel == "Boeing 777")">Boeing 777 (Heavy)</option>
+                        </select>
+                    </div>
+
+                    <div class="grid grid-cols-3 gap-3 pt-4">
+                        <button type="submit" name="actionType" value="Update" class="py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-bold shadow-md transition flex items-center justify-center">
+                            Update
+                        </button>
+                        <button type="submit" name="actionType" value="Save" class="py-2.5 bg-green-600 hover:bg-green-700 text-white rounded-lg font-bold shadow-md transition flex items-center justify-center" title="Save to Caretaker">
+                            <span class="material-symbols-outlined text-sm mr-2">save</span> Backup
+                        </button>
+                        <button type="submit" name="actionType" value="Undo" class="py-2.5 bg-orange-500 hover:bg-orange-600 text-white rounded-lg font-bold shadow-md transition flex items-center justify-center" title="Restore from Caretaker">
+                            <span class="material-symbols-outlined text-sm mr-2">undo</span> Restore
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- History Logs -->
+        <div class="bg-white border border-slate-200 rounded-2xl shadow-sm overflow-hidden h-full flex flex-col">
+            <div class="bg-slate-50 border-b border-slate-200 px-6 py-4 flex items-center justify-between">
+                <h2 class="text-lg font-bold text-slate-800">State History</h2>
+                <span class="bg-slate-200 text-slate-700 font-bold px-3 py-1 rounded-full text-xs">Caretaker</span>
+            </div>
+            
+            <div class="p-6 bg-slate-50 flex-grow max-h-[400px] overflow-y-auto">
+                <div class="relative pl-6 border-l-2 border-slate-200 space-y-6">
+                    @if (logs != null && logs.Any())
+                    {
+                        for (int i = logs.Count - 1; i >= 0; i--)
+                        {
+                            <div class="relative">
+                                <div class="absolute -left-[31px] top-1 h-4 w-4 rounded-full border-2 border-white @(logs[i].Contains("Restored") ? "bg-orange-400" : (logs[i].Contains("Saved") ? "bg-green-400" : "bg-blue-400")) shadow-sm"></div>
+                                <div class="bg-white p-3 rounded-lg border border-slate-200 shadow-sm text-sm font-medium text-slate-700">
+                                    @logs[i]
+                                </div>
+                            </div>
+                        }
+                    }
+                    else
+                    {
+                        <div class="text-slate-500 italic text-sm">No state changes yet.</div>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

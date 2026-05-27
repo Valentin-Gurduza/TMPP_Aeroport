@@ -12,37 +12,35 @@ namespace TMPP_Aeroport.Controllers
     {
         private readonly UserManager<ApplicationUser> _userManager;
         private readonly RoleManager<IdentityRole> _roleManager;
+        private readonly ApplicationDbContext _dbContext;
 
-        public AdminController(UserManager<ApplicationUser> userManager, RoleManager<IdentityRole> roleManager)
+        public AdminController(UserManager<ApplicationUser> userManager, RoleManager<IdentityRole> roleManager, ApplicationDbContext dbContext)
         {
             _userManager = userManager;
             _roleManager = roleManager;
+            _dbContext = dbContext;
         }
 
         public async Task<IActionResult> Index()
         {
-            var users = await _userManager.Users.ToListAsync();
-            var userRolesViewModel = new List<UserRolesViewModel>();
+            var users = await _dbContext.Users.ToListAsync();
+            var userRoles = await _dbContext.UserRoles.ToListAsync();
+            var roles = await _dbContext.Roles.ToListAsync();
 
-            foreach (var user in users)
+            var userRolesViewModel = users.Select(user => new UserRolesViewModel
             {
-                var viewModel = new UserRolesViewModel
-                {
-                    UserId = user.Id,
-                    FirstName = user.FirstName,
-                    LastName = user.LastName,
-                    Email = user.Email,
-                    Roles = await GetUserRoles(user)
-                };
-                userRolesViewModel.Add(viewModel);
-            }
+                UserId = user.Id,
+                FirstName = user.FirstName,
+                LastName = user.LastName,
+                Email = user.Email,
+                Roles = userRoles.Where(ur => ur.UserId == user.Id)
+                                 .Select(ur => roles.FirstOrDefault(r => r.Id == ur.RoleId)?.Name)
+                                 .Where(name => name != null)
+                                 .Select(name => name!)
+                                 .ToList()
+            }).ToList();
 
             return View(userRolesViewModel);
-        }
-
-        private async Task<List<string>> GetUserRoles(ApplicationUser user)
-        {
-            return new List<string>(await _userManager.GetRolesAsync(user));
         }
 
         [HttpGet]
@@ -60,22 +58,16 @@ namespace TMPP_Aeroport.Controllers
             ViewBag.UserName = user.Email;
             var model = new List<ManageUserRolesViewModel>();
 
+            var userRoles = await _userManager.GetRolesAsync(user);
+
             foreach (var role in await _roleManager.Roles.ToListAsync())
             {
                 var userRolesViewModel = new ManageUserRolesViewModel
                 {
                     RoleId = role.Id,
-                    RoleName = role.Name
+                    RoleName = role.Name,
+                    Selected = role.Name != null && userRoles.Contains(role.Name)
                 };
-
-                if (await _userManager.IsInRoleAsync(user, role.Name!))
-                {
-                    userRolesViewModel.Selected = true;
-                }
-                else
-                {
-                    userRolesViewModel.Selected = false;
-                }
 
                 model.Add(userRolesViewModel);
             }
@@ -110,23 +102,8 @@ namespace TMPP_Aeroport.Controllers
                 return View(model);
             }
 
+            TempData["SuccessMessage"] = $"Roles updated successfully for user {user.Email}.";
             return RedirectToAction("Index");
         }
-    }
-
-    public class UserRolesViewModel
-    {
-        public string UserId { get; set; } = string.Empty;
-        public string? FirstName { get; set; }
-        public string? LastName { get; set; }
-        public string? Email { get; set; }
-        public IEnumerable<string> Roles { get; set; } = new List<string>();
-    }
-
-    public class ManageUserRolesViewModel
-    {
-        public string RoleId { get; set; } = string.Empty;
-        public string? RoleName { get; set; }
-        public bool Selected { get; set; }
     }
 }

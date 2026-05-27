@@ -44,6 +44,12 @@
     </div>
     
     <div class="flex items-center gap-4">
+        <!-- Runway Lights Control (Command Pattern) -->
+        <button id="toggle-lights-btn" class="bg-slate-800 hover:bg-slate-700 active:bg-slate-900 text-white px-4 py-2.5 rounded-lg border border-slate-700 shadow-sm flex items-center gap-2 text-sm font-bold transition">
+            <span class="material-symbols-outlined text-[18px] text-amber-400">lightbulb</span>
+            <span>Toggle Runway Lights</span>
+        </button>
+
         <!-- Speed Controls -->
         <div class="bg-white px-2 py-1.5 rounded-lg border border-slate-200 shadow-sm flex items-center gap-1">
             <span class="text-xs font-bold text-slate-400 uppercase mr-2 ml-2">Time:</span>
@@ -238,6 +244,27 @@
                 `;
             }
 
+            function getCombinedPopupContent(f, marker) {
+                let weatherHtml = '';
+                if (marker._weatherCache !== null && marker._weatherCache !== undefined) {
+                    weatherHtml = `
+                        <div class="mt-2 p-2 bg-blue-50 rounded border border-blue-100 flex items-center justify-between">
+                            <span class="text-xs text-blue-800 font-bold flex items-center gap-1">
+                                <span class="material-symbols-outlined text-[12px] align-middle">cloud</span> Dest Temp (Adapter)
+                            </span>
+                            <span class="text-sm font-black text-blue-600">${marker._weatherCache.toFixed(1)}°C</span>
+                        </div>
+                    `;
+                } else {
+                    weatherHtml = `
+                        <div class="mt-2 p-2 bg-slate-50 rounded border border-slate-100 flex items-center justify-center">
+                            <span class="text-xs text-slate-500 italic">Fetching weather via Adapter...</span>
+                        </div>
+                    `;
+                }
+                return generatePopupContent(f) + weatherHtml;
+            }
+
             // If user clicks anywhere else on map, remove trajectory
             map.on('click', () => {
                 if (activeLine) {
@@ -264,9 +291,13 @@
                                 icon: iconFactory.getIcon(iconColor, bearing)
                             }).addTo(map);
 
-                            markers[f.flightNumber].bindPopup(generatePopupContent(f));
+                            markers[f.flightNumber]._weatherCache = null;
 
-                            markers[f.flightNumber].on('click', () => {
+                            markers[f.flightNumber].bindPopup(() => {
+                                return getCombinedPopupContent(f, markers[f.flightNumber]);
+                            });
+
+                            markers[f.flightNumber].on('click', async () => {
                                 if (activeLine) map.removeLayer(activeLine);
                                 activeLineFlightId = f.flightNumber;
                                 activeLine = L.polyline([
@@ -278,17 +309,30 @@
                                     dashArray: '5, 10',
                                     opacity: 0.8
                                 }).addTo(map);
+
+                                // Fetch weather via Adapter API
+                                try {
+                                    const response = await fetch('/Airport/GetWeatherForCity?city=' + encodeURIComponent(f.destName));
+                                    const data = await response.json();
+                                    markers[f.flightNumber]._weatherCache = data.temperatureCelsius;
+                                    
+                                    // Force popup update if it's open
+                                    if (markers[f.flightNumber].isPopupOpen()) {
+                                        markers[f.flightNumber].setPopupContent(getCombinedPopupContent(f, markers[f.flightNumber]));
+                                    }
+                                } catch(e) {
+                                    console.error("Weather fetch failed", e);
+                                }
                             });
                         } else {
                             // Update existing marker
                             markers[f.flightNumber].setLatLng([f.currentLat, f.currentLng]);
                             
                             // Only update icon if bearing changed significantly to avoid constant DOM updates
-                            // (Simplified: just setting it is fine because Flyweight caches the DOM object)
                             markers[f.flightNumber].setIcon(iconFactory.getIcon(iconColor, bearing));
 
                             if (markers[f.flightNumber].isPopupOpen()) {
-                                markers[f.flightNumber].setPopupContent(generatePopupContent(f));
+                                markers[f.flightNumber].setPopupContent(getCombinedPopupContent(f, markers[f.flightNumber]));
                             }
                         }
                     });
@@ -299,11 +343,39 @@
                         if (!activeIds.includes(id)) {
                             map.removeLayer(markers[id]);
                             delete markers[id];
+                            
                             if (activeLineFlightId === id && activeLine) {
                                 map.removeLayer(activeLine);
                                 activeLine = null;
+                                activeLineFlightId = null;
                             }
                         }
+                    }
+                });
+
+                window.globalConnection.on("RunwayLights", function (lightsOn) {
+                    const radarMapElement = document.getElementById('radar-map');
+                    if (lightsOn) {
+                        // Flash map brightly to simulate runway lights coming on!
+                        radarMapElement.style.transition = 'filter 0.5s ease-in-out, box-shadow 0.5s ease';
+                        radarMapElement.style.filter = 'brightness(1.5) contrast(1.2)';
+                        radarMapElement.style.boxShadow = '0 0 40px 10px rgba(96, 165, 250, 0.6)';
+                        
+                        // Toast notification
+                        const toast = document.createElement('div');
+                        toast.innerHTML = '<span class="material-symbols-outlined">lightbulb</span> Runway Lights Activated (Command Pattern)';
+                        toast.style.cssText = 'position:fixed; bottom:20px; left:20px; background:#3b82f6; color:white; padding:15px 25px; border-radius:8px; font-family:sans-serif; font-weight:bold; display:flex; gap:10px; align-items:center; box-shadow:0 10px 25px rgba(0,0,0,0.5); z-index:9999; animation: slideInLeft 0.3s ease-out;';
+                        document.body.appendChild(toast);
+                        setTimeout(() => { toast.style.animation = 'slideOutLeft 0.3s ease-in'; setTimeout(() => toast.remove(), 300); }, 4000);
+                    } else {
+                        radarMapElement.style.filter = 'brightness(1) contrast(1)';
+                        radarMapElement.style.boxShadow = 'none';
+                        
+                        const toast = document.createElement('div');
+                        toast.innerHTML = '<span class="material-symbols-outlined text-slate-400">lightbulb_outline</span> Runway Lights Deactivated';
+                        toast.style.cssText = 'position:fixed; bottom:20px; left:20px; background:#1e293b; color:white; padding:15px 25px; border-radius:8px; font-family:sans-serif; font-weight:bold; display:flex; gap:10px; align-items:center; box-shadow:0 10px 25px rgba(0,0,0,0.5); z-index:9999; animation: slideInLeft 0.3s ease-out;';
+                        document.body.appendChild(toast);
+                        setTimeout(() => { toast.style.animation = 'slideOutLeft 0.3s ease-in'; setTimeout(() => toast.remove(), 300); }, 4000);
                     }
                 });
             } else {
@@ -330,6 +402,22 @@
                     }
                 });
             });
+
+            // Toggle Runway Lights click handler
+            const toggleLightsBtn = document.getElementById('toggle-lights-btn');
+            if (toggleLightsBtn) {
+                toggleLightsBtn.addEventListener('click', async () => {
+                    toggleLightsBtn.disabled = true;
+                    try {
+                        await fetch('/ATC/RunwayLights?commandName=ToggleLights');
+                        toastr.success("Runway Lights Command Sent!", "Command Pattern");
+                    } catch (e) {
+                        toastr.error("Failed to send command.", "Error");
+                    } finally {
+                        toggleLightsBtn.disabled = false;
+                    }
+                });
+            }
         });
     </script>
 }

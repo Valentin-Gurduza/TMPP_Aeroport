@@ -29,8 +29,9 @@ builder.Services.AddSignalR(); // Adăugat pentru Faza 4 (Real-time WebSockets)
 builder.Services.AddSingleton<TMPP_Aeroport.Domain.Interfaces.IFlightService, TMPP_Aeroport.Services.FlightService>();
 builder.Services.AddSingleton<TMPP_Aeroport.Domain.Interfaces.IAircraftService, TMPP_Aeroport.Services.AircraftService>();
 
-// Global Background Simulation
-builder.Services.AddHostedService<TMPP_Aeroport.Services.FlightSimulationService>();
+// Global Background Simulation (Registered as Singleton so it can be injected in Controllers, and HostedService to run in background)
+builder.Services.AddSingleton<TMPP_Aeroport.Services.FlightSimulationService>();
+builder.Services.AddHostedService(provider => provider.GetRequiredService<TMPP_Aeroport.Services.FlightSimulationService>());
 
 // Register Adapter Pattern Services
 builder.Services.AddSingleton<TMPP_Aeroport.Domain.Adapter.LegacyWeatherSystem>();

@@ -1,0 +1,59 @@
+@model dynamic
+@{
+    ViewData["Title"] = "Terminal Displays";
+    Layout = "~/Views/Shared/_LayoutCorporate.cshtml";
+    
+    var hardware = ViewBag.Hardware as string;
+    var departuresHtml = ViewBag.DeparturesRender as string;
+    var arrivalsHtml = ViewBag.ArrivalsRender as string;
+}
+
+<div class="max-w-7xl mx-auto space-y-8 animate-fade-in-up">
+    <!-- Header -->
+    <div class="flex items-center justify-between mb-8">
+        <div>
+            <h1 class="text-3xl font-extrabold text-slate-800 tracking-tight flex items-center">
+                <span class="material-symbols-outlined mr-3 text-4xl text-blue-600">monitor</span>
+                Terminal Displays Configuration
+            </h1>
+            <p class="text-slate-500 mt-2 text-lg">Bridge Pattern: Rendering flight boards onto different hardware implementations</p>
+        </div>
+        
+        <form action="/GroundOps/TerminalDisplays" method="get" class="flex items-center space-x-3 bg-white p-2 rounded-xl border border-slate-200 shadow-sm">
+            <span class="text-sm font-semibold text-slate-500 uppercase px-2">Hardware Target:</span>
+            <select name="hardware" onchange="this.form.submit()" class="px-4 py-2 rounded-lg border-0 bg-slate-100 focus:ring-0 font-bold text-slate-700 cursor-pointer hover:bg-slate-200 transition">
+                <option value="led" selected="@(hardware == "led")">LED Matrix Display</option>
+                <option value="web" selected="@(hardware == "web")">Smart TV / Web Browser</option>
+            </select>
+        </form>
+    </div>
+
+    <!-- Displays Grid -->
+    <div class="grid grid-cols-1 xl:grid-cols-2 gap-8">
+        <!-- Departures -->
+        <div class="bg-white border border-slate-200 rounded-2xl shadow-sm overflow-hidden flex flex-col">
+            <div class="bg-slate-50 border-b border-slate-200 px-6 py-4">
+                <h2 class="text-lg font-bold text-slate-800 flex items-center">
+                    <span class="material-symbols-outlined mr-2 text-blue-600">flight_takeoff</span>
+                    Departures Board
+                </h2>
+            </div>
+            <div class="p-6 bg-slate-900 flex-grow min-h-[400px]">
+                @Html.Raw(departuresHtml)
+            </div>
+        </div>
+
+        <!-- Arrivals -->
+        <div class="bg-white border border-slate-200 rounded-2xl shadow-sm overflow-hidden flex flex-col">
+            <div class="bg-slate-50 border-b border-slate-200 px-6 py-4">
+                <h2 class="text-lg font-bold text-slate-800 flex items-center">
+                    <span class="material-symbols-outlined mr-2 text-green-600">flight_land</span>
+                    Arrivals Board
+                </h2>
+            </div>
+            <div class="p-6 bg-slate-900 flex-grow min-h-[400px]">
+                @Html.Raw(arrivalsHtml)
+            </div>
+        </div>
+    </div>
+</div>

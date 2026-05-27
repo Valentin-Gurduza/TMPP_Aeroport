@@ -19,35 +19,41 @@ namespace TMPP_Aeroport.Domain.Bridge
     // Concrete Implementation 1: Panou Tradițional LED în Terminal
     public class LEDRenderer : IDisplayRenderer
     {
-        public string RenderHeader(string title) => $"[LED MATRIX] ---- {title.ToUpper()} ----";
-        public string RenderRow(Flight flight) => $"[LED RED] > {flight.FlightNumber} | {flight.Destination} | {flight.DepartureTime:HH:mm} | {flight.Status.ToUpper()}";
-        public string RenderFooter() => $"[LED MATRIX] ------------------------\n";
+        public string RenderHeader(string title) => $"<div class='text-center border-b border-red-500/30 pb-3 mb-4 font-bold text-red-400'>[LED MATRIX] ---- {title.ToUpper()} ----</div>";
+        
+        public string RenderRow(Flight flight) 
+        {
+            return $"<div class='flex items-center gap-4 bg-red-900/10 p-2 rounded border border-red-500/10 text-red-500 font-mono text-sm'>" +
+                   $"<span class='text-xs opacity-60 w-12'>{flight.DepartureTime:HH:mm}</span>" +
+                   $"<span class='flex-1 font-bold w-32'>&gt; {flight.FlightNumber}</span>" +
+                   $"<span class='flex-1 opacity-80'>{flight.Destination}</span>" +
+                   $"<span class='bg-red-500/20 px-2 py-0.5 rounded text-xs font-bold border border-red-500/30 animate-pulse w-24 text-center'>{flight.Status.ToUpper()}</span>" +
+                   $"</div>";
+        }
+        
+        public string RenderFooter() => $"<div class='text-center border-t border-red-500/30 pt-2 mt-4 text-xs opacity-50'>[END OF LED DATA]</div>";
     }
 
     // Concrete Implementation 2: Monitor Smart TV LCD
     public class WebRenderer : IDisplayRenderer
     {
-        public string RenderHeader(string title) => $"<div class='bg-slate-800 text-white rounded-xl overflow-hidden shadow-lg border border-slate-700'><div class='bg-slate-900 px-4 py-3 border-b border-slate-700 font-bold uppercase tracking-wider text-sm flex items-center gap-2'><span class='material-symbols-outlined text-blue-400'>monitor</span> {title}</div><div class='divide-y divide-slate-700'>";
+        public string RenderHeader(string title) => $"<div class='text-center border-b border-cyan-500/30 pb-3 mb-4 font-bold text-cyan-300'>✈ {title.ToUpper()} (SMART WEB)</div>";
         
         public string RenderRow(Flight flight) 
         {
-            string statusColor = flight.Status == "Airborne" ? "text-emerald-400" : 
-                                 flight.Status == "Boarding" ? "text-amber-400" : "text-slate-300";
+            string statusColor = flight.Status == "Airborne" ? "text-emerald-300 bg-emerald-500/20 border-emerald-500/30" : 
+                                 flight.Status == "Boarding" ? "text-amber-300 bg-amber-500/20 border-amber-500/30 animate-pulse" : 
+                                 "text-cyan-300 bg-cyan-500/20 border-cyan-500/30";
             
-            return $@"
-                <div class='px-4 py-3 flex justify-between items-center hover:bg-slate-750 transition'>
-                    <div class='flex flex-col'>
-                        <span class='font-bold text-slate-100'>{flight.FlightNumber}</span>
-                        <span class='text-xs text-slate-400'>{flight.Destination}</span>
-                    </div>
-                    <div class='flex flex-col items-end'>
-                        <span class='font-mono text-sm text-blue-300'>{flight.DepartureTime:HH:mm}</span>
-                        <span class='text-xs font-bold uppercase {statusColor}'>{flight.Status}</span>
-                    </div>
-                </div>";
+            return $"<div class='flex items-center gap-4 bg-cyan-900/20 p-2 rounded border border-cyan-500/10'>" +
+                   $"<span class='text-xs opacity-60 w-12 text-cyan-200'>{flight.DepartureTime:HH:mm}</span>" +
+                   $"<span class='flex-1 font-bold text-white w-32'>&gt; {flight.FlightNumber}</span>" +
+                   $"<span class='flex-1 text-cyan-100'>{flight.Destination}</span>" +
+                   $"<span class='px-2 py-0.5 rounded text-xs font-bold border {statusColor} w-24 text-center'>{flight.Status.ToUpper()}</span>" +
+                   $"</div>";
         }
         
-        public string RenderFooter() => $"</div></div>\n";
+        public string RenderFooter() => $"<div class='text-center pt-2 mt-4 text-xs text-cyan-600 font-mono'>Powered by WebRenderer UI</div>";
     }
 
     // =========================================================
@@ -92,7 +98,7 @@ namespace TMPP_Aeroport.Domain.Bridge
 
         public override string ShowBoard(IEnumerable<Flight> flights)
         {
-            var output = renderer.RenderHeader("Afișaj Secundar (Hardware Test)");
+            var output = renderer.RenderHeader("Sosiri Curente (Arrivals)");
             foreach (var f in flights)
             {
                 output += "\n" + renderer.RenderRow(f);

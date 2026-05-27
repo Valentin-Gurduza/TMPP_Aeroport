@@ -23,10 +23,11 @@ namespace TMPP_Aeroport.Controllers
 
         // GET: Flights
         // Accessible by all authenticated users (passengers see the board, admins manage it)
-        public async Task<IActionResult> Index()
+        public async Task<IActionResult> Index(int? pageNumber)
         {
-            var applicationDbContext = _context.Flights.Include(f => f.Aircraft);
-            return View(await applicationDbContext.ToListAsync());
+            var flights = _context.Flights.Include(f => f.Aircraft).OrderByDescending(f => f.DepartureTime);
+            int pageSize = 10;
+            return View(await PaginatedList<Flight>.CreateAsync(flights.AsNoTracking(), pageNumber ?? 1, pageSize));
         }
 
         // GET: Flights/Create
@@ -81,8 +82,41 @@ namespace TMPP_Aeroport.Controllers
                 
                 // SignalR: Observer Pattern - Notificăm toți clienții conectați!
                 await _hubContext.Clients.All.SendAsync("ReceiveFlightUpdate", flight.Id, flight.Status);
+                
+                TempData["SuccessMessage"] = $"Flight {flight.FlightNumber} status updated to {flight.Status}.";
             }
 
+            return RedirectToAction(nameof(Index));
+        }
+
+        // GET: Flights/Delete/5
+        [Authorize(Roles = "Admin")]
+        public async Task<IActionResult> Delete(int? id)
+        {
+            if (id == null) return NotFound();
+
+            var flight = await _context.Flights
+                .Include(f => f.Aircraft)
+                .FirstOrDefaultAsync(m => m.Id == id);
+            if (flight == null) return NotFound();
+
+            return View(flight);
+        }
+
+        // POST: Flights/Delete/5
+        [HttpPost, ActionName("Delete")]
+        [ValidateAntiForgeryToken]
+        [Authorize(Roles = "Admin")]
+        public async Task<IActionResult> DeleteConfirmed(int id)
+        {
+            var flight = await _context.Flights.FindAsync(id);
+            if (flight != null)
+            {
+                var flightNumber = flight.FlightNumber;
+                _context.Flights.Remove(flight);
+                await _context.SaveChangesAsync();
+                TempData["SuccessMessage"] = $"Flight {flightNumber} has been successfully deleted.";
+            }
             return RedirectToAction(nameof(Index));
         }
     }

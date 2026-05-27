@@ -16,6 +16,10 @@ namespace TMPP_Aeroport.Models
 
         [Required]
         [MaxLength(100)]
+        public string Origin { get; set; } = "Bucharest OTP";
+
+        [Required]
+        [MaxLength(100)]
         public string Destination { get; set; } = string.Empty;
 
         [Required]
@@ -23,7 +27,7 @@ namespace TMPP_Aeroport.Models
 
         [Required]
         [MaxLength(50)]
-        public string Status { get; set; } = "Scheduled"; // Expected: Scheduled, Boarding, Airborne, Landed, Cancelled
+        public string Status { get; set; } = FlightStatus.Scheduled;
 
         // Foreign Key to Aircraft
         public int AircraftId { get; set; }

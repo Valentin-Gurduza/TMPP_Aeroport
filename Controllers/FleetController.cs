@@ -17,9 +17,11 @@ namespace TMPP_Aeroport.Controllers
         }
 
         // GET: Fleet
-        public async Task<IActionResult> Index()
+        public async Task<IActionResult> Index(int? pageNumber)
         {
-            return View(await _context.Aircrafts.ToListAsync());
+            var aircrafts = _context.Aircrafts.OrderBy(a => a.RegistrationCode);
+            int pageSize = 10;
+            return View(await PaginatedList<Aircraft>.CreateAsync(aircrafts.AsNoTracking(), pageNumber ?? 1, pageSize));
         }
 
         // GET: Fleet/Create
@@ -39,6 +41,7 @@ namespace TMPP_Aeroport.Controllers
             {
                 _context.Add(aircraft);
                 await _context.SaveChangesAsync();
+                TempData["SuccessMessage"] = $"Aircraft {aircraft.RegistrationCode} added to fleet.";
                 return RedirectToAction(nameof(Index));
             }
             return View(aircraft);
@@ -70,6 +73,7 @@ namespace TMPP_Aeroport.Controllers
                 {
                     _context.Update(aircraft);
                     await _context.SaveChangesAsync();
+                    TempData["SuccessMessage"] = $"Aircraft {aircraft.RegistrationCode} updated successfully.";
                 }
                 catch (DbUpdateConcurrencyException)
                 {
@@ -90,8 +94,10 @@ namespace TMPP_Aeroport.Controllers
             var aircraft = await _context.Aircrafts.FindAsync(id);
             if (aircraft != null)
             {
+                var code = aircraft.RegistrationCode;
                 _context.Aircrafts.Remove(aircraft);
                 await _context.SaveChangesAsync();
+                TempData["SuccessMessage"] = $"Aircraft {code} removed from fleet.";
             }
             return RedirectToAction(nameof(Index));
         }
