@@ -1,4 +1,4 @@
-@model IEnumerable<TMPP_Aeroport.Models.Flight>
+@model TMPP_Aeroport.Models.PaginatedList<TMPP_Aeroport.Models.Flight>
 @{
     ViewData["Title"] = "Flight Departures";
 }
@@ -76,6 +76,29 @@
             }
         </tbody>
     </table>
+</div>
+
+@{
+    var prevDisabled = !Model.HasPreviousPage ? "disabled opacity-50 cursor-not-allowed" : "";
+    var nextDisabled = !Model.HasNextPage ? "disabled opacity-50 cursor-not-allowed" : "";
+}
+
+<div class="mt-6 flex justify-between items-center">
+    <div class="text-sm text-slate-400">
+        Page @Model.PageIndex of @Model.TotalPages
+    </div>
+    <div class="flex gap-2">
+        <a asp-action="Index"
+           asp-route-pageNumber="@(Model.PageIndex - 1)"
+           class="px-4 py-2 bg-slate-800 text-slate-300 rounded hover:bg-slate-700 transition @prevDisabled">
+            Previous
+        </a>
+        <a asp-action="Index"
+           asp-route-pageNumber="@(Model.PageIndex + 1)"
+           class="px-4 py-2 bg-slate-800 text-slate-300 rounded hover:bg-slate-700 transition @nextDisabled">
+            Next
+        </a>
+    </div>
 </div>
 
 @section Scripts {

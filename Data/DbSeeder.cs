@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Identity;
+using Microsoft.Extensions.Configuration;
 using TMPP_Aeroport.Models;
 using System;
 using System.Collections.Generic;
@@ -40,7 +41,9 @@ namespace TMPP_Aeroport.Data
                     EmailConfirmed = true
                 };
 
-                var createPowerUser = await userManager.CreateAsync(newAdmin, "Admin123!");
+                var config = serviceProvider.GetRequiredService<IConfiguration>();
+                string adminPassword = config["SeedAdminPassword"] ?? "Admin123!";
+                var createPowerUser = await userManager.CreateAsync(newAdmin, adminPassword);
                 if (createPowerUser.Succeeded)
                 {
                     await userManager.AddToRoleAsync(newAdmin, "Admin");
@@ -50,17 +53,7 @@ namespace TMPP_Aeroport.Data
             // Seed Aircrafts and Flights
             var context = serviceProvider.GetRequiredService<ApplicationDbContext>();
             
-            // Clear existing for a fresh simulation start (Optional, but good for demo)
-            if (context.Flights.Any()) 
-            { 
-                context.Flights.RemoveRange(context.Flights); 
-                await context.SaveChangesAsync(); 
-            }
-            if (context.Aircrafts.Any()) 
-            { 
-                context.Aircrafts.RemoveRange(context.Aircrafts); 
-                await context.SaveChangesAsync(); 
-            }
+            // Only seed if empty (do not clear existing data)
             
             if (!context.Aircrafts.Any())
             {
@@ -92,26 +85,26 @@ namespace TMPP_Aeroport.Data
                     var flights = new List<Flight>
                     {
                         // Airborne right now (Departed 1 hour ago)
-                        new Flight { FlightNumber = "RO301", Destination = "Frankfurt FRA", DepartureTime = now.AddHours(-1), Status = "Airborne", AircraftId = aircraftList[0].Id },
-                        new Flight { FlightNumber = "AF108", Destination = "Bucharest OTP", DepartureTime = now.AddHours(-1.5), Status = "Airborne", AircraftId = aircraftList[3].Id },
-                        new Flight { FlightNumber = "KLM99", Destination = "Amsterdam AMS", DepartureTime = now.AddMinutes(-45), Status = "Airborne", AircraftId = aircraftList[5].Id },
-                        new Flight { FlightNumber = "BA402", Destination = "Rome FCO", DepartureTime = now.AddMinutes(-120), Status = "Airborne", AircraftId = aircraftList[7].Id },
+                        new Flight { FlightNumber = "RO301", Destination = "Frankfurt FRA", DepartureTime = now.AddHours(-1), Status = TMPP_Aeroport.Models.FlightStatus.Airborne, AircraftId = aircraftList[0].Id },
+                        new Flight { FlightNumber = "AF108", Destination = "Bucharest OTP", DepartureTime = now.AddHours(-1.5), Status = TMPP_Aeroport.Models.FlightStatus.Airborne, AircraftId = aircraftList[3].Id },
+                        new Flight { FlightNumber = "KLM99", Destination = "Amsterdam AMS", DepartureTime = now.AddMinutes(-45), Status = TMPP_Aeroport.Models.FlightStatus.Airborne, AircraftId = aircraftList[5].Id },
+                        new Flight { FlightNumber = "BA402", Destination = "Rome FCO", DepartureTime = now.AddMinutes(-120), Status = TMPP_Aeroport.Models.FlightStatus.Airborne, AircraftId = aircraftList[7].Id },
                         
                         // Boarding right now (Departing in 15 mins)
-                        new Flight { FlightNumber = "RO381", Destination = "Paris CDG", DepartureTime = now.AddMinutes(15), Status = "Boarding", AircraftId = aircraftList[1].Id },
-                        new Flight { FlightNumber = "LH202", Destination = "Berlin BER", DepartureTime = now.AddMinutes(5), Status = "Boarding", AircraftId = aircraftList[8].Id },
-                        new Flight { FlightNumber = "W6314", Destination = "London LHR", DepartureTime = now.AddMinutes(25), Status = "Boarding", AircraftId = aircraftList[11].Id },
+                        new Flight { FlightNumber = "RO381", Destination = "Paris CDG", DepartureTime = now.AddMinutes(15), Status = TMPP_Aeroport.Models.FlightStatus.Boarding, AircraftId = aircraftList[1].Id },
+                        new Flight { FlightNumber = "LH202", Destination = "Berlin BER", DepartureTime = now.AddMinutes(5), Status = TMPP_Aeroport.Models.FlightStatus.Boarding, AircraftId = aircraftList[8].Id },
+                        new Flight { FlightNumber = "W6314", Destination = "London LHR", DepartureTime = now.AddMinutes(25), Status = TMPP_Aeroport.Models.FlightStatus.Boarding, AircraftId = aircraftList[11].Id },
 
                         // Scheduled soon
-                        new Flight { FlightNumber = "RO361", Destination = "Amsterdam AMS", DepartureTime = now.AddMinutes(45), Status = "Scheduled", AircraftId = aircraftList[2].Id },
-                        new Flight { FlightNumber = "IB311", Destination = "Madrid MAD", DepartureTime = now.AddMinutes(90), Status = "Scheduled", AircraftId = aircraftList[9].Id },
-                        new Flight { FlightNumber = "FR102", Destination = "Rome FCO", DepartureTime = now.AddHours(2), Status = "Scheduled", AircraftId = aircraftList[10].Id },
+                        new Flight { FlightNumber = "RO361", Destination = "Amsterdam AMS", DepartureTime = now.AddMinutes(45), Status = TMPP_Aeroport.Models.FlightStatus.Scheduled, AircraftId = aircraftList[2].Id },
+                        new Flight { FlightNumber = "IB311", Destination = "Madrid MAD", DepartureTime = now.AddMinutes(90), Status = TMPP_Aeroport.Models.FlightStatus.Scheduled, AircraftId = aircraftList[9].Id },
+                        new Flight { FlightNumber = "FR102", Destination = "Rome FCO", DepartureTime = now.AddHours(2), Status = TMPP_Aeroport.Models.FlightStatus.Scheduled, AircraftId = aircraftList[10].Id },
                         
                         // Scheduled future (Tomorrow)
-                        new Flight { FlightNumber = "RO315", Destination = "Munich MUC", DepartureTime = now.AddDays(1).AddHours(2), Status = "Scheduled", AircraftId = aircraftList[0].Id },
-                        new Flight { FlightNumber = "RO391", Destination = "London LHR", DepartureTime = now.AddDays(1).AddHours(6), Status = "Scheduled", AircraftId = aircraftList[1].Id },
-                        new Flight { FlightNumber = "AF202", Destination = "Paris CDG", DepartureTime = now.AddDays(2).AddHours(1), Status = "Scheduled", AircraftId = aircraftList[4].Id },
-                        new Flight { FlightNumber = "KLM101", Destination = "Amsterdam AMS", DepartureTime = now.AddDays(3), Status = "Scheduled", AircraftId = aircraftList[6].Id }
+                        new Flight { FlightNumber = "RO315", Destination = "Munich MUC", DepartureTime = now.AddDays(1).AddHours(2), Status = TMPP_Aeroport.Models.FlightStatus.Scheduled, AircraftId = aircraftList[0].Id },
+                        new Flight { FlightNumber = "RO391", Destination = "London LHR", DepartureTime = now.AddDays(1).AddHours(6), Status = TMPP_Aeroport.Models.FlightStatus.Scheduled, AircraftId = aircraftList[1].Id },
+                        new Flight { FlightNumber = "AF202", Destination = "Paris CDG", DepartureTime = now.AddDays(2).AddHours(1), Status = TMPP_Aeroport.Models.FlightStatus.Scheduled, AircraftId = aircraftList[4].Id },
+                        new Flight { FlightNumber = "KLM101", Destination = "Amsterdam AMS", DepartureTime = now.AddDays(3), Status = TMPP_Aeroport.Models.FlightStatus.Scheduled, AircraftId = aircraftList[6].Id }
                     };
                     context.Flights.AddRange(flights);
                     await context.SaveChangesAsync();

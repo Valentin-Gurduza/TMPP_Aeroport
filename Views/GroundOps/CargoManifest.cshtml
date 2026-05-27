@@ -1,0 +1,50 @@
+@model dynamic
+@{
+    ViewData["Title"] = "Cargo Manifest";
+    Layout = "~/Views/Shared/_LayoutCorporate.cshtml";
+    
+    var totalWeight = ViewBag.TotalWeight as double?;
+    var stringTree = ViewBag.StringTree as string;
+}
+
+<div class="max-w-4xl mx-auto space-y-6 animate-fade-in-up">
+    <!-- Header -->
+    <div class="flex items-center justify-between mb-8">
+        <div>
+            <h1 class="text-3xl font-extrabold text-slate-800 tracking-tight flex items-center">
+                <span class="material-symbols-outlined mr-3 text-4xl text-blue-600">luggage</span>
+                Cargo & Baggage Manifest
+            </h1>
+            <p class="text-slate-500 mt-2 text-lg">Composite Pattern: Hierarchical Cargo Weight Calculation</p>
+        </div>
+        <div class="bg-blue-50 border border-blue-200 px-6 py-3 rounded-2xl flex flex-col items-end">
+            <span class="text-xs font-bold text-blue-500 uppercase tracking-wide">Total Takeoff Weight</span>
+            <span class="text-3xl font-black text-blue-700">@totalWeight kg</span>
+        </div>
+    </div>
+
+    <div class="bg-white border border-slate-200 rounded-2xl shadow-sm overflow-hidden">
+        <div class="bg-slate-50 border-b border-slate-200 px-6 py-4 flex items-center">
+            <span class="material-symbols-outlined mr-2 text-slate-600">account_tree</span>
+            <h2 class="text-lg font-bold text-slate-800">Hierarchical Manifest Tree</h2>
+        </div>
+        
+        <div class="p-6">
+            <div class="bg-slate-900 rounded-xl p-6 overflow-x-auto shadow-inner">
+                <pre class="font-mono text-sm text-slate-300 whitespace-pre">@Html.Raw(stringTree)</pre>
+            </div>
+            
+            <div class="mt-6 flex items-start p-4 bg-blue-50 border-l-4 border-blue-500 rounded-r-lg">
+                <span class="material-symbols-outlined text-blue-500 mr-3">info</span>
+                <div>
+                    <h4 class="font-bold text-blue-800">How it works (Composite Pattern)</h4>
+                    <p class="text-sm text-blue-600 mt-1">
+                        The controller calls <code class="bg-blue-100 px-1 rounded">mainCargo.GetWeight()</code> exactly once. 
+                        The pattern automatically recursively drills down through all composite nodes (containers) 
+                        and leaf nodes (suitcases) to sum up the total weight. No loops are written in the controller!
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

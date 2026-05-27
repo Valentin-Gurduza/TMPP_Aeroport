@@ -1,3 +1,4 @@
+@model TMPP_Aeroport.Domain.Builder.FlightItinerary
 @{
     ViewData["Title"] = "Itinerary Planner";
 }
@@ -11,53 +12,79 @@
     <p class="text-slate-500 mt-1">Builder Pattern — Constructing complex <span class="font-mono bg-slate-100 text-blue-600 px-2 py-0.5 rounded text-sm">FlightItinerary</span> objects step-by-step via director</p>
 </div>
 
+@if (TempData["SuccessMessage"] != null)
+{
+    <div class="mb-6 p-4 bg-emerald-100 border border-emerald-300 text-emerald-800 rounded-xl flex items-start gap-3 shadow-sm animate-fadeIn">
+        <span class="material-symbols-outlined text-emerald-600 mt-0.5 text-[24px]">check_circle</span>
+        <div>
+            <p class="font-bold text-emerald-950">Package Ticket Booked Successfully!</p>
+            <p class="text-sm text-emerald-800 mt-0.5">@TempData["SuccessMessage"]</p>
+            <div class="mt-3">
+                <a asp-controller="Tickets" asp-action="MyTickets" class="inline-flex items-center gap-1.5 text-xs font-bold px-3 py-1.5 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition">
+                    <span class="material-symbols-outlined text-[14px]">confirmation_number</span> View My Tickets
+                </a>
+            </div>
+        </div>
+    </div>
+}
+@if (TempData["Error"] != null)
+{
+    <div class="mb-6 p-4 bg-red-100 border border-red-300 text-red-800 rounded-xl flex items-center gap-3 shadow-sm animate-fadeIn">
+        <span class="material-symbols-outlined text-red-600 text-[24px]">error</span>
+        <div>
+            <p class="font-bold">Error Booking Ticket</p>
+            <p class="text-sm">@TempData["Error"]</p>
+        </div>
+    </div>
+}
+
 <div class="grid grid-cols-1 lg:grid-cols-5 gap-8">
     <!-- Builder Form -->
     <div class="lg:col-span-2 bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
         <div class="bg-slate-50 px-6 py-4 border-b border-slate-200 flex items-center gap-3">
             <span class="material-symbols-outlined text-blue-600">build</span>
-            <h3 class="font-bold text-slate-800 tracking-wide uppercase">Build Itinerary</h3>
+            <h3 class="font-bold text-slate-800 tracking-wide uppercase">Configure Package</h3>
         </div>
         
         <div class="p-6">
             <form action="/Airport/BuilderDemo" method="get" class="space-y-5">
                 <div>
                     <label class="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Passenger Name</label>
-                    <input name="passengerName" type="text" class="w-full px-4 py-2.5 rounded-lg border border-slate-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition outline-none" value="@(ViewBag.PassengerName ?? "Ion Ionescu")" />
+                    <input name="passengerName" type="text" class="w-full px-4 py-2.5 rounded-lg border border-slate-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition outline-none" value="@(Model?.PassengerName ?? "Ion Ionescu")" required />
                 </div>
                 <div>
-                    <label class="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Departure</label>
-                    <input name="departure" type="text" class="w-full px-4 py-2.5 rounded-lg border border-slate-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition outline-none" value="@(ViewBag.Departure ?? "OTP - Bucharest")" />
+                    <label class="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Select Active Flight</label>
+                    <select name="flightId" class="w-full px-4 py-2.5 rounded-lg border border-slate-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition outline-none">
+                        @if (ViewBag.Flights != null)
+                        {
+                            foreach (var f in (List<TMPP_Aeroport.Models.Flight>)ViewBag.Flights)
+                            {
+                                <option value="@f.Id" selected="@(ViewBag.SelectedFlightId == f.Id)">@f.FlightNumber to @f.Destination (@f.DepartureTime.ToString("dd MMM HH:mm"))</option>
+                            }
+                        }
+                        else
+                        {
+                            <option value="">No active flights available</option>
+                        }
+                    </select>
                 </div>
                 <div>
-                    <label class="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Destination</label>
-                    <input name="destination" type="text" class="w-full px-4 py-2.5 rounded-lg border border-slate-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition outline-none" value="@(ViewBag.Destination ?? "CDG - Paris")" />
+                    <label class="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Ticket Class (Director Type)</label>
+                    <select name="type" class="w-full px-4 py-2.5 rounded-lg border border-slate-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition outline-none">
+                        <option value="Economy" selected="@(Model?.TicketType == "Economy")">Economy Package (Standard perks)</option>
+                        <option value="Business" selected="@(Model?.TicketType.Contains("Business") == true)">Business Package (VIP perks)</option>
+                    </select>
                 </div>
                 
                 <div class="pt-4 border-t border-slate-200 space-y-3">
-                    <label class="flex items-center gap-3 cursor-pointer group">
-                        <div class="relative flex items-center">
-                            <input type="checkbox" checked class="w-5 h-5 border-slate-300 rounded text-blue-600 focus:ring-blue-500" />
-                        </div>
-                        <span class="text-sm font-medium text-slate-700 group-hover:text-blue-600 transition">Include Hotel Transfer</span>
-                    </label>
-                    <label class="flex items-center gap-3 cursor-pointer group">
-                        <div class="relative flex items-center">
-                            <input type="checkbox" class="w-5 h-5 border-slate-300 rounded text-blue-600 focus:ring-blue-500" />
-                        </div>
-                        <span class="text-sm font-medium text-slate-700 group-hover:text-blue-600 transition">Include Airport Lounge</span>
-                    </label>
-                    <label class="flex items-center gap-3 cursor-pointer group">
-                        <div class="relative flex items-center">
-                            <input type="checkbox" checked class="w-5 h-5 border-slate-300 rounded text-blue-600 focus:ring-blue-500" />
-                        </div>
-                        <span class="text-sm font-medium text-slate-700 group-hover:text-blue-600 transition">Include Meal Plan</span>
-                    </label>
+                    <p class="text-xs text-slate-500 leading-relaxed">
+                        <span class="font-bold text-slate-700">How Builder Works:</span> Instead of writing code with messy constructors like <code>new FlightItinerary(name, true, false, false, "Menu", 2)</code>, the <code>ItineraryDirector</code> coordinates concrete builders to build complex packages systematically!
+                    </p>
                 </div>
                 
                 <button type="submit" class="w-full mt-4 py-3.5 bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white rounded-xl font-bold tracking-wide transition shadow-lg shadow-blue-600/30 flex justify-center items-center gap-2">
                     <span class="material-symbols-outlined text-[20px]">construction</span>
-                    BUILD ITINERARY
+                    PREVIEW ITINERARY
                 </button>
             </form>
         </div>
@@ -65,55 +92,86 @@
 
     <!-- Result / Steps Display -->
     <div class="lg:col-span-3 space-y-6">
-        <!-- Generated Itinerary Card -->
-        <div class="bg-gradient-to-r from-blue-600 to-indigo-700 rounded-2xl p-6 shadow-lg shadow-blue-900/20 text-white relative overflow-hidden">
-            <span class="material-symbols-outlined absolute -right-4 -bottom-4 text-[120px] opacity-10">map</span>
-            <div class="flex items-center justify-between mb-6 relative z-10 border-b border-white/20 pb-4">
-                <h3 class="font-bold text-lg">Generated Itinerary</h3>
-                <span class="font-mono text-xs bg-white/20 border border-white/30 px-3 py-1 rounded-full text-white backdrop-blur-sm shadow-inner">ID: 0x@(new Random().Next(1000, 9999))</span>
-            </div>
-            
-            <div class="grid grid-cols-2 gap-6 relative z-10">
-                <div class="space-y-4">
-                    <div class="flex gap-3 bg-black/10 p-3 rounded-xl border border-white/10">
-                        <span class="material-symbols-outlined text-blue-200">person</span>
-                        <div>
-                            <p class="text-[10px] text-blue-200 font-bold uppercase tracking-wider">Passenger</p>
-                            <p class="font-bold">@(ViewBag.PassengerName ?? "Ion Ionescu")</p>
+        @if (Model != null)
+        {
+            <!-- Generated Itinerary Card -->
+            <div class="bg-gradient-to-r from-blue-600 to-indigo-700 rounded-2xl p-6 shadow-lg shadow-blue-900/20 text-white relative overflow-hidden">
+                <span class="material-symbols-outlined absolute -right-4 -bottom-4 text-[120px] opacity-10">map</span>
+                <div class="flex items-center justify-between mb-6 relative z-10 border-b border-white/20 pb-4">
+                    <div>
+                        <h3 class="font-bold text-lg">Travel Package Card (@(Model.TicketType.Contains("Business") ? "Business Class" : "Economy"))</h3>
+                        <p class="text-xs text-blue-200 mt-0.5">Route: @ViewBag.Destination</p>
+                    </div>
+                    <span class="font-mono text-xs bg-white/20 border border-white/30 px-3 py-1 rounded-full text-white backdrop-blur-sm shadow-inner">STATUS: READY TO ISSUE</span>
+                </div>
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6 relative z-10 mb-6">
+                    <div class="space-y-4">
+                        <div class="flex gap-3 bg-black/10 p-3 rounded-xl border border-white/10">
+                            <span class="material-symbols-outlined text-blue-200">person</span>
+                            <div>
+                                <p class="text-[10px] text-blue-200 font-bold uppercase tracking-wider">Passenger Name</p>
+                                <p class="font-bold">@Model.PassengerName</p>
+                            </div>
+                        </div>
+                        <div class="flex gap-3 bg-black/10 p-3 rounded-xl border border-white/10">
+                            <span class="material-symbols-outlined text-blue-200">event_seat</span>
+                            <div>
+                                <p class="text-[10px] text-blue-200 font-bold uppercase tracking-wider">Seat & Checked Bags</p>
+                                <p class="font-bold text-sm">@Model.SeatAssigned</p>
+                                <p class="text-xs text-blue-200">Allowance: @Model.CheckedBags Checked Bags</p>
+                            </div>
                         </div>
                     </div>
-                    <div class="flex gap-3 bg-black/10 p-3 rounded-xl border border-white/10">
-                        <span class="material-symbols-outlined text-blue-200">flight_takeoff</span>
-                        <div>
-                            <p class="text-[10px] text-blue-200 font-bold uppercase tracking-wider">Route</p>
-                            <p class="font-bold">@(ViewBag.Departure ?? "OTP") &rarr; @(ViewBag.Destination ?? "CDG")</p>
+                    <div class="space-y-4">
+                        <div class="flex gap-3 @(Model.HasPriorityBoarding ? "bg-emerald-500/20 border-emerald-500/30" : "bg-slate-500/20 border-slate-500/30") p-3 rounded-xl border">
+                            <span class="material-symbols-outlined @(Model.HasPriorityBoarding ? "text-emerald-300" : "text-slate-400")">speed</span>
+                            <div>
+                                <p class="text-[10px] @(Model.HasPriorityBoarding ? "text-emerald-200" : "text-slate-400") font-bold uppercase tracking-wider">Priority Boarding</p>
+                                <p class="font-bold @(Model.HasPriorityBoarding ? "text-emerald-300" : "text-slate-400") text-sm">@(Model.HasPriorityBoarding ? "INCLUDED ✓" : "NOT INCLUDED ✗")</p>
+                            </div>
+                        </div>
+                        <div class="flex gap-3 @(Model.Meals.Any() ? "bg-emerald-500/20 border-emerald-500/30" : "bg-slate-500/20 border-slate-500/30") p-3 rounded-xl border">
+                            <span class="material-symbols-outlined @(Model.Meals.Any() ? "text-emerald-300" : "text-slate-400")">restaurant</span>
+                            <div>
+                                <p class="text-[10px] @(Model.Meals.Any() ? "text-emerald-200" : "text-slate-400") font-bold uppercase tracking-wider">Meal Plan</p>
+                                <p class="font-bold @(Model.Meals.Any() ? "text-emerald-300" : "text-slate-400") text-sm">@(Model.Meals.Any() ? string.Join(", ", Model.Meals) : "NOT INCLUDED ✗")</p>
+                            </div>
+                        </div>
+                        <div class="flex gap-3 @(Model.HasLoungeAccess ? "bg-amber-500/20 border-amber-500/30" : "bg-slate-500/20 border-slate-500/30") p-3 rounded-xl border">
+                            <span class="material-symbols-outlined @(Model.HasLoungeAccess ? "text-amber-300" : "text-slate-400")">weekend</span>
+                            <div>
+                                <p class="text-[10px] @(Model.HasLoungeAccess ? "text-amber-200" : "text-slate-400") font-bold uppercase tracking-wider">Lounge Access</p>
+                                <p class="font-bold @(Model.HasLoungeAccess ? "text-amber-300" : "text-slate-400") text-sm">@(Model.HasLoungeAccess ? "INCLUDED ✓" : "NOT INCLUDED ✗")</p>
+                            </div>
                         </div>
                     </div>
                 </div>
-                <div class="space-y-4">
-                    <div class="flex gap-3 bg-emerald-500/20 p-3 rounded-xl border border-emerald-500/30">
-                        <span class="material-symbols-outlined text-emerald-300">hotel</span>
-                        <div>
-                            <p class="text-[10px] text-emerald-200 font-bold uppercase tracking-wider">Hotel Transfer</p>
-                            <p class="font-bold text-emerald-300 text-sm">INCLUDED ✓</p>
-                        </div>
+
+                <div class="relative z-10 pt-4 border-t border-white/20 flex flex-col sm:flex-row items-center justify-between gap-4">
+                    <div>
+                        <span class="text-xs text-blue-200 block uppercase tracking-wider font-bold">Class Pricing</span>
+                        <span class="text-3xl font-black">@(Model.TicketType.Contains("Business") ? "€450" : "€150")</span>
                     </div>
-                    <div class="flex gap-3 bg-emerald-500/20 p-3 rounded-xl border border-emerald-500/30">
-                        <span class="material-symbols-outlined text-emerald-300">restaurant</span>
-                        <div>
-                            <p class="text-[10px] text-emerald-200 font-bold uppercase tracking-wider">Meal Plan</p>
-                            <p class="font-bold text-emerald-300 text-sm">INCLUDED ✓</p>
-                        </div>
-                    </div>
+                    <form action="/Airport/BookItinerary" method="post" class="w-full sm:w-auto">
+                        @Html.AntiForgeryToken()
+                        <input type="hidden" name="flightId" value="@ViewBag.SelectedFlightId" />
+                        <input type="hidden" name="passengerName" value="@Model.PassengerName" />
+                        <input type="hidden" name="type" value="@(Model.TicketType.Contains("Business") ? "Business" : "Economy")" />
+                        <button type="submit" class="w-full sm:w-auto px-6 py-3.5 bg-white text-blue-700 font-bold rounded-xl shadow-lg hover:bg-blue-50 transition active:scale-95 flex items-center justify-center gap-2">
+                            <span class="material-symbols-outlined">shopping_cart</span>
+                            <span>BOOK PACKAGE TICKET</span>
+                        </button>
+                    </form>
                 </div>
             </div>
-        </div>
+        }
 
         <!-- Builder Steps -->
         <div class="bg-white rounded-2xl p-6 shadow-sm border border-slate-200">
             <div class="flex items-center gap-3 mb-6">
                 <span class="material-symbols-outlined text-blue-600">schema</span>
-                <h3 class="font-bold text-slate-800">Construction Steps (Director Pattern)</h3>
+                <h3 class="font-bold text-slate-800">Construction Steps (Director & Builder Flow)</h3>
             </div>
             
             <div class="space-y-3 font-mono text-sm">
@@ -122,39 +180,16 @@
                     int step = 1;
                     foreach (var s in (List<string>)ViewBag.BuilderSteps)
                     {
-                        <div class="flex items-center gap-4 p-3 bg-slate-50 border border-slate-200 rounded-lg shadow-sm">
+                        <div class="flex items-start gap-4 p-3 bg-slate-50 border border-slate-200 rounded-lg shadow-sm">
                             <span class="text-blue-600 font-bold w-6 text-center">@step.</span>
-                            <span class="text-slate-700 flex-1">@s</span>
-                            <span class="material-symbols-outlined text-emerald-500 text-[18px]">check_circle</span>
+                            <span class="text-slate-700 flex-1 whitespace-pre-wrap">@s</span>
+                            <span class="material-symbols-outlined text-emerald-500 text-[18px] mt-0.5">check_circle</span>
                         </div>
                         step++;
                     }
-                }
-                else
-                {
-                    <div class="flex items-center gap-4 p-3 bg-slate-50 border border-slate-200 rounded-lg shadow-sm">
-                        <span class="text-blue-600 font-bold w-6 text-center">1.</span>
-                        <span class="text-slate-700 flex-1">builder.SetPassenger("Ion Ionescu")</span>
-                        <span class="material-symbols-outlined text-emerald-500 text-[18px]">check_circle</span>
-                    </div>
-                    <div class="flex items-center gap-4 p-3 bg-slate-50 border border-slate-200 rounded-lg shadow-sm">
-                        <span class="text-blue-600 font-bold w-6 text-center">2.</span>
-                        <span class="text-slate-700 flex-1">builder.SetRoute("OTP", "CDG")</span>
-                        <span class="material-symbols-outlined text-emerald-500 text-[18px]">check_circle</span>
-                    </div>
-                    <div class="flex items-center gap-4 p-3 bg-slate-50 border border-slate-200 rounded-lg shadow-sm">
-                        <span class="text-blue-600 font-bold w-6 text-center">3.</span>
-                        <span class="text-slate-700 flex-1">builder.AddHotelTransfer()</span>
-                        <span class="material-symbols-outlined text-emerald-500 text-[18px]">check_circle</span>
-                    </div>
-                    <div class="flex items-center gap-4 p-3 bg-slate-50 border border-slate-200 rounded-lg shadow-sm">
-                        <span class="text-blue-600 font-bold w-6 text-center">4.</span>
-                        <span class="text-slate-700 flex-1">builder.AddMealPlan()</span>
-                        <span class="material-symbols-outlined text-emerald-500 text-[18px]">check_circle</span>
-                    </div>
                     <div class="flex items-center gap-4 p-4 mt-4 border border-emerald-200 bg-emerald-50 rounded-lg shadow-sm">
                         <span class="material-symbols-outlined text-emerald-600 animate-pulse text-[20px]">construction</span>
-                        <span class="text-emerald-700 font-bold">director.Construct() &rarr; FlightItinerary Generated ✓</span>
+                        <span class="text-emerald-700 font-bold flex-1">director.Construct() completed successfully &rarr; FlightItinerary Created!</span>
                     </div>
                 }
             </div>

@@ -1,0 +1,125 @@
+@model IEnumerable<TMPP_Aeroport.Domain.Entities.Flight>
+@{
+    ViewData["Title"] = "Flight Scheduler";
+    Layout = "~/Views/Shared/_LayoutCorporate.cshtml";
+    
+    var sampleBoardingPass = ViewBag.SampleBoardingPass as TMPP_Aeroport.Domain.AbstractFactory.BoardingPass;
+    var sampleBaggageTag = ViewBag.SampleBaggageTag as TMPP_Aeroport.Domain.AbstractFactory.BaggageTag;
+}
+
+<div class="max-w-6xl mx-auto space-y-8 animate-fade-in-up">
+    <!-- Header -->
+    <div class="flex items-center justify-between mb-8">
+        <div>
+            <h1 class="text-3xl font-extrabold text-slate-800 tracking-tight flex items-center">
+                <span class="material-symbols-outlined mr-3 text-4xl text-blue-600">event</span>
+                Flight Scheduler & Factory
+            </h1>
+            <p class="text-slate-500 mt-2 text-lg">Prototype Pattern (Cloning) & Abstract Factory Pattern (Documents)</p>
+        </div>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        
+        <!-- Left: Clone Flight (Prototype) -->
+        <div class="lg:col-span-2 bg-white border border-slate-200 rounded-2xl shadow-sm overflow-hidden">
+            <div class="bg-slate-50 border-b border-slate-200 px-6 py-4 flex items-center justify-between">
+                <h2 class="text-lg font-bold text-slate-800 flex items-center">
+                    <span class="material-symbols-outlined mr-2 text-blue-600">content_copy</span>
+                    Recurrent Flight Scheduling
+                </h2>
+                <span class="bg-blue-100 text-blue-700 text-xs font-bold px-3 py-1 rounded-full border border-blue-200">Prototype</span>
+            </div>
+            
+            <div class="p-0 overflow-x-auto">
+                <table class="w-full text-left border-collapse">
+                    <thead>
+                        <tr class="bg-slate-100 text-slate-500 text-xs uppercase tracking-wider font-bold">
+                            <th class="p-4 border-b border-slate-200">Flight</th>
+                            <th class="p-4 border-b border-slate-200">Route</th>
+                            <th class="p-4 border-b border-slate-200">Status</th>
+                            <th class="p-4 border-b border-slate-200 text-right">Action</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-slate-100 text-sm font-medium text-slate-700">
+                        @foreach (var f in Model.Take(6))
+                        {
+                            <tr class="hover:bg-slate-50 transition">
+                                <td class="p-4">
+                                    <div class="flex items-center">
+                                        <span class="material-symbols-outlined text-slate-400 mr-2 text-base">flight</span>
+                                        <span class="font-bold text-slate-800">@f.FlightNumber</span>
+                                    </div>
+                                </td>
+                                <td class="p-4">OTP → @f.Destination</td>
+                                <td class="p-4">
+                                    <span class="px-2 py-1 rounded-md text-xs font-bold bg-slate-100 border border-slate-200 text-slate-600">Scheduled</span>
+                                </td>
+                                <td class="p-4 text-right">
+                                    <form action="/Management/FlightScheduler" method="get">
+                                        <input type="hidden" name="cloneFlightId" value="@f.Id" />
+                                        <button type="submit" class="inline-flex items-center px-3 py-1.5 bg-blue-50 text-blue-700 border border-blue-200 rounded-lg hover:bg-blue-100 hover:border-blue-300 transition text-xs font-bold shadow-sm">
+                                            <span class="material-symbols-outlined text-sm mr-1">content_copy</span> Clone
+                                        </button>
+                                    </form>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Right: Abstract Factory -->
+        <div class="lg:col-span-1 space-y-6">
+            <div class="bg-white border border-slate-200 rounded-2xl shadow-sm overflow-hidden h-full">
+                <div class="bg-slate-50 border-b border-slate-200 px-6 py-4 flex items-center justify-between">
+                    <h2 class="text-lg font-bold text-slate-800 flex items-center">
+                        <span class="material-symbols-outlined mr-2 text-green-600">factory</span>
+                        Document Factory
+                    </h2>
+                    <span class="bg-green-100 text-green-700 text-xs font-bold px-3 py-1 rounded-full border border-green-200">Abstract Factory</span>
+                </div>
+                
+                <div class="p-6">
+                    <form action="/Management/FlightScheduler" method="get" class="mb-6">
+                        <label class="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">Test Document Generation</label>
+                        <div class="flex space-x-2">
+                            <select name="newTicketType" class="flex-grow px-3 py-2 rounded-lg border border-slate-300 text-sm font-medium focus:border-green-500 focus:ring-2 focus:ring-green-200 outline-none">
+                                <option value="economy">Economy Class</option>
+                                <option value="business">Business Class</option>
+                            </select>
+                            <button type="submit" class="px-4 py-2 bg-green-600 text-white font-bold rounded-lg hover:bg-green-700 transition shadow-sm text-sm">
+                                Generate
+                            </button>
+                        </div>
+                    </form>
+
+                    @if (sampleBoardingPass != null)
+                    {
+                        <div class="space-y-4">
+                            <!-- Boarding Pass -->
+                            <div class="border-2 border-dashed @(sampleBoardingPass is TMPP_Aeroport.Domain.AbstractFactory.BusinessBoardingPass ? "border-amber-300 bg-amber-50 text-amber-900" : "border-slate-300 bg-slate-50 text-slate-700") p-4 rounded-xl relative">
+                                <span class="absolute -top-3 left-4 bg-white px-2 text-xs font-bold uppercase @(sampleBoardingPass is TMPP_Aeroport.Domain.AbstractFactory.BusinessBoardingPass ? "text-amber-600" : "text-slate-500")">Boarding Pass</span>
+                                <div class="font-black text-xl mb-1">@sampleBoardingPass.PassengerName</div>
+                                <div class="text-sm font-medium mb-3">Flight: @sampleBoardingPass.FlightNumber</div>
+                                @Html.Raw(sampleBoardingPass.GetTicketDetails())
+                            </div>
+                            
+                            @if (sampleBaggageTag != null)
+                            {
+                                <!-- Baggage Tag -->
+                                <div class="border-2 border-dashed @(sampleBoardingPass is TMPP_Aeroport.Domain.AbstractFactory.BusinessBoardingPass ? "border-amber-300 bg-amber-50 text-amber-900" : "border-slate-300 bg-slate-50 text-slate-700") p-4 rounded-xl relative">
+                                    <span class="absolute -top-3 left-4 bg-white px-2 text-xs font-bold uppercase @(sampleBoardingPass is TMPP_Aeroport.Domain.AbstractFactory.BusinessBoardingPass ? "text-amber-600" : "text-slate-500")">Baggage Tag</span>
+                                    <div class="font-black text-lg mb-2">Code: @sampleBaggageTag.Code</div>
+                                    Color: @Html.Raw(sampleBaggageTag.GetTagColor())
+                                </div>
+                            }
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+
+    </div>
+</div>

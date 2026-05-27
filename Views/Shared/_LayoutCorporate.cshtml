@@ -78,55 +78,99 @@
 
             <div class="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2 mt-6 px-3">Passenger</div>
             <nav class="space-y-1">
-                <a asp-controller="Tickets" asp-action="MyTickets" class="sidebar-link flex items-center px-3 py-2 text-sm font-medium rounded-md text-slate-700 @(ViewContext.RouteData.Values["controller"]?.ToString() == "Tickets" ? "active" : "")">
+                <a asp-controller="Tickets" asp-action="MyTickets" class="sidebar-link flex items-center px-3 py-2 text-sm font-medium rounded-md text-slate-700 @(ViewContext.RouteData.Values["action"]?.ToString() == "MyTickets" ? "active" : "")">
                     <span class="material-symbols-outlined mr-3 text-[20px]">confirmation_number</span> My Tickets
+                </a>
+                <a asp-controller="Tickets" asp-action="StateDemo" class="sidebar-link flex items-center px-3 py-2 text-sm font-medium rounded-md text-slate-700 @(ViewContext.RouteData.Values["action"]?.ToString() == "StateDemo" ? "active" : "")">
+                    <span class="material-symbols-outlined mr-3 text-[20px]">point_of_sale</span> Ticket Machine
+                </a>
+                <a asp-controller="Tickets" asp-action="StrategyDemo" class="sidebar-link flex items-center px-3 py-2 text-sm font-medium rounded-md text-slate-700 @(ViewContext.RouteData.Values["action"]?.ToString() == "StrategyDemo" ? "active" : "")">
+                    <span class="material-symbols-outlined mr-3 text-[20px]">calculate</span> Check Prices
                 </a>
             </nav>
 
-            <div class="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2 mt-6 px-3">Operations</div>
+            <div class="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2 mt-6 px-3">ATC (Air Traffic)</div>
+            <nav class="space-y-1">
+                <a asp-controller="ATC" asp-action="Radar" class="sidebar-link flex items-center px-3 py-2 text-sm font-medium rounded-md text-slate-700 @(ViewContext.RouteData.Values["action"]?.ToString() == "Radar" ? "active" : "")">
+                    <span class="material-symbols-outlined mr-3 text-[20px]">radar</span> Live Radar <span class="ml-auto w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+                </a>
+                <a asp-controller="ATC" asp-action="ATCTower" class="sidebar-link flex items-center px-3 py-2 text-sm font-medium rounded-md text-slate-700 @(ViewContext.RouteData.Values["action"]?.ToString() == "ATCTower" ? "active" : "")">
+                    <span class="material-symbols-outlined mr-3 text-[20px]">settings_input_antenna</span> ATC Tower
+                </a>
+                <a asp-controller="ATC" asp-action="Alerts" class="sidebar-link flex items-center px-3 py-2 text-sm font-medium rounded-md text-slate-700 @(ViewContext.RouteData.Values["action"]?.ToString() == "Alerts" ? "active" : "")">
+                    <span class="material-symbols-outlined mr-3 text-[20px]">notifications</span> Global Alerts
+                </a>
+                <a asp-controller="ATC" asp-action="RunwayLights" class="sidebar-link flex items-center px-3 py-2 text-sm font-medium rounded-md text-slate-700 @(ViewContext.RouteData.Values["action"]?.ToString() == "RunwayLights" ? "active" : "")">
+                    <span class="material-symbols-outlined mr-3 text-[20px]">lightbulb</span> Runway Lights
+                </a>
+            </nav>
+
+            <div class="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2 mt-6 px-3">Ground Ops</div>
             <nav class="space-y-1">
                 <a asp-controller="Flights" asp-action="Index" class="sidebar-link flex items-center px-3 py-2 text-sm font-medium rounded-md text-slate-700 @(ViewContext.RouteData.Values["controller"]?.ToString() == "Flights" ? "active" : "")">
                     <span class="material-symbols-outlined mr-3 text-[20px]">flight_takeoff</span> Live FIDS Board
                 </a>
-                <a asp-controller="Airport" asp-action="FacadeDemo" class="sidebar-link flex items-center px-3 py-2 text-sm font-medium rounded-md text-slate-700 @(ViewContext.RouteData.Values["action"]?.ToString() == "FacadeDemo" ? "active" : "")">
-                    <span class="material-symbols-outlined mr-3 text-[20px]">settings_input_antenna</span> ATC Tower
+                <a asp-controller="GroundOps" asp-action="PreFlightChecks" class="sidebar-link flex items-center px-3 py-2 text-sm font-medium rounded-md text-slate-700 @(ViewContext.RouteData.Values["action"]?.ToString() == "PreFlightChecks" ? "active" : "")">
+                    <span class="material-symbols-outlined mr-3 text-[20px]">checklist</span> Pre-Flight SOP
                 </a>
-                <a asp-controller="Airport" asp-action="MediatorDemo" class="sidebar-link flex items-center px-3 py-2 text-sm font-medium rounded-md text-slate-700 @(ViewContext.RouteData.Values["action"]?.ToString() == "MediatorDemo" ? "active" : "")">
-                    <span class="material-symbols-outlined mr-3 text-[20px]">hub</span> Air Traffic
+                <a asp-controller="GroundOps" asp-action="TerminalDisplays" class="sidebar-link flex items-center px-3 py-2 text-sm font-medium rounded-md text-slate-700 @(ViewContext.RouteData.Values["action"]?.ToString() == "TerminalDisplays" ? "active" : "")">
+                    <span class="material-symbols-outlined mr-3 text-[20px]">tv</span> Terminal Displays
                 </a>
-                <a asp-controller="Airport" asp-action="BridgeDemo" class="sidebar-link flex items-center px-3 py-2 text-sm font-medium rounded-md text-slate-700 @(ViewContext.RouteData.Values["action"]?.ToString() == "BridgeDemo" ? "active" : "")">
-                    <span class="material-symbols-outlined mr-3 text-[20px]">tv</span> Hardware Displays
+                <a asp-controller="GroundOps" asp-action="GateAssignments" class="sidebar-link flex items-center px-3 py-2 text-sm font-medium rounded-md text-slate-700 @(ViewContext.RouteData.Values["action"]?.ToString() == "GateAssignments" ? "active" : "")">
+                    <span class="material-symbols-outlined mr-3 text-[20px]">storefront</span> Gate Manager
+                </a>
+                <a asp-controller="GroundOps" asp-action="CargoManifest" class="sidebar-link flex items-center px-3 py-2 text-sm font-medium rounded-md text-slate-700 @(ViewContext.RouteData.Values["action"]?.ToString() == "CargoManifest" ? "active" : "")">
+                    <span class="material-symbols-outlined mr-3 text-[20px]">luggage</span> Cargo Manifest
                 </a>
             </nav>
             
+            <div class="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2 mt-6 px-3">Security</div>
+            <nav class="space-y-1">
+                <a asp-controller="Security" asp-action="Checkpoint" class="sidebar-link flex items-center px-3 py-2 text-sm font-medium rounded-md text-slate-700 @(ViewContext.RouteData.Values["action"]?.ToString() == "Checkpoint" ? "active" : "")">
+                    <span class="material-symbols-outlined mr-3 text-[20px]">policy</span> Checkpoint Scanner
+                </a>
+            </nav>
+
             <div class="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2 mt-6 px-3">Management</div>
             <nav class="space-y-1">
                 <a asp-controller="Airport" asp-action="BuilderDemo" class="sidebar-link flex items-center px-3 py-2 text-sm font-medium rounded-md text-slate-700 @(ViewContext.RouteData.Values["action"]?.ToString() == "BuilderDemo" ? "active" : "")">
                     <span class="material-symbols-outlined mr-3 text-[20px]">event_note</span> Itineraries
                 </a>
-                <a asp-controller="Airport" asp-action="VisitorDemo" class="sidebar-link flex items-center px-3 py-2 text-sm font-medium rounded-md text-slate-700 @(ViewContext.RouteData.Values["action"]?.ToString() == "VisitorDemo" ? "active" : "")">
-                    <span class="material-symbols-outlined mr-3 text-[20px]">transfer_within_a_station</span> Export Data
+                <a asp-controller="Management" asp-action="FlightScheduler" class="sidebar-link flex items-center px-3 py-2 text-sm font-medium rounded-md text-slate-700 @(ViewContext.RouteData.Values["action"]?.ToString() == "FlightScheduler" ? "active" : "")">
+                    <span class="material-symbols-outlined mr-3 text-[20px]">event</span> Flight Scheduler
+                </a>
+                <a asp-controller="Management" asp-action="AuditLogs" class="sidebar-link flex items-center px-3 py-2 text-sm font-medium rounded-md text-slate-700 @(ViewContext.RouteData.Values["action"]?.ToString() == "AuditLogs" ? "active" : "")">
+                    <span class="material-symbols-outlined mr-3 text-[20px]">admin_panel_settings</span> Audit Logs
+                </a>
+                <a asp-controller="Management" asp-action="Analytics" class="sidebar-link flex items-center px-3 py-2 text-sm font-medium rounded-md text-slate-700 @(ViewContext.RouteData.Values["action"]?.ToString() == "Analytics" ? "active" : "")">
+                    <span class="material-symbols-outlined mr-3 text-[20px]">analytics</span> Export Data
                 </a>
                 <a asp-controller="Fleet" asp-action="Index" class="sidebar-link flex items-center px-3 py-2 text-sm font-medium rounded-md text-slate-700 @(ViewContext.RouteData.Values["controller"]?.ToString() == "Fleet" ? "active" : "")">
                     <span class="material-symbols-outlined mr-3 text-[20px]">flight</span> Fleet
                 </a>
-                <a asp-controller="Airport" asp-action="Radar" class="sidebar-link flex items-center px-3 py-2 text-sm font-medium rounded-md text-slate-700 @(ViewContext.RouteData.Values["action"]?.ToString() == "Radar" ? "active" : "")">
-                    <span class="material-symbols-outlined mr-3 text-[20px]">radar</span> Live Radar <span class="ml-auto w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
-                </a>
                 @if (User.IsInRole("Admin"))
                 {
                     <a asp-controller="Admin" asp-action="Index" class="sidebar-link flex items-center px-3 py-2 text-sm font-medium rounded-md text-slate-700 @(ViewContext.RouteData.Values["controller"]?.ToString() == "Admin" ? "active" : "")">
-                        <span class="material-symbols-outlined mr-3 text-[20px]">admin_panel_settings</span> User Mgmt
+                        <span class="material-symbols-outlined mr-3 text-[20px]">manage_accounts</span> User Mgmt
                     </a>
                 }
             </nav>
+
+
         </div>
         
         <div class="p-4 border-t border-slate-200">
             <div class="flex items-center">
                 <div class="flex-shrink-0">
+                    @{
+                        var initial = "U";
+                        if (User.Identity?.IsAuthenticated == true && !string.IsNullOrEmpty(User.Identity.Name))
+                        {
+                            initial = User.Identity.Name.Substring(0, 1).ToUpper();
+                        }
+                    }
                     <div class="h-8 w-8 rounded-full bg-primary-100 flex items-center justify-center text-primary-700 font-bold">
-                        A
+                        @initial
                     </div>
                 </div>
                 <div class="ml-3 w-full">
@@ -158,6 +202,21 @@
         <!-- Main Content Area -->
         <main class="flex-1 overflow-y-auto p-6">
             <div class="max-w-7xl mx-auto">
+                @if (TempData["SuccessMessage"] != null)
+                {
+                    <div class="mb-6 rounded-lg bg-emerald-50 p-4 border border-emerald-200 flex items-start">
+                        <div class="flex-shrink-0">
+                            <span class="material-symbols-outlined text-emerald-600">check_circle</span>
+                        </div>
+                        <div class="ml-3">
+                            <h3 class="text-sm font-medium text-emerald-800">Success</h3>
+                            <div class="mt-1 text-sm text-emerald-700">
+                                @TempData["SuccessMessage"]
+                            </div>
+                        </div>
+                    </div>
+                }
+                
                 @RenderBody()
             </div>
         </main>
@@ -166,7 +225,7 @@
     <!-- Global Notification System (SignalR + Toastr) -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/7.0.5/signalr.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/8.0.0/signalr.min.js"></script>
     
     <script>
         toastr.options = {

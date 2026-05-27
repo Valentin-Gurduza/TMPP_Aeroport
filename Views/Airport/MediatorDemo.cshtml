@@ -1,5 +1,8 @@
 @{
     ViewData["Title"] = "ATC Traffic Coordinator";
+    var flights = ViewBag.Flights as List<TMPP_Aeroport.Models.Flight>;
+    var aircraftsDict = ViewBag.AircraftsDict as Dictionary<string, TMPP_Aeroport.Domain.Mediator.Aircraft>;
+    var pendingRequests = ViewBag.PendingRequests as IEnumerable<TMPP_Aeroport.Services.SimulatedFlight>;
 }
 
 <div class="mb-8">
@@ -11,44 +14,96 @@
     <p class="text-slate-500 mt-1">Mediator Pattern — Aircraft communicate via the Control Tower, never directly with each other.</p>
 </div>
 
+<!-- ATC PENDING REQUESTS DASHBOARD -->
+@if (pendingRequests != null && pendingRequests.Any())
+{
+    <div class="mb-8 bg-amber-50 rounded-2xl border border-amber-200 shadow-sm p-6">
+        <div class="flex items-center gap-2 mb-4">
+            <span class="material-symbols-outlined text-amber-600 animate-pulse">warning</span>
+            <h2 class="font-bold text-amber-800 uppercase tracking-widest text-sm">Action Required: Pending Clearances</h2>
+        </div>
+        <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+            @foreach (var req in pendingRequests)
+            {
+                <div class="bg-white p-4 rounded-xl border border-amber-300 shadow-sm flex flex-col gap-3">
+                    <div class="flex justify-between items-start">
+                        <div>
+                            <div class="font-bold text-slate-800">@req.FlightNumber</div>
+                            <div class="text-xs text-slate-500 font-mono">@req.OriginName ➔ @req.DestName</div>
+                        </div>
+                        <div class="bg-amber-100 text-amber-800 text-[10px] font-bold px-2 py-1 rounded border border-amber-200">
+                            @req.Status.ToUpper()
+                        </div>
+                    </div>
+                    
+                    <form action="/Airport/MediatorDemo" method="post" class="mt-2 flex flex-col gap-2">
+                        <input type="hidden" name="commandFlight" value="@req.FlightNumber" />
+                        
+                        @if (req.Status == "Awaiting Takeoff")
+                        {
+                            <button type="submit" name="commandType" value="ClearTakeoff" class="w-full py-2 bg-emerald-500 hover:bg-emerald-600 text-white rounded font-bold text-xs transition shadow-sm">
+                                GRANT TAKEOFF CLEARANCE
+                            </button>
+                        }
+                        else if (req.Status == "Holding Pattern")
+                        {
+                            <button type="submit" name="commandType" value="ClearLanding" class="w-full py-2 bg-emerald-500 hover:bg-emerald-600 text-white rounded font-bold text-xs transition shadow-sm">
+                                GRANT LANDING CLEARANCE
+                            </button>
+                            <div class="grid grid-cols-2 gap-2">
+                                <button type="submit" name="commandType" value="Divert" class="w-full py-2 bg-purple-500 hover:bg-purple-600 text-white rounded font-bold text-xs transition shadow-sm">
+                                    DIVERT NEAREST
+                                </button>
+                                <button type="submit" name="commandType" value="ReturnBase" class="w-full py-2 bg-rose-500 hover:bg-rose-600 text-white rounded font-bold text-xs transition shadow-sm">
+                                    RETURN ORIGIN
+                                </button>
+                            </div>
+                        }
+                    </form>
+                </div>
+            }
+        </div>
+    </div>
+}
+<!-- END PENDING REQUESTS -->
+
 <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 items-start">
     <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
         <div class="bg-slate-50 px-6 py-4 border-b border-slate-200 flex items-center gap-3">
             <span class="material-symbols-outlined text-cyan-600">settings_remote</span>
-            <h3 class="font-bold text-slate-800 tracking-wide uppercase">Communication Triggers</h3>
+            <h3 class="font-bold text-slate-800 tracking-wide uppercase">Transmit Message</h3>
         </div>
         
         <div class="p-6">
-            <form action="/Airport/MediatorDemo" method="get" class="space-y-4">
-                <button type="submit" name="actionType" value="Broadcast" class="w-full p-4 bg-white border border-red-200 rounded-xl flex items-center justify-between hover:bg-red-50 hover:border-red-300 transition shadow-sm group">
-                    <div class="text-left">
-                        <div class="font-bold text-red-700 text-sm tracking-wide">@(ViewBag.Flight1Name ?? "FLIGHT-1") BROADCASTS ISSUE</div>
-                        <div class="text-xs mt-1 text-slate-500 font-mono">"Encountering severe turbulence at FL350."</div>
-                    </div>
-                    <div class="w-10 h-10 rounded-full bg-red-100 text-red-600 flex items-center justify-center group-hover:scale-110 transition-transform">
+            <form action="/Airport/MediatorDemo" method="post" class="space-y-6">
+                <div>
+                    <label class="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">Transmitting Aircraft (Colleague)</label>
+                    <select name="senderFlightNumber" class="w-full px-4 py-3 rounded-lg border border-slate-300 focus:border-cyan-500 focus:ring-2 focus:ring-cyan-200 transition outline-none bg-white font-mono text-slate-700">
+                        @if (flights != null)
+                        {
+                            foreach (var flight in flights)
+                            {
+                                <option value="@flight.FlightNumber">@flight.FlightNumber (@flight.Status)</option>
+                            }
+                        }
+                    </select>
+                </div>
+                
+                <div>
+                    <label class="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">Message to Tower (Mediator)</label>
+                    <input type="text" name="message" placeholder="E.g. Encountering turbulence at FL350" class="w-full px-4 py-3 rounded-lg border border-slate-300 focus:border-cyan-500 focus:ring-2 focus:ring-cyan-200 transition outline-none bg-white font-mono text-slate-700" />
+                </div>
+                
+                <div class="grid grid-cols-2 gap-4">
+                    <button type="submit" name="actionType" value="Broadcast" class="w-full py-4 bg-cyan-600 hover:bg-cyan-700 text-white rounded-xl font-bold tracking-wide transition shadow-lg shadow-cyan-600/30 flex justify-center items-center gap-2">
                         <span class="material-symbols-outlined text-[20px]">campaign</span>
-                    </div>
-                </button>
-    
-                <button type="submit" name="actionType" value="Landing" class="w-full p-4 bg-white border border-amber-200 rounded-xl flex items-center justify-between hover:bg-amber-50 hover:border-amber-300 transition shadow-sm group">
-                    <div class="text-left">
-                        <div class="font-bold text-amber-700 text-sm tracking-wide">@(ViewBag.Flight2Name ?? "FLIGHT-2") REQUESTS LANDING</div>
-                        <div class="text-xs mt-1 text-slate-500 font-mono">"Requesting landing clearance on Runway 09."</div>
-                    </div>
-                    <div class="w-10 h-10 rounded-full bg-amber-100 text-amber-600 flex items-center justify-center group-hover:scale-110 transition-transform">
+                        SEND MESSAGE
+                    </button>
+                    <button type="submit" name="actionType" value="Landing" class="w-full py-4 bg-amber-500 hover:bg-amber-600 text-white rounded-xl font-bold tracking-wide transition shadow-lg shadow-amber-500/30 flex justify-center items-center gap-2">
                         <span class="material-symbols-outlined text-[20px]">flight_land</span>
-                    </div>
-                </button>
-    
-                <button type="submit" name="actionType" value="Heli" class="w-full p-4 bg-white border border-emerald-200 rounded-xl flex items-center justify-between hover:bg-emerald-50 hover:border-emerald-300 transition shadow-sm group">
-                    <div class="text-left">
-                        <div class="font-bold text-emerald-700 text-sm tracking-wide">HELI-MEDEVAC ENTERING</div>
-                        <div class="text-xs mt-1 text-slate-500 font-mono">"Entering airspace from South."</div>
-                    </div>
-                    <div class="w-10 h-10 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center group-hover:scale-110 transition-transform">
-                        <span class="material-symbols-outlined text-[20px]">toys</span>
-                    </div>
-                </button>
+                        REQ. LANDING
+                    </button>
+                </div>
             </form>
         </div>
     </div>
@@ -59,16 +114,18 @@
             <div class="bg-slate-800 px-4 py-3 border-b border-slate-700 flex justify-between items-center">
                 <div class="flex items-center gap-2">
                     <span class="material-symbols-outlined text-cyan-400 text-[18px]">cell_tower</span>
-                    <h3 class="text-xs font-bold text-cyan-400 uppercase tracking-widest">ATCTower Mediator</h3>
+                    <h3 class="text-xs font-bold text-slate-300 uppercase tracking-widest">ATC Tower (Mediator) Logs</h3>
                 </div>
-                <span class="flex h-2.5 w-2.5 rounded-full bg-cyan-500 animate-pulse"></span>
+                <div class="w-2 h-2 rounded-full bg-cyan-500 animate-pulse"></div>
             </div>
-            <div class="p-5 font-mono text-xs space-y-2 text-cyan-100 min-h-[120px]">
-                @if(ViewBag.TowerLogs != null) {
-                    foreach(var log in ViewBag.TowerLogs) { 
-                        <div class="flex gap-2">
+            <div class="p-4 font-mono text-[11px] space-y-2 max-h-[250px] overflow-y-auto">
+                @if (ViewBag.TowerLogs != null)
+                {
+                    foreach (var log in ViewBag.TowerLogs)
+                    {
+                        <div class="flex items-start gap-2 border-b border-white/5 pb-2">
                             <span class="text-cyan-600 font-bold">></span>
-                            <span>@log</span>
+                            <span class="text-slate-300">@log</span>
                         </div>
                     }
                 } else {
@@ -77,40 +134,40 @@
             </div>
         </div>
 
-        <!-- Aircraft Logs -->
+        <!-- Aircraft Logs Grid -->
         <div class="grid grid-cols-2 gap-4">
-            <div class="bg-slate-800 px-4 py-3 border-b border-slate-700 flex justify-between items-center mt-6 rounded-t-2xl">
-                <div class="flex items-center gap-2">
-                    <span class="material-symbols-outlined text-blue-400 text-[18px]">flight</span>
-                    <h3 class="text-xs font-bold text-slate-300 uppercase tracking-widest">@(ViewBag.Flight1Name) Logs</h3>
-                </div>
-            </div>
-            <div class="p-4 font-mono text-xs space-y-2 max-h-[150px] overflow-y-auto bg-slate-900 rounded-b-2xl border border-t-0 border-slate-700">
-                @if (ViewBag.Flight1Logs != null)
+            @if (aircraftsDict != null)
+            {
+                var displayCount = 0;
+                foreach (var kvp in aircraftsDict)
                 {
-                    foreach (var log in ViewBag.Flight1Logs)
-                    {
-                        <div class="text-blue-300 border-l-2 border-blue-500/30 pl-2">@log</div>
-                    }
+                    if (displayCount >= 4) break; 
+                    var aircraftLogs = kvp.Value.AircraftLogs;
+                    
+                    <div class="bg-slate-800 rounded-2xl shadow-lg border border-slate-700 overflow-hidden flex flex-col h-[180px]">
+                        <div class="bg-slate-900 px-3 py-2 border-b border-slate-700 flex justify-between items-center">
+                            <div class="flex items-center gap-1.5">
+                                <span class="material-symbols-outlined text-emerald-400 text-[14px]">flight</span>
+                                <h3 class="text-[10px] font-bold text-slate-300 uppercase tracking-widest">@kvp.Key</h3>
+                            </div>
+                        </div>
+                        <div class="p-3 font-mono text-[9px] space-y-1 overflow-y-auto flex-1">
+                            @if (aircraftLogs != null && aircraftLogs.Count > 0)
+                            {
+                                foreach (var log in aircraftLogs)
+                                {
+                                    <div class="text-emerald-300 border-l border-emerald-500/30 pl-1.5">@log</div>
+                                }
+                            }
+                            else
+                            {
+                                <div class="text-slate-600 italic">No messages received.</div>
+                            }
+                        </div>
+                    </div>
+                    displayCount++;
                 }
-            </div>
-
-            <!-- Flight 2 Logs -->
-            <div class="bg-slate-800 px-4 py-3 border-b border-slate-700 flex justify-between items-center mt-6 rounded-t-2xl">
-                <div class="flex items-center gap-2">
-                    <span class="material-symbols-outlined text-purple-400 text-[18px]">flight</span>
-                    <h3 class="text-xs font-bold text-slate-300 uppercase tracking-widest">@(ViewBag.Flight2Name) Logs</h3>
-                </div>
-            </div>
-            <div class="p-4 font-mono text-xs space-y-2 max-h-[150px] overflow-y-auto bg-slate-900 rounded-b-2xl border border-t-0 border-slate-700">
-                @if (ViewBag.Flight2Logs != null)
-                {
-                    foreach (var log in ViewBag.Flight2Logs)
-                    {
-                        <div class="text-purple-300 border-l-2 border-purple-500/30 pl-2">@log</div>
-                    }
-                }
-            </div>
+            }
         </div>
     </div>
 </div>

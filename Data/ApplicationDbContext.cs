@@ -21,6 +21,11 @@ namespace TMPP_Aeroport.Data
         {
             base.OnModelCreating(builder);
             // Customize the ASP.NET Identity model and override the defaults if needed.
+
+            builder.Entity<Ticket>()
+                .HasIndex(t => new { t.FlightId, t.SeatNumber })
+                .IsUnique()
+                .HasFilter("[TicketState] <> 'Cancelled'");
         }
     }
 }

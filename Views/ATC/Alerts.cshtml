@@ -1,0 +1,76 @@
+@{
+    ViewData["Title"] = "Flight Status Observer";
+}
+
+<div class="mb-8">
+    <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-100 text-blue-800 text-xs font-bold mb-4 border border-blue-200">
+        <span class="material-symbols-outlined text-[14px]">cell_tower</span>
+        LIVE STATUS BROADCASTER
+    </div>
+    <h1 class="text-3xl font-bold text-slate-800">Global Flight Alerts</h1>
+    <p class="text-slate-500 mt-1">Observer Pattern — Flight status changes automatically notify all subscribed observers.</p>
+</div>
+
+<div class="grid grid-cols-1 lg:grid-cols-2 gap-8 items-start">
+    <section class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
+        <div class="bg-slate-50 px-6 py-4 border-b border-slate-200 flex items-center gap-3">
+            <span class="material-symbols-outlined text-blue-600">settings_input_antenna</span>
+            <h3 class="font-bold text-slate-800 tracking-wide uppercase">Flight Controller (Subject)</h3>
+        </div>
+        
+        <div class="p-6">
+            <form action="/ATC/AlertsExecute" method="post" class="space-y-6">
+                <div>
+                    <label class="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">Target Flight Number</label>
+                    <select name="flightNumber" class="w-full px-4 py-2.5 rounded-lg border border-slate-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition outline-none font-medium text-slate-700">
+                        @if (ViewBag.Flights != null)
+                        {
+                            foreach (var flight in ViewBag.Flights)
+                            {
+                                var isSelected = ViewBag.FlightNumber == flight.FlightNumber ? "selected" : null;
+                                <option value="@flight.FlightNumber" selected="@isSelected">@flight.FlightNumber (@flight.Destination) - @flight.Status</option>
+                            }
+                        }
+                    </select>
+                </div>
+                
+                <div>
+                    <label class="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">Broadcast New Status</label>
+                    <div class="grid grid-cols-3 gap-3">
+                        <button type="submit" name="newStatus" value="BOARDING" class="py-3 bg-amber-50 text-amber-700 border border-amber-200 rounded-xl hover:bg-amber-100 transition active:scale-95 shadow-sm text-sm font-bold tracking-wider">BOARDING</button>
+                        <button type="submit" name="newStatus" value="DELAYED" class="py-3 bg-red-50 text-red-700 border border-red-200 rounded-xl hover:bg-red-100 transition active:scale-95 shadow-sm text-sm font-bold tracking-wider">DELAYED</button>
+                        <button type="submit" name="newStatus" value="DEPARTED" class="py-3 bg-emerald-50 text-emerald-700 border border-emerald-200 rounded-xl hover:bg-emerald-100 transition active:scale-95 shadow-sm text-sm font-bold tracking-wider">DEPARTED</button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </section>
+
+    <section class="bg-slate-900 border border-slate-800 rounded-2xl shadow-lg flex flex-col min-h-[400px] overflow-hidden">
+        <div class="bg-slate-950 px-6 py-4 border-b border-white/10 flex justify-between items-center">
+            <h3 class="text-xs font-bold text-blue-400 uppercase tracking-widest">OBSERVER NOTIFICATIONS LOG</h3>
+            <span class="material-symbols-outlined text-sm text-blue-400 animate-pulse">cell_tower</span>
+        </div>
+        <div class="p-6 flex-1 font-mono text-sm space-y-4 overflow-y-auto max-h-[400px]">
+            @if (ViewBag.Logs != null && ViewBag.Logs.Count > 0)
+            {
+                <div class="inline-block px-3 py-1 bg-white/10 rounded text-slate-300 text-xs mb-2">
+                    Subject updated state to: <span class="font-bold text-white">@ViewBag.NewStatus</span>
+                </div>
+                @foreach(var log in ViewBag.Logs)
+                {
+                    <div class="flex items-start gap-3 text-blue-300 p-3 bg-blue-900/20 border border-blue-500/20 rounded-lg">
+                        <span class="material-symbols-outlined text-[18px] mt-0.5">mark_email_unread</span>
+                        <span class="leading-relaxed">@log</span>
+                    </div>
+                }
+            }
+            else
+            {
+                <div class="text-slate-500 italic flex items-center justify-center h-full opacity-50">
+                    Waiting for state change to trigger notifications...
+                </div>
+            }
+        </div>
+    </section>
+</div>
