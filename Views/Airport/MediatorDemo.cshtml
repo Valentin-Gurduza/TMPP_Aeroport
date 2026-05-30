@@ -35,8 +35,7 @@
                             @req.Status.ToUpper()
                         </div>
                     </div>
-                    
-                    <form action="/Airport/MediatorDemo" method="post" class="mt-2 flex flex-col gap-2">
+                    <form action="/ATC/HandleTowerCommand" method="post" class="mt-2 flex flex-col gap-2">
                         <input type="hidden" name="commandFlight" value="@req.FlightNumber" />
                         
                         @if (req.Status == "Awaiting Takeoff")

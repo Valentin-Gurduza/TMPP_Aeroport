@@ -13,10 +13,9 @@
     <div class="flex items-center justify-between mb-8">
         <div>
             <h1 class="text-3xl font-extrabold text-slate-800 tracking-tight flex items-center">
-                <span class="material-symbols-outlined mr-3 text-4xl text-blue-600">storefront</span>
-                Gate Assignment Manager
+                <span class="material-symbols-outlined mr-3 text-4xl text-blue-600">door_front</span>
+                Gate Assignments
             </h1>
-            <p class="text-slate-500 mt-2 text-lg">Memento Pattern: State Backup and Restoration</p>
         </div>
     </div>
 
@@ -49,35 +48,46 @@
                 <!-- Edit Form -->
                 <form action="/GroundOps/GateAssignments" method="get" class="space-y-4">
                     <div>
-                        <label class="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">New Gate Assignment</label>
-                        <select name="newGate" class="w-full px-4 py-2.5 rounded-lg border border-slate-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition outline-none font-medium text-slate-700">
-                            <option value="A1" selected="@(currentGate == "A1")">Gate A1</option>
-                            <option value="A2" selected="@(currentGate == "A2")">Gate A2</option>
-                            <option value="B1" selected="@(currentGate == "B1")">Gate B1</option>
-                            <option value="C4" selected="@(currentGate == "C4")">Gate C4</option>
+                        <label class="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">Select Flight</label>
+                        <select name="flightId" class="w-full px-4 py-2.5 rounded-lg border border-slate-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition outline-none font-medium text-slate-700" onchange="this.form.submit()">
+                            <option value="">-- Choose Flight --</option>
+                            @if (ViewBag.Flights != null)
+                            {
+                                foreach (var f in ViewBag.Flights)
+                                {
+                                    <option value="@f.Id" selected="@(ViewBag.SelectedFlightId == f.Id)">@f.FlightNumber - @f.Destination</option>
+                                }
+                            }
                         </select>
                     </div>
 
-                    <div>
-                        <label class="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">Aircraft Model</label>
-                        <select name="newModel" class="w-full px-4 py-2.5 rounded-lg border border-slate-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition outline-none font-medium text-slate-700">
-                            <option value="Boeing 737 MAX" selected="@(currentModel == "Boeing 737 MAX")">Boeing 737 MAX</option>
-                            <option value="Airbus A320" selected="@(currentModel == "Airbus A320")">Airbus A320</option>
-                            <option value="Boeing 777" selected="@(currentModel == "Boeing 777")">Boeing 777 (Heavy)</option>
-                        </select>
-                    </div>
+                    @if (ViewBag.SelectedFlightId != null)
+                    {
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">New Gate Assignment</label>
+                            <select name="newGate" class="w-full px-4 py-2.5 rounded-lg border border-slate-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition outline-none font-medium text-slate-700">
+                                <option value="A1" selected="@(currentGate == "A1")">Gate A1</option>
+                                <option value="A2" selected="@(currentGate == "A2")">Gate A2</option>
+                                <option value="B1" selected="@(currentGate == "B1")">Gate B1</option>
+                                <option value="C4" selected="@(currentGate == "C4")">Gate C4</option>
+                            </select>
+                        </div>
+                    }
 
-                    <div class="grid grid-cols-3 gap-3 pt-4">
-                        <button type="submit" name="actionType" value="Update" class="py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-bold shadow-md transition flex items-center justify-center">
-                            Update
-                        </button>
-                        <button type="submit" name="actionType" value="Save" class="py-2.5 bg-green-600 hover:bg-green-700 text-white rounded-lg font-bold shadow-md transition flex items-center justify-center" title="Save to Caretaker">
-                            <span class="material-symbols-outlined text-sm mr-2">save</span> Backup
-                        </button>
-                        <button type="submit" name="actionType" value="Undo" class="py-2.5 bg-orange-500 hover:bg-orange-600 text-white rounded-lg font-bold shadow-md transition flex items-center justify-center" title="Restore from Caretaker">
-                            <span class="material-symbols-outlined text-sm mr-2">undo</span> Restore
-                        </button>
-                    </div>
+                    @if (ViewBag.SelectedFlightId != null)
+                    {
+                        <div class="grid grid-cols-3 gap-3 pt-4">
+                            <button type="submit" name="actionType" value="Update" class="py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-bold shadow-md transition flex items-center justify-center">
+                                Update
+                            </button>
+                            <button type="submit" name="actionType" value="Save" class="py-2.5 bg-green-600 hover:bg-green-700 text-white rounded-lg font-bold shadow-md transition flex items-center justify-center" title="Save to Caretaker">
+                                <span class="material-symbols-outlined text-sm mr-2">save</span> Backup
+                            </button>
+                            <button type="submit" name="actionType" value="Undo" class="py-2.5 bg-orange-500 hover:bg-orange-600 text-white rounded-lg font-bold shadow-md transition flex items-center justify-center" title="Restore from Caretaker">
+                                <span class="material-symbols-outlined text-sm mr-2">undo</span> Restore
+                            </button>
+                        </div>
+                    }
                 </form>
             </div>
         </div>

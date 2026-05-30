@@ -9,6 +9,7 @@ using System.Linq;
 using System.Collections.Generic;
 using System;
 using System.Threading.Tasks;
+using TMPP_Aeroport.Domain.Mediator;
 
 namespace TMPP_Aeroport.Controllers
 {
@@ -18,12 +19,16 @@ namespace TMPP_Aeroport.Controllers
         private readonly ApplicationDbContext _dbContext;
         private readonly FlightSimulationService _flightSimulation;
         private readonly IHubContext<FlightHub> _hubContext;
+        private readonly IServiceScopeFactory _scopeFactory;
+        private readonly IATCMediator _tower;
 
-        public ATCController(ApplicationDbContext dbContext, FlightSimulationService flightSimulation, IHubContext<FlightHub> hubContext)
+        public ATCController(ApplicationDbContext dbContext, FlightSimulationService flightSimulation, IHubContext<FlightHub> hubContext, IServiceScopeFactory scopeFactory, IATCMediator tower)
         {
             _dbContext = dbContext;
             _flightSimulation = flightSimulation;
             _hubContext = hubContext;
+            _scopeFactory = scopeFactory;
+            _tower = tower;
         }
 
         // Live Radar Simulation
@@ -32,51 +37,106 @@ namespace TMPP_Aeroport.Controllers
             return View();
         }
 
-        // Mediator Pattern: ATC Tower
-        public IActionResult ATCTower(string senderFlightNumber, string message, string actionType, string commandType, string commandFlight)
+        // Flyweight Pattern: Radar Data API Endpoint
+        [HttpGet]
+        public async Task<IActionResult> RadarData()
         {
-            var tower = new TMPP_Aeroport.Domain.Mediator.ATCTower();
+            var activeFlights = _flightSimulation.GetActiveFlights()
+                .Where(f => f.Status == "Airborne" || f.Status.Contains("Holding"));
+
+            var factory = new TMPP_Aeroport.Domain.Flyweight.AircraftModelFactory();
+            var blips = new List<object>();
+
+            // The DB context is just to get aircraft model names since we only have FlightNumber in Simulation Service
+            // Wait, I can fetch the flights from DB once
+            var flightNumbers = activeFlights.Select(f => f.FlightNumber).ToList();
+            var dbFlights = await _dbContext.Flights.Include(f => f.Aircraft)
+                .Where(f => flightNumbers.Contains(f.FlightNumber))
+                .ToListAsync();
+
+            foreach (var simFlight in activeFlights)
+            {
+                var dbFlight = dbFlights.FirstOrDefault(f => f.FlightNumber == simFlight.FlightNumber);
+                string modelName = dbFlight?.Aircraft?.Model ?? "Generic Plane";
+
+                // AircraftModelData is created ONCE per model type, saving RAM on server
+                var sharedModel = factory.GetAircraftModel(modelName);
+
+                // RadarBlip is extremely lightweight, uses the shared Model
+                var blip = new TMPP_Aeroport.Domain.Flyweight.RadarBlip(
+                    simFlight.FlightNumber, 
+                    simFlight.CurrentLat, 
+                    simFlight.CurrentLng, 
+                    sharedModel
+                );
+
+                blips.Add(new {
+                    flightNumber = blip.FlightNumber,
+                    lat = blip.Latitude,
+                    lng = blip.Longitude,
+                    modelType = blip.GetSharedModelName(), // Client UI will use this to select correct texture/sprite
+                    status = simFlight.Status,
+                    origin = dbFlight?.Origin ?? "UNK",
+                    destination = dbFlight?.Destination ?? "UNK"
+                });
+            }
+
+            return Json(new { 
+                cacheSize = factory.GetCacheSize(), 
+                blips = blips 
+            });
+        }
+
+        // Mediator Pattern: ATC Tower
+        [HttpGet]
+        public IActionResult ATCTower()
+        {
             var flights = _dbContext.Flights.Where(f => f.Status == "Airborne" || f.Status == "Scheduled" || f.Status.Contains("Boarding") || f.Status.Contains("Awaiting")).ToList();
             
-            // --- Process ATC Commands (Strict simulation overrides) ---
+            var concreteTower = _tower as TMPP_Aeroport.Domain.Mediator.ATCTower;
+            ViewBag.TowerLogs = concreteTower?.ATCLogs ?? new List<string>();
+            ViewBag.Flights = flights;
+            ViewBag.PendingRequests = _flightSimulation.GetPendingRequests();
+
+            return View();
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> SendChatMessage([FromForm] string senderFlightNumber, [FromForm] string message, [FromForm] string actionType)
+        {
+            if (!string.IsNullOrEmpty(senderFlightNumber))
+            {
+                var sender = new TMPP_Aeroport.Domain.Mediator.CommercialFlight(_tower, senderFlightNumber);
+                
+                if (actionType == "Landing")
+                {
+                    sender.RequestLanding();
+                    await _hubContext.Clients.All.SendAsync("ReceiveATCChat", senderFlightNumber, "Requesting Landing Clearance", "Aircraft");
+                    // Tower auto-responds
+                    await Task.Delay(500);
+                    await _hubContext.Clients.All.SendAsync("ReceiveATCChat", "TOWER", $"[TOWER] {senderFlightNumber}, cleared for landing approach.", "System");
+                }
+                else if (!string.IsNullOrEmpty(message))
+                {
+                    sender.Send(message);
+                    await _hubContext.Clients.All.SendAsync("ReceiveATCChat", senderFlightNumber, message, "Aircraft");
+                }
+                return Json(new { success = true });
+            }
+            return Json(new { success = false });
+        }
+
+        [HttpPost]
+        public IActionResult HandleTowerCommand([FromForm] string commandType, [FromForm] string commandFlight)
+        {
             if (!string.IsNullOrEmpty(commandType) && !string.IsNullOrEmpty(commandFlight))
             {
                 if (commandType == "ClearTakeoff") _flightSimulation.ApproveTakeoff(commandFlight);
                 else if (commandType == "ClearLanding") _flightSimulation.ApproveLanding(commandFlight);
                 else if (commandType == "ReturnBase") _flightSimulation.ReturnToOrigin(commandFlight);
                 else if (commandType == "Divert") _flightSimulation.DivertToNearest(commandFlight);
-                
-                return RedirectToAction("ATCTower"); // PRG pattern
             }
-
-            // Create Aircraft Colleagues for active flights and register to Tower
-            var aircraftsDict = new Dictionary<string, TMPP_Aeroport.Domain.Mediator.Aircraft>();
-            foreach (var flight in flights)
-            {
-                aircraftsDict[flight.FlightNumber] = new TMPP_Aeroport.Domain.Mediator.CommercialFlight(tower, flight.FlightNumber);
-            }
-
-            // Radio comms
-            if (!string.IsNullOrEmpty(senderFlightNumber) && aircraftsDict.ContainsKey(senderFlightNumber))
-            {
-                var sender = aircraftsDict[senderFlightNumber];
-                
-                if (actionType == "Landing")
-                {
-                    sender.RequestLanding();
-                }
-                else if (!string.IsNullOrEmpty(message))
-                {
-                    sender.Send(message);
-                }
-            }
-
-            ViewBag.Flights = flights;
-            ViewBag.TowerLogs = tower.ATCLogs;
-            ViewBag.AircraftsDict = aircraftsDict;
-            ViewBag.PendingRequests = _flightSimulation.GetPendingRequests();
-
-            return View();
+            return RedirectToAction("ATCTower");
         }
 
         // Observer Pattern: Global Alerts
@@ -99,12 +159,19 @@ namespace TMPP_Aeroport.Controllers
             }
 
             var subject = new TMPP_Aeroport.Domain.Observer.FlightStatusSubject(flightNumber);
-            var logs = new List<string>();
 
-            subject.Attach(new TMPP_Aeroport.Domain.Observer.PassengerNotifier(logs));
-            subject.Attach(new TMPP_Aeroport.Domain.Observer.DisplayBoardUpdater(logs));
+            subject.Attach(new TMPP_Aeroport.Domain.Observer.PassengerNotifier(_dbContext));
+            subject.Attach(new TMPP_Aeroport.Domain.Observer.DisplayBoardUpdater(_dbContext));
 
             subject.Status = newStatus;
+            
+            // Bug fix: Save the logs generated by the Observers to DB and retrieve them for the view
+            await _dbContext.SaveChangesAsync();
+            var logs = await _dbContext.AuditLogs
+                .OrderByDescending(a => a.Timestamp)
+                .Take(4)
+                .Select(a => a.Message)
+                .ToListAsync();
 
             await _hubContext.Clients.All.SendAsync("FlightStateChanged", new {
                 FlightNumber = flightNumber,
@@ -139,7 +206,7 @@ namespace TMPP_Aeroport.Controllers
         public async Task<IActionResult> RunwayLights(string commandName)
         {
             var key = GetSessionKey();
-            var receiver = _receivers.GetOrAdd(key, _ => new TMPP_Aeroport.Domain.Command.RunwayReceiver());
+            var receiver = _receivers.GetOrAdd(key, _ => new TMPP_Aeroport.Domain.Command.RunwayReceiver(_scopeFactory));
             var invoker = _invokers.GetOrAdd(key, _ => new TMPP_Aeroport.Domain.Command.AtcInvoker());
             bool lightsOn = _lightsOnStates.GetOrAdd(key, false);
 
@@ -158,6 +225,27 @@ namespace TMPP_Aeroport.Controllers
                     lightsOn = true;
                     _lightsOnStates[key] = lightsOn;
                     await _hubContext.Clients.All.SendAsync("RunwayLights", lightsOn);
+                }
+                else if (commandName == "Emergency")
+                {
+                    var macroCmd = new TMPP_Aeroport.Domain.Command.EmergencyMacroCommand(receiver);
+                    
+                    // Add other commands to the macro if we want (e.g. broadcast warning)
+                    // For now, MacroCommand handles BlockRunway + TurnOnLights.
+                    
+                    invoker.ExecuteCommand(macroCmd);
+                    lightsOn = true;
+                    _lightsOnStates[key] = lightsOn;
+                    
+                    // Broadcast the emergency alert via SignalR
+                    await _hubContext.Clients.All.SendAsync("RunwayLights", lightsOn);
+                    await _hubContext.Clients.All.SendAsync("FlightStateChanged", new {
+                        FlightNumber = "SYSTEM",
+                        OldStatus = "Normal",
+                        NewStatus = "EMERGENCY PROTOCOL ACTIVE",
+                        Origin = "ATC",
+                        Destination = "ALL"
+                    });
                 }
                 else if (commandName == "Undo")
                 {

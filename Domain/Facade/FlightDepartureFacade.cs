@@ -59,34 +59,32 @@ namespace TMPP_Aeroport.Domain.Facade
         private readonly ATCService _atc;
         private readonly CrewManagementService _crew;
         private readonly BaggageLoadingService _baggage;
+        private readonly TMPP_Aeroport.Data.ApplicationDbContext _dbContext;
 
-        public FlightDepartureFacade()
+        public FlightDepartureFacade(TMPP_Aeroport.Data.ApplicationDbContext dbContext)
         {
-            // Fațada învelește blocurile de construire.
-            // Poate primi aceste servicii și prin Dependency Injection.
             _atc = new ATCService();
             _crew = new CrewManagementService();
             _baggage = new BaggageLoadingService();
+            _dbContext = dbContext;
         }
 
-        // Singura metodă pe care Clientul trebuie să o cheme!
-        public List<string> AuthoriseDeparture(string flightNumber, string runway)
+        public (bool Success, List<string> Logs) AuthoriseDeparture(string flightNumber, string runway)
         {
             List<string> stepResults = new List<string>();
-
             stepResults.Add($"Începere secvență decolare pentru zbor {flightNumber} pe pista {runway}...");
 
             if (!_baggage.IsCargoLoaded(flightNumber))
             {
                 stepResults.Add("EROARE: Bagajele nu sunt gata!");
-                return stepResults;
+                return (false, stepResults);
             }
             stepResults.Add("- Cargo confirmat complet.");
 
             if (!_crew.IsCrewReady(flightNumber))
             {
                 stepResults.Add("EROARE: Echipaj incomplet!");
-                return stepResults;
+                return (false, stepResults);
             }
             stepResults.Add("- Echipaj pregătit.");
 
@@ -98,11 +96,19 @@ namespace TMPP_Aeroport.Domain.Facade
 
             if (_atc.RequestTakeoffClearance(flightNumber, runway))
             {
-                stepResults.Add($"[SUCCES] Avionul {flightNumber} are aprobare finală (Clearance). Decolare inițiată!");
+                stepResults.Add($"[SUCCES] Avionul {flightNumber} are aprobare finală (Clearance). Zbor pregătit de decolare!");
             }
 
-            AirportLogger.Instance.Log($"[Facade] Zborul {flightNumber} a decolat cu succes.");
-            return stepResults;
+            // Update Database
+            var flight = _dbContext.Flights.FirstOrDefault(f => f.FlightNumber == flightNumber);
+            if (flight != null)
+            {
+                flight.Status = TMPP_Aeroport.Models.FlightStatus.ReadyForDeparture;
+                _dbContext.SaveChanges();
+                AirportLogger.Instance.Log($"[Facade] Zborul {flightNumber} a fost marcat ca ReadyForDeparture.");
+            }
+
+            return (true, stepResults);
         }
     }
 }

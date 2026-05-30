@@ -9,6 +9,11 @@ namespace TMPP_Aeroport.Domain.AbstractFactory
         public string PassengerName { get; set; } = string.Empty;
         public string FlightNumber { get; set; } = string.Empty;
         
+        // Bug fix: proprietăți lipsă, afișate în CheckIn.cshtml
+        public string SeatNumber { get; set; } = string.Empty;
+        public string Gate { get; set; } = string.Empty;
+        public string Terminal { get; set; } = string.Empty;
+        
         // Metodă abstractă pentru afișarea detaliilor specifice clasei (Economy/Business)
         public abstract string GetTicketDetails();
     }

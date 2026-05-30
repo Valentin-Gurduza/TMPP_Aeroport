@@ -9,5 +9,7 @@ namespace TMPP_Aeroport.Models
         public const string Delayed = "Delayed";
         public const string Cancelled = "Cancelled";
         public const string AwaitingTakeoff = "Awaiting Takeoff Clearance";
+        public const string Draft = "Draft";
+        public const string ReadyForDeparture = "Ready for Departure";
     }
 }

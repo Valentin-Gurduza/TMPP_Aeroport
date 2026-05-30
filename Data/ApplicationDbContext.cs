@@ -16,6 +16,11 @@ namespace TMPP_Aeroport.Data
         public DbSet<Aircraft> Aircrafts { get; set; }
         public DbSet<Flight> Flights { get; set; }
         public DbSet<Ticket> Tickets { get; set; }
+        public DbSet<BoardingPass> BoardingPasses { get; set; }
+        public DbSet<AuditLog> AuditLogs { get; set; }
+        public DbSet<AirportMessage> AirportMessages { get; set; }
+        public DbSet<GateAssignment> GateAssignments { get; set; }
+        public DbSet<BaggageItem> BaggageItems { get; set; }
 
         protected override void OnModelCreating(ModelBuilder builder)
         {

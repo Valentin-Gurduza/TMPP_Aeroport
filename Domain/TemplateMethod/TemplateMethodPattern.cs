@@ -1,60 +1,98 @@
 using System.Collections.Generic;
+using System.Linq;
+using Microsoft.EntityFrameworkCore;
+using TMPP_Aeroport.Data;
+using TMPP_Aeroport.Models;
 
 namespace TMPP_Aeroport.Domain.TemplateMethod
 {
-    // 1. Abstract Class containing the Template Method
     public abstract class FlightPreflightRoutine
     {
-        public List<string> RoutineLogs { get; } = new List<string>();
+        protected ApplicationDbContext _context;
+        protected Flight _flight;
 
-        // The Template Method
+        public List<string> RoutineLogs { get; } = new List<string>();
+        public bool IsSuccessful { get; private set; } = true;
+
+        public FlightPreflightRoutine(ApplicationDbContext context, Flight flight)
+        {
+            _context = context;
+            _flight = flight;
+        }
+
         public void ExecuteRoutine()
         {
-            RoutineLogs.Add("--- Starting Pre-flight Routine ---");
-            CheckFuel();
-            CheckSystems();
-            LoadSpecificPayload(); // Specialized step
-            BriefCrew();
-            RoutineLogs.Add("--- Pre-flight Routine Complete ---");
+            RoutineLogs.Add($"--- Starting Pre-flight Routine for {_flight.FlightNumber} ---");
+            if (!CheckFuel()) IsSuccessful = false;
+            if (!CheckSystems()) IsSuccessful = false;
+            if (!LoadSpecificPayload()) IsSuccessful = false;
+            if (!BriefCrew()) IsSuccessful = false;
+            
+            if (IsSuccessful)
+                RoutineLogs.Add("--- Pre-flight Routine Complete [SUCCESS] ---");
+            else
+                RoutineLogs.Add("--- Pre-flight Routine Aborted [FAILED] ---");
         }
 
-        // Standard steps with default implementations
-        protected void CheckFuel()
+        protected virtual bool CheckFuel()
         {
             RoutineLogs.Add("✅ Checking fuel levels. Nominal.");
+            return true;
         }
 
-        protected void CheckSystems()
+        protected virtual bool CheckSystems()
         {
             RoutineLogs.Add("✅ Checking avionics and hydraulics. Systems GO.");
+            return true;
         }
 
-        protected void BriefCrew()
+        protected virtual bool BriefCrew()
         {
             RoutineLogs.Add("✅ Briefing crew on weather and flight plan.");
+            return true;
         }
 
-        // Abstract step that MUST be implemented by subclasses
-        protected abstract void LoadSpecificPayload();
+        protected abstract bool LoadSpecificPayload();
     }
 
-    // 2. Concrete Class 1
     public class PassengerFlightRoutine : FlightPreflightRoutine
     {
-        protected override void LoadSpecificPayload()
+        public PassengerFlightRoutine(ApplicationDbContext context, Flight flight) : base(context, flight) {}
+
+        protected override bool LoadSpecificPayload()
         {
-            RoutineLogs.Add("👥 Boarding passengers and loading luggage into hold.");
-            RoutineLogs.Add("🍲 Ensuring catering supplies are onboard.");
+            var tickets = _context.Tickets.Where(t => t.FlightId == _flight.Id).ToList();
+            var issuedTickets = tickets.Count(t => t.TicketState == "Issued" || t.TicketState == "CheckedIn" || t.TicketState == "Boarded");
+            
+            if (issuedTickets > _flight.MaxCapacity && _flight.MaxCapacity > 0)
+            {
+                RoutineLogs.Add($"❌ OVERBOOKED! {issuedTickets} passengers for {_flight.MaxCapacity} seats.");
+                return false;
+            }
+            
+            RoutineLogs.Add($"✅ 👥 Processing {issuedTickets} passengers.");
+            RoutineLogs.Add("✅ 🍲 Catering supplies onboard.");
+            return true;
         }
     }
 
-    // 3. Concrete Class 2
     public class CargoFlightRoutine : FlightPreflightRoutine
     {
-        protected override void LoadSpecificPayload()
+        public CargoFlightRoutine(ApplicationDbContext context, Flight flight) : base(context, flight) {}
+
+        protected override bool LoadSpecificPayload()
         {
-            RoutineLogs.Add("📦 Loading heavy cargo pallets.");
-            RoutineLogs.Add("⚖️ Checking weight distribution and center of gravity limits.");
+            int totalWeight = _context.BaggageItems.Where(b => b.FlightId == _flight.Id).Sum(b => (int?)b.Weight) ?? 0;
+            
+            if (totalWeight > _flight.BaggageLimitKg && _flight.BaggageLimitKg > 0)
+            {
+                RoutineLogs.Add($"❌ OVERWEIGHT! {totalWeight}kg loaded, max is {_flight.BaggageLimitKg}kg.");
+                return false;
+            }
+            
+            RoutineLogs.Add($"✅ 📦 Loading {totalWeight}kg cargo pallets.");
+            RoutineLogs.Add("✅ ⚖️ Weight distribution nominal.");
+            return true;
         }
     }
 }

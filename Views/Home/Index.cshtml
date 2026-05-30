@@ -1,8 +1,148 @@
-﻿@{
-    ViewData["Title"] = "Home Page";
+@{
+    ViewData["Title"] = "SAMS Dashboard";
+    Layout = "~/Views/Shared/_LayoutCorporate.cshtml";
+    
+    int activeFlights = ViewBag.ActiveFlights ?? 0;
+    int totalPassengers = ViewBag.TotalPassengers ?? 0;
+    int fleetSize = ViewBag.FleetSize ?? 0;
+    var recentLogs = ViewBag.RecentLogs as List<TMPP_Aeroport.Models.AuditLog>;
 }
 
-<div class="text-center">
-    <h1 class="display-4">Welcome</h1>
-    <p>Learn about <a href="https://learn.microsoft.com/aspnet/core">building Web apps with ASP.NET Core</a>.</p>
+<div class="max-w-6xl mx-auto space-y-8 animate-fade-in-up pt-4">
+    <!-- Welcome Header -->
+    <div class="flex items-center justify-between">
+        <div>
+            <h1 class="text-3xl font-extrabold text-slate-800 tracking-tight flex items-center">
+                <span class="material-symbols-outlined mr-3 text-4xl text-blue-600">dashboard</span>
+                Operations Dashboard
+            </h1>
+            <p class="text-slate-500 mt-2 text-lg">Smart Airport Management System (SAMS v2.0)</p>
+        </div>
+        <div class="text-right">
+            <div class="text-sm font-semibold text-slate-500 uppercase tracking-wider">System Status</div>
+            <div class="inline-flex items-center mt-1 px-3 py-1 rounded-full bg-green-100 text-green-700 font-bold text-sm">
+                <span class="w-2 h-2 rounded-full bg-green-500 mr-2 animate-pulse"></span> All Systems Operational
+            </div>
+        </div>
+    </div>
+
+    <!-- Quick Stats Grid -->
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <!-- Card 1 -->
+        <div class="bg-white border border-slate-200 rounded-2xl shadow-sm p-6 flex items-center">
+            <div class="h-14 w-14 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center mr-5">
+                <span class="material-symbols-outlined text-3xl">flight_takeoff</span>
+            </div>
+            <div>
+                <div class="text-sm font-semibold text-slate-500 uppercase tracking-wider mb-1">Active Flights</div>
+                <div class="text-3xl font-black text-slate-800">@activeFlights</div>
+            </div>
+        </div>
+
+        <!-- Card 2 -->
+        <div class="bg-white border border-slate-200 rounded-2xl shadow-sm p-6 flex items-center">
+            <div class="h-14 w-14 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center mr-5">
+                <span class="material-symbols-outlined text-3xl">groups</span>
+            </div>
+            <div>
+                <div class="text-sm font-semibold text-slate-500 uppercase tracking-wider mb-1">Total Passengers</div>
+                <div class="text-3xl font-black text-slate-800">@totalPassengers</div>
+            </div>
+        </div>
+
+        <!-- Card 3 -->
+        <div class="bg-white border border-slate-200 rounded-2xl shadow-sm p-6 flex items-center">
+            <div class="h-14 w-14 rounded-xl bg-slate-100 text-slate-700 flex items-center justify-center mr-5">
+                <span class="material-symbols-outlined text-3xl">airlines</span>
+            </div>
+            <div>
+                <div class="text-sm font-semibold text-slate-500 uppercase tracking-wider mb-1">Fleet Size</div>
+                <div class="text-3xl font-black text-slate-800">@fleetSize</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Content Grid -->
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        
+        <!-- Quick Actions -->
+        <div class="lg:col-span-1 space-y-6">
+            <div class="bg-white border border-slate-200 rounded-2xl shadow-sm overflow-hidden">
+                <div class="bg-slate-50 border-b border-slate-200 px-6 py-4">
+                    <h2 class="text-lg font-bold text-slate-800">Quick Actions</h2>
+                </div>
+                <div class="p-4 space-y-2">
+                    <a href="/Board" class="flex items-center p-3 hover:bg-slate-50 rounded-xl transition group">
+                        <div class="h-10 w-10 rounded-lg bg-blue-100 text-blue-600 flex items-center justify-center mr-4 group-hover:bg-blue-600 group-hover:text-white transition">
+                            <span class="material-symbols-outlined">tv</span>
+                        </div>
+                        <div>
+                            <div class="font-bold text-slate-700">FIDS Board</div>
+                            <div class="text-xs text-slate-500">Public flight information</div>
+                        </div>
+                    </a>
+                    
+                    @if (User.IsInRole("Admin") || User.IsInRole("ATC_Manager"))
+                    {
+                        <a href="/ATC/Radar" class="flex items-center p-3 hover:bg-slate-50 rounded-xl transition group">
+                            <div class="h-10 w-10 rounded-lg bg-green-100 text-green-600 flex items-center justify-center mr-4 group-hover:bg-green-600 group-hover:text-white transition">
+                                <span class="material-symbols-outlined">radar</span>
+                            </div>
+                            <div>
+                                <div class="font-bold text-slate-700">Live Radar</div>
+                                <div class="text-xs text-slate-500">Monitor airspace</div>
+                            </div>
+                        </a>
+                    }
+                    
+                    @if (User.IsInRole("Admin") || User.IsInRole("Ground_Staff"))
+                    {
+                        <a href="/GroundOps/CargoManifest" class="flex items-center p-3 hover:bg-slate-50 rounded-xl transition group">
+                            <div class="h-10 w-10 rounded-lg bg-orange-100 text-orange-600 flex items-center justify-center mr-4 group-hover:bg-orange-600 group-hover:text-white transition">
+                                <span class="material-symbols-outlined">luggage</span>
+                            </div>
+                            <div>
+                                <div class="font-bold text-slate-700">Cargo Manifest</div>
+                                <div class="text-xs text-slate-500">Manage baggage containers</div>
+                            </div>
+                        </a>
+                    }
+                </div>
+            </div>
+        </div>
+
+        <!-- Recent Activity Logs -->
+        <div class="lg:col-span-2">
+            <div class="bg-white border border-slate-200 rounded-2xl shadow-sm overflow-hidden h-full flex flex-col">
+                <div class="bg-slate-50 border-b border-slate-200 px-6 py-4 flex items-center justify-between">
+                    <h2 class="text-lg font-bold text-slate-800">Recent Audit Logs</h2>
+                    <a href="/Management/AuditLogs" class="text-sm font-semibold text-blue-600 hover:text-blue-700">View All</a>
+                </div>
+                <div class="p-6 bg-slate-900 flex-grow font-mono text-sm text-slate-300">
+                    @if (recentLogs != null && recentLogs.Any())
+                    {
+                        <ul class="space-y-3">
+                            @foreach (var log in recentLogs)
+                            {
+                                <li class="flex items-start">
+                                    <span class="text-blue-400 mr-3">[@log.Timestamp.ToString("HH:mm:ss")]</span>
+                                    <span>
+                                        <span class="font-bold text-slate-100">[FI] </span>
+                                        @log.Message
+                                    </span>
+                                </li>
+                            }
+                        </ul>
+                    }
+                    else
+                    {
+                        <div class="text-slate-500 italic flex items-center justify-center h-full">
+                            No recent logs found.
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+        
+    </div>
 </div>

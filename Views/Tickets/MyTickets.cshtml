@@ -92,7 +92,7 @@ else
                             }
                         </div>
                         
-                        <div class="flex items-center gap-3">
+                        <div class="flex items-center gap-3" id="actions-@ticket.Id">
                             @if (ticket.TicketState == "WaitingForPayment")
                             {
                                 <a asp-action="Pay" asp-route-id="@ticket.Id" class="text-sm font-bold text-blue-600 hover:text-blue-800 transition">
@@ -101,18 +101,31 @@ else
                             }
                             else if (ticket.TicketState == "Issued")
                             {
+                                <button type="button" onclick="executeAction('CheckIn', @ticket.Id)" class="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-bold rounded-lg shadow-sm transition">
+                                    Check-in
+                                </button>
                                 <button onclick="downloadTicketAsPdf('ticket-@ticket.Id', '@ticket.Flight?.FlightNumber')" class="text-slate-400 hover:text-blue-600 transition-colors" title="Download PDF">
                                     <span class="material-symbols-outlined">download</span>
                                 </button>
                             }
-
-                            @if (ticket.TicketState != "Cancelled")
+                            else if (ticket.TicketState == "CheckedIn")
                             {
-                                <form asp-action="Cancel" asp-route-id="@ticket.Id" method="post" class="inline">
-                                    <button type="submit" class="text-sm font-bold text-red-600 hover:text-red-800 transition" onclick="return confirm('Are you sure you want to cancel this ticket?');">
-                                        Cancel
-                                    </button>
-                                </form>
+                                <button type="button" onclick="executeAction('Board', @ticket.Id)" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-bold rounded-lg shadow-sm transition">
+                                    Board Flight
+                                </button>
+                            }
+
+                            @if (ticket.TicketState != "Cancelled" && ticket.TicketState != "Boarded" && ticket.TicketState != "Refunded")
+                            {
+                                <button type="button" onclick="executeAction('Cancel', @ticket.Id, true)" class="text-sm font-bold text-red-600 hover:text-red-800 transition">
+                                    Cancel
+                                </button>
+                            }
+                            else if (ticket.TicketState == "Cancelled")
+                            {
+                                <button type="button" onclick="executeAction('Refund', @ticket.Id, true)" class="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold rounded-lg border border-slate-300 transition flex items-center justify-center gap-1.5">
+                                    <span class="material-symbols-outlined text-[16px]">account_balance_wallet</span> Refund Ticket
+                                </button>
                             }
                         </div>
                     </div>
@@ -165,5 +178,45 @@ else
                 if(downloadBtn) downloadBtn.style.display = 'block';
             });
         }
+
+        async function executeAction(actionName, ticketId, confirmFirst = false) {
+            if (confirmFirst && !confirm('Are you sure you want to perform this action?')) {
+                return;
+            }
+
+            try {
+                const response = await fetch(`/Tickets/${actionName}?id=${ticketId}`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' }
+                });
+
+                const data = await response.json();
+                
+                if (data.success) {
+                    toastr.success(data.message);
+                    // Reload to update state
+                    setTimeout(() => window.location.reload(), 1000);
+                } else {
+                    toastr.error(data.message);
+                }
+            } catch (err) {
+                console.error(err);
+                toastr.error("An error occurred. Please try again.");
+            }
+        }
+
+        // Listen for real-time Flight Status changes to refresh the tickets view automatically
+        document.addEventListener("DOMContentLoaded", function() {
+            if (window.globalConnection) {
+                window.globalConnection.on("FlightStateChanged", function (data) {
+                    // Check if the flight number exists in the page
+                    const pageText = document.body.innerText;
+                    if (pageText.includes(data.flightNumber)) {
+                        toastr.info(`Status updated for flight ${data.flightNumber}. Refreshing tickets...`);
+                        setTimeout(() => window.location.reload(), 1500);
+                    }
+                });
+            }
+        });
     </script>
 }

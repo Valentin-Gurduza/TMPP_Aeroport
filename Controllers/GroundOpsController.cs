@@ -12,33 +12,46 @@ namespace TMPP_Aeroport.Controllers
     public class GroundOpsController : Controller
     {
         private readonly ApplicationDbContext _dbContext;
+        private readonly TMPP_Aeroport.Services.FlightSimulationService _simService;
 
-        public GroundOpsController(ApplicationDbContext dbContext)
+        public GroundOpsController(ApplicationDbContext dbContext, TMPP_Aeroport.Services.FlightSimulationService simService)
         {
             _dbContext = dbContext;
+            _simService = simService;
         }
 
         // Facade & Template Method: Pre-Flight Checks
         [HttpPost]
         public async Task<IActionResult> PreFlightChecksExecute(string flightNumber, string runway, string flightType)
         {
+            var flight = await _dbContext.Flights.Include(f => f.Aircraft).FirstOrDefaultAsync(f => f.FlightNumber == flightNumber);
+            if (flight == null)
+            {
+                ViewBag.Error = "Zborul nu a fost găsit.";
+                return View("PreFlightChecks");
+            }
+
             // Template Method execution
             TMPP_Aeroport.Domain.TemplateMethod.FlightPreflightRoutine routine;
-            if (flightType == "cargo") routine = new TMPP_Aeroport.Domain.TemplateMethod.CargoFlightRoutine();
-            else routine = new TMPP_Aeroport.Domain.TemplateMethod.PassengerFlightRoutine();
+            if (flightType == "cargo" || flight.Aircraft?.Type == "Cargo") 
+                routine = new TMPP_Aeroport.Domain.TemplateMethod.CargoFlightRoutine(_dbContext, flight);
+            else 
+                routine = new TMPP_Aeroport.Domain.TemplateMethod.PassengerFlightRoutine(_dbContext, flight);
             
             routine.ExecuteRoutine();
 
-            // Facade execution
-            var facade = new TMPP_Aeroport.Domain.Facade.FlightDepartureFacade();
-            var flightLog = facade.AuthoriseDeparture(flightNumber, runway);
+            List<string> flightLog = new List<string>();
 
-            var flight = await _dbContext.Flights.FirstOrDefaultAsync(f => f.FlightNumber == flightNumber);
-            if (flight != null)
+            if (routine.IsSuccessful)
             {
-                // Simulate ground ops completing checks. Status is moved to Awaiting Takeoff Clearance
-                // But realistically, Ground Ops prepares the flight for ATC.
-                // We just log it for now.
+                // Facade execution
+                var facade = new TMPP_Aeroport.Domain.Facade.FlightDepartureFacade(_dbContext);
+                var facadeResult = facade.AuthoriseDeparture(flightNumber, runway);
+                flightLog = facadeResult.Logs;
+            }
+            else
+            {
+                flightLog.Add("❌ Decolarea a fost oprită deoarece verificările pre-zbor au eșuat.");
             }
 
             ViewBag.FlightLog = flightLog;
@@ -59,7 +72,12 @@ namespace TMPP_Aeroport.Controllers
         // Bridge Pattern: Terminal Displays
         public IActionResult TerminalDisplays(string hardware = "led")
         {
-            var flights = _dbContext.Flights.OrderBy(f => f.DepartureTime).Take(6).ToList();
+            var departuresList = _dbContext.Flights.Where(f => f.Origin.Contains("OTP") || f.Origin.Contains("Bucharest")).OrderBy(f => f.DepartureTime).Take(6).ToList();
+            var arrivalsList = _dbContext.Flights.Where(f => f.Destination.Contains("OTP") || f.Destination.Contains("Bucharest")).OrderBy(f => f.ArrivalTime).Take(6).ToList();
+
+            // Fallback in case of no flights (demo DB might not have OTP flights exactly)
+            if (!departuresList.Any()) departuresList = _dbContext.Flights.OrderBy(f => f.DepartureTime).Take(6).ToList();
+            if (!arrivalsList.Any()) arrivalsList = _dbContext.Flights.OrderByDescending(f => f.DepartureTime).Take(6).ToList();
 
             TMPP_Aeroport.Domain.Bridge.IDisplayRenderer renderer = (hardware == "web") ? 
                 new TMPP_Aeroport.Domain.Bridge.WebRenderer() : 
@@ -69,8 +87,8 @@ namespace TMPP_Aeroport.Controllers
             TMPP_Aeroport.Domain.Bridge.FlightBoard arrivals = new TMPP_Aeroport.Domain.Bridge.ArrivalsBoard(renderer);
 
             ViewBag.Hardware = hardware;
-            ViewBag.DeparturesRender = departures.ShowBoard(flights);
-            ViewBag.ArrivalsRender = arrivals.ShowBoard(flights);
+            ViewBag.DeparturesRender = departures.ShowBoard(departuresList);
+            ViewBag.ArrivalsRender = arrivals.ShowBoard(arrivalsList);
 
             return View();
         }
@@ -81,54 +99,148 @@ namespace TMPP_Aeroport.Controllers
 
         private string GetSessionKey() => (User.Identity?.IsAuthenticated == true ? User.Identity.Name : null) ?? HttpContext.Connection.RemoteIpAddress?.ToString() ?? "unknown";
 
-        public IActionResult GateAssignments(string actionType, string newGate, string newModel)
+        public async Task<IActionResult> GateAssignments(int? flightId, string actionType, string newGate)
         {
             var key = GetSessionKey();
-            var originator = _originators.GetOrAdd(key, _ => new TMPP_Aeroport.Domain.Memento.FlightConfigurator() { Gate = "A1", DepartureTime = DateTime.Now.AddHours(2), AircraftModel = "Boeing 737" });
-            var caretaker = _caretakers.GetOrAdd(key, _ => new TMPP_Aeroport.Domain.Memento.FlightConfigHistory());
+            
+            // Populate Dropdown
+            var flights = await _dbContext.Flights.Where(f => f.Status == "Scheduled" || f.Status == "Boarding" || f.Status == "Draft").ToListAsync();
+            ViewBag.Flights = flights;
 
-            if (actionType == "Save")
+            if (flightId.HasValue)
             {
-                caretaker.Backup(originator);
-            }
-            else if (actionType == "Update")
-            {
-                originator.SetConfiguration(newGate ?? "A1", DateTime.Now.AddHours(3), newModel ?? "Airbus A320");
-            }
-            else if (actionType == "Undo")
-            {
-                caretaker.Undo(originator);
-            }
+                var flight = await _dbContext.Flights.Include(f => f.Aircraft).FirstOrDefaultAsync(f => f.Id == flightId.Value);
+                if (flight != null)
+                {
+                    var originator = _originators.GetOrAdd(key + "_" + flight.Id, _ => new TMPP_Aeroport.Domain.Memento.FlightConfigurator() 
+                    { 
+                        Gate = flight.Gate ?? "Unassigned", 
+                        DepartureTime = flight.DepartureTime, 
+                        AircraftModel = flight.Aircraft?.Model ?? "Unknown" 
+                    });
+                    var caretaker = _caretakers.GetOrAdd(key + "_" + flight.Id, _ => new TMPP_Aeroport.Domain.Memento.FlightConfigHistory());
 
-            ViewBag.CurrentGate = originator.Gate;
-            ViewBag.CurrentModel = originator.AircraftModel;
-            ViewBag.Logs = originator.ActionLogs;
+                    if (actionType == "Save")
+                    {
+                        caretaker.Backup(originator);
+                        // Save to real DB
+                        flight.Gate = originator.Gate;
+                        await _dbContext.SaveChangesAsync();
+                        originator.ActionLogs.Add($"Saved gate {originator.Gate} to Database for flight {flight.FlightNumber}");
+                    }
+                    else if (actionType == "Update" && !string.IsNullOrEmpty(newGate))
+                    {
+                        originator.SetConfiguration(newGate, originator.DepartureTime, originator.AircraftModel);
+                    }
+                    else if (actionType == "Undo")
+                    {
+                        caretaker.Undo(originator);
+                        // Revert in real DB if necessary
+                        flight.Gate = originator.Gate;
+                        await _dbContext.SaveChangesAsync();
+                    }
+
+                    ViewBag.CurrentGate = originator.Gate;
+                    ViewBag.CurrentModel = originator.AircraftModel;
+                    ViewBag.Logs = originator.ActionLogs;
+                    ViewBag.SelectedFlightId = flight.Id;
+                }
+            }
 
             return View();
         }
 
         // Composite Pattern: Cargo Manifest
-        public IActionResult CargoManifest()
+        public async Task<IActionResult> CargoManifest(string flightNumberFilter = "")
         {
-            ILuggageItem pasager1Valiza1 = new Suitcase("Valiză Roșie", 23.5);
-            ILuggageItem pasager1Rucsac = new Backpack("Rucsac Laptop", 5.2);
-            ILuggageItem pasager2Valiza = new Suitcase("Valiză Neagră", 18.0);
+            var dbBaggageQuery = _dbContext.BaggageItems.Include(b => b.Flight).AsQueryable();
+            
+            if (!string.IsNullOrEmpty(flightNumberFilter))
+            {
+                dbBaggageQuery = dbBaggageQuery.Where(b => b.Flight != null && b.Flight.FlightNumber == flightNumberFilter);
+            }
 
-            LuggageContainer popescuFamilyContainer = new LuggageContainer("POP-01");
-            popescuFamilyContainer.Add(pasager1Valiza1);
-            popescuFamilyContainer.Add(pasager1Rucsac);
-            popescuFamilyContainer.Add(pasager2Valiza);
+            var dbBaggage = await dbBaggageQuery.ToListAsync();
+            
+            LuggageContainer mainCargo = new LuggageContainer("AIRPORT-MAIN-HUB");
 
-            ILuggageItem pasager3Valiza = new Suitcase("Geantă Golf", 12.0);
+            // Group by flight
+            var flightGroups = dbBaggage.GroupBy(b => b.Flight?.FlightNumber ?? "UNK");
 
-            LuggageContainer mainCargo = new LuggageContainer("CARGO-MAIN-737");
-            mainCargo.Add(popescuFamilyContainer);
-            mainCargo.Add(pasager3Valiza);
+            foreach (var group in flightGroups)
+            {
+                LuggageContainer flightContainer = new LuggageContainer($"FLIGHT-{group.Key}");
+                
+                foreach (var item in group)
+                {
+                    ILuggageItem luggageItem;
+                    if (item.Type == "Backpack") 
+                        luggageItem = new Backpack($"Tag: {item.TagCode}", item.Weight);
+                    else 
+                        luggageItem = new Suitcase($"Tag: {item.TagCode}", item.Weight);
+                        
+                    flightContainer.Add(luggageItem);
+                }
+                
+                mainCargo.Add(flightContainer);
+            }
 
+            // We want to pass the hierarchical object to the View
             ViewBag.MainCargo = mainCargo;
             ViewBag.TotalWeight = mainCargo.GetWeight();
-            ViewBag.StringTree = mainCargo.Display();
+            
+            // Generate list of flights for the dropdown filter
+            ViewBag.Flights = await _dbContext.Flights.Where(f => f.Status == "Scheduled" || f.Status == "Boarding").ToListAsync();
+            ViewBag.FlightNumberFilter = flightNumberFilter;
 
+            return View();
+        }
+
+        // Feature 1: BHS - Baggage Routing Live View
+        [HttpGet]
+        public async Task<IActionResult> BaggageRouting()
+        {
+            var stages = new[] { "CheckedIn", "OnConveyor", "XRayScreening", "Sorted", "LoadedOnAircraft" };
+            var bags = await _dbContext.BaggageItems.Include(b => b.Flight).ToListAsync();
+            ViewBag.Stages = stages;
+            ViewBag.Bags = bags;
+            return View();
+        }
+
+        // BHS: Auto-advance bag stages (called by JS timer)
+        [HttpPost]
+        public async Task<IActionResult> AdvanceBaggageStages()
+        {
+            var stages = new[] { "CheckedIn", "OnConveyor", "XRayScreening", "Sorted", "LoadedOnAircraft" };
+            var bags = await _dbContext.BaggageItems.Where(b => b.BaggageStage != "LoadedOnAircraft" && b.SecurityStatus != "Rejected").ToListAsync();
+            var now = DateTime.Now;
+            foreach (var bag in bags)
+            {
+                // Only advance if not recently updated (5+ seconds ago)
+                if (!bag.StageUpdatedAt.HasValue || (now - bag.StageUpdatedAt.Value).TotalSeconds >= 5)
+                {
+                    var idx = Array.IndexOf(stages, bag.BaggageStage);
+                    if (idx >= 0 && idx < stages.Length - 1)
+                    {
+                        bag.BaggageStage = stages[idx + 1];
+                        bag.StageUpdatedAt = now;
+                        // If flagged in XRay, hold it there
+                        if (bag.BaggageStage == "XRayScreening" && bag.SecurityStatus == "Flagged")
+                            bag.BaggageStage = "XRayScreening";
+                    }
+                }
+            }
+            await _dbContext.SaveChangesAsync();
+            return Ok();
+        }
+
+        // Feature 2: GSE - Ground Support Equipment Live View
+        [HttpGet]
+        public IActionResult GroundVehicles()
+        {
+            var pool = _simService.GetVehiclePool();
+            ViewBag.Vehicles = pool.AllVehicles;
+            ViewBag.ActiveFlights = _simService.GetActiveFlights().Where(f => f.Status == "Landed" || f.ServicingStarted).ToList();
             return View();
         }
     }

@@ -85,4 +85,15 @@ namespace TMPP_Aeroport.Domain.ChainOfResponsibility
             return base.Handle(baggage);
         }
     }
+
+    public class ManualInspectionHandler : BaseBaggageHandler
+    {
+        public override bool Handle(Baggage baggage)
+        {
+            // If the baggage reached here, it means it was previously flagged but a human operator
+            // has manually inspected it and allowed it to proceed.
+            baggage.CheckLogs.Add($"👨‍✈️ Manual Inspection passed. Officer manually cleared {baggage.Owner}'s baggage.");
+            return base.Handle(baggage);
+        }
+    }
 }

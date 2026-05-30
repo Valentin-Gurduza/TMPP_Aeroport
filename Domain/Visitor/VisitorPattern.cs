@@ -53,13 +53,17 @@ namespace TMPP_Aeroport.Domain.Visitor
 
     public class FlightElement : IAirportElement
     {
+        public int Id { get; set; }
         public string FlightNumber { get; set; }
         public string Destination { get; set; }
+        public System.DateTime DepartureTime { get; set; }
 
-        public FlightElement(string number, string destination)
+        public FlightElement(int id, string number, string destination, System.DateTime departureTime)
         {
+            Id = id;
             FlightNumber = number;
             Destination = destination;
+            DepartureTime = departureTime;
         }
 
         public void Accept(IVisitor visitor)
@@ -85,7 +89,7 @@ namespace TMPP_Aeroport.Domain.Visitor
 
         public void Visit(FlightElement flight)
         {
-            ExportedData.Add($"{{ \"Flight\": \"{flight.FlightNumber}\", \"Dest\": \"{flight.Destination}\" }}");
+            ExportedData.Add($"{{ \"Flight\": \"{flight.FlightNumber}\", \"Dest\": \"{flight.Destination}\", \"Time\": \"{flight.DepartureTime:yyyy-MM-dd HH:mm}\" }}");
         }
     }
 
@@ -105,7 +109,35 @@ namespace TMPP_Aeroport.Domain.Visitor
 
         public void Visit(FlightElement flight)
         {
-            ExportedData.Add($"<Flight Number=\"{flight.FlightNumber}\" Dest=\"{flight.Destination}\" />");
+            ExportedData.Add($"<Flight Number=\"{flight.FlightNumber}\" Dest=\"{flight.Destination}\" Time=\"{flight.DepartureTime:yyyy-MM-dd HH:mm}\" />");
+        }
+    }
+
+    public class FlightDelayVisitor : IVisitor
+    {
+        private readonly System.TimeSpan _delayAmount;
+        public List<FlightElement> DelayedFlights { get; } = new List<FlightElement>();
+
+        public FlightDelayVisitor(System.TimeSpan delayAmount)
+        {
+            _delayAmount = delayAmount;
+        }
+
+        public void Visit(TerminalElement terminal)
+        {
+            // Nu se aplică
+        }
+
+        public void Visit(AircraftElement aircraft)
+        {
+            // Nu se aplică
+        }
+
+        public void Visit(FlightElement flight)
+        {
+            // Aplică delay la toate zborurile vizitate
+            flight.DepartureTime = flight.DepartureTime.Add(_delayAmount);
+            DelayedFlights.Add(flight);
         }
     }
 }
