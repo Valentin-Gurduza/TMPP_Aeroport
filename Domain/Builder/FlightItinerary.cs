@@ -4,7 +4,7 @@ namespace TMPP_Aeroport.Domain.Builder
 {
     // The Complex Product: Flight Itinerary
     // Un obiect complex cu mulți parametri (unele opționale).
-    public class FlightItinerary
+    public class FlightItinerary : System.ICloneable
     {
         public string PassengerName { get; set; } = string.Empty;
         public string TicketType { get; set; } = string.Empty;
@@ -23,6 +23,17 @@ namespace TMPP_Aeroport.Domain.Builder
                           $"- Acces Lounge: {(HasLoungeAccess ? "DA" : "NU")}\n" +
                           $"- Meniu: {(Meals.Count > 0 ? string.Join(", ", Meals) : "Fără masă")}";
             return summary;
+        }
+
+        // Prototype Pattern Implementation
+        public object Clone()
+        {
+            // Shallow copy is enough except for Lists
+            var clone = (FlightItinerary)this.MemberwiseClone();
+            clone.Meals = new List<string>(this.Meals);
+            
+            // To simulate booking for a group, we might clone the itinerary and just change the name/seat
+            return clone;
         }
     }
 

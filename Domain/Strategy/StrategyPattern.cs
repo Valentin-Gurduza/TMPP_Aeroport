@@ -34,6 +34,35 @@ namespace TMPP_Aeroport.Domain.Strategy
         }
     }
 
+    public class FrequentFlyerPricingStrategy : ITicketPricingStrategy
+    {
+        private int _points;
+        public FrequentFlyerPricingStrategy(int points)
+        {
+            _points = points;
+        }
+
+        public double CalculatePrice(double basePrice)
+        {
+            double discount = (_points / 100) * 0.05; // 5% off per 100 points
+            if (discount > 0.5) discount = 0.5; // Max 50% off
+            return basePrice * (1.0 - discount);
+        }
+    }
+
+    // Combined strategy: VIP Staff + Last Minute
+    // VIP-uri nu platesc suprataxă de 50% — primesc un adaos de urgență redus (+15%) DAR cu reducerea VIP (-20%) aplicată
+    public class VipLastMinutePricingStrategy : ITicketPricingStrategy
+    {
+        public double CalculatePrice(double basePrice)
+        {
+            // Last minute urgency: +15% (nu 50% — VIP au prioritate la seat reservation)
+            // VIP discount: -20%
+            // Net result: basePrice * 1.15 * 0.80 = basePrice * 0.92 → ~8% reducere față de prețul normal
+            return basePrice * 1.15 * 0.80;
+        }
+    }
+
     // 3. Contextul
     public class TicketContext
     {

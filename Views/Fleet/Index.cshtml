@@ -8,17 +8,23 @@
         <h1 class="text-2xl font-bold text-slate-800">Fleet Management</h1>
         <p class="text-sm text-slate-500">Manage all aircraft registrations and details.</p>
     </div>
-    @if (User.IsInRole("Admin"))
-    {
-        <a asp-action="Create" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-semibold transition flex items-center gap-2">
-            <span class="material-symbols-outlined text-[18px]">add</span>
-            Add Aircraft
-        </a>
-    }
+    <div class="flex items-center space-x-4">
+        <div class="relative w-64">
+            <span class="material-symbols-outlined absolute left-3 top-2.5 text-slate-400 text-sm">search</span>
+            <input type="text" id="fleet-search" onkeyup="filterFleet()" placeholder="Search fleet..." class="w-full pl-9 pr-4 py-2 rounded-lg border border-slate-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition text-sm">
+        </div>
+        @if (User.IsInRole("Admin"))
+        {
+            <a asp-action="Create" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-semibold transition flex items-center gap-2">
+                <span class="material-symbols-outlined text-[18px]">add</span>
+                Add Aircraft
+            </a>
+        }
+    </div>
 </div>
 
 <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
-    <table class="w-full text-left text-sm text-slate-600">
+    <table class="w-full text-left text-sm text-slate-600" id="fleet-table">
         <thead class="bg-slate-50 text-slate-500 border-b border-slate-200 uppercase text-xs font-semibold">
             <tr>
                 <th class="px-6 py-4">Registration</th>
@@ -42,7 +48,7 @@
             }
             @foreach (var item in Model)
             {
-                <tr class="hover:bg-slate-50 transition">
+                <tr class="fleet-row hover:bg-slate-50 transition">
                     <td class="px-6 py-4 font-mono text-blue-600 font-medium">@item.RegistrationCode</td>
                     <td class="px-6 py-4 text-slate-800 font-medium">@item.Model</td>
                     <td class="px-6 py-4">@item.Airline</td>
@@ -88,3 +94,22 @@
         </a>
     </div>
 </div>
+
+@section Scripts {
+    <script>
+        function filterFleet() {
+            let input = document.getElementById('fleet-search');
+            let filter = input.value.toLowerCase();
+            let rows = document.getElementsByClassName('fleet-row');
+
+            for (let i = 0; i < rows.length; i++) {
+                let txtValue = rows[i].textContent || rows[i].innerText;
+                if (txtValue.toLowerCase().indexOf(filter) > -1) {
+                    rows[i].style.display = "";
+                } else {
+                    rows[i].style.display = "none";
+                }
+            }
+        }
+    </script>
+}

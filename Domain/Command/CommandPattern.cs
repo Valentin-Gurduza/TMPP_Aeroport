@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using Microsoft.Extensions.DependencyInjection;
 // Incapsuleaza o cerere ca un obiect...6
 
 namespace TMPP_Aeroport.Domain.Command
@@ -14,25 +15,40 @@ namespace TMPP_Aeroport.Domain.Command
     public class RunwayReceiver
     {
         public List<string> Logs { get; } = new List<string>();
+        private readonly Microsoft.Extensions.DependencyInjection.IServiceScopeFactory _scopeFactory;
+
+        public RunwayReceiver(Microsoft.Extensions.DependencyInjection.IServiceScopeFactory scopeFactory)
+        {
+            _scopeFactory = scopeFactory;
+        }
+
+        private void SaveLog(string message)
+        {
+            Logs.Add(message);
+            using var scope = _scopeFactory.CreateScope();
+            var db = scope.ServiceProvider.GetRequiredService<TMPP_Aeroport.Data.ApplicationDbContext>();
+            db.AuditLogs.Add(new TMPP_Aeroport.Models.AuditLog { Message = message, Category = "ATC Command" });
+            db.SaveChanges();
+        }
 
         public void TurnOnLights()
         {
-            Logs.Add("Runway lights: ON");
+            SaveLog("Runway lights: ON");
         }
 
         public void TurnOffLights()
         {
-            Logs.Add("Runway lights: OFF");
+            SaveLog("Runway lights: OFF");
         }
 
         public void ClearRunway()
         {
-            Logs.Add("Runway cleared for takeoff/landing");
+            SaveLog("Runway cleared for takeoff/landing");
         }
         
         public void BlockRunway()
         {
-            Logs.Add("Runway blocked");
+            SaveLog("Runway blocked");
         }
     }
 
@@ -85,6 +101,44 @@ namespace TMPP_Aeroport.Domain.Command
         {
             _receiver.TurnOffLights();
             _receiver.BlockRunway();
+        }
+    }
+
+    // MacroCommand (Composite Pattern within Command)
+    public class EmergencyMacroCommand : ICommand
+    {
+        private List<ICommand> _commands = new List<ICommand>();
+        private RunwayReceiver _receiver;
+
+        public EmergencyMacroCommand(RunwayReceiver receiver)
+        {
+            _receiver = receiver;
+        }
+
+        public void AddCommand(ICommand command)
+        {
+            _commands.Add(command);
+        }
+
+        public void Execute()
+        {
+            _receiver.BlockRunway();
+            _receiver.TurnOnLights(); // Red lights simulation
+            
+            foreach (var cmd in _commands)
+            {
+                cmd.Execute();
+            }
+        }
+
+        public void Undo()
+        {
+            // Undo in reverse order
+            for (int i = _commands.Count - 1; i >= 0; i--)
+            {
+                _commands[i].Undo();
+            }
+            _receiver.ClearRunway();
         }
     }
 

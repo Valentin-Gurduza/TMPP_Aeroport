@@ -1,0 +1,107 @@
+@using TMPP_Aeroport.Domain.ObjectPool
+@{
+    ViewData["Title"] = "Ground Support Equipment";
+    Layout = "~/Views/Shared/_LayoutCorporate.cshtml";
+    var vehicles = ViewBag.Vehicles as IReadOnlyList<GroundVehicle>;
+    var activeFlights = ViewBag.ActiveFlights as List<TMPP_Aeroport.Services.SimulatedFlight>;
+}
+
+<div class="space-y-6">
+    <div class="flex items-center justify-between">
+        <div>
+            <h1 class="text-2xl font-bold text-slate-800 flex items-center">
+                <span class="material-symbols-outlined mr-3 text-orange-500 text-3xl">airport_shuttle</span>
+                Ground Support Equipment
+            </h1>
+            <p class="text-slate-500 mt-1">Live vehicle fleet — Object Pool Pattern</p>
+        </div>
+        <div class="flex gap-3">
+            <div class="bg-white border border-slate-200 rounded-xl px-4 py-2 text-center">
+                <div class="text-2xl font-bold text-slate-800">@(vehicles?.Count ?? 0)</div>
+                <div class="text-xs text-slate-500">Total Vehicles</div>
+            </div>
+            <div class="bg-white border border-slate-200 rounded-xl px-4 py-2 text-center">
+                <div class="text-2xl font-bold text-green-600">@(vehicles?.Count(v => v.Status == VehicleStatus.Available) ?? 0)</div>
+                <div class="text-xs text-slate-500">Available</div>
+            </div>
+            <div class="bg-white border border-slate-200 rounded-xl px-4 py-2 text-center">
+                <div class="text-2xl font-bold text-orange-500">@(vehicles?.Count(v => v.Status == VehicleStatus.InUse) ?? 0)</div>
+                <div class="text-xs text-slate-500">In Service</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Vehicle Fleet by Type -->
+    @foreach (var vType in new[] { VehicleType.FuelTruck, VehicleType.CateringTruck, VehicleType.Tug })
+    {
+        var typeVehicles = vehicles?.Where(v => v.Type == vType).ToList() ?? new List<GroundVehicle>();
+        var typeLabel = vType == VehicleType.FuelTruck ? "⛽ Fuel Trucks" :
+                        vType == VehicleType.CateringTruck ? "🍽️ Catering Trucks" : "🚜 Tug / Pushback";
+        <div class="bg-white border border-slate-200 rounded-xl shadow-sm overflow-hidden">
+            <div class="bg-slate-50 border-b border-slate-200 px-5 py-3 flex justify-between items-center">
+                <h2 class="font-bold text-slate-700">@typeLabel</h2>
+                <span class="text-sm text-slate-500">@typeVehicles.Count(v => v.Status == VehicleStatus.Available) available</span>
+            </div>
+            <div class="p-4 grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-3">
+                @foreach (var v in typeVehicles)
+                {
+                    var statusBg = v.Status == VehicleStatus.Available ? "bg-green-50 border-green-300" :
+                                  v.Status == VehicleStatus.InUse ? "bg-orange-50 border-orange-400" : "bg-slate-100 border-slate-300";
+                    var dot = v.Status == VehicleStatus.Available ? "bg-green-500" :
+                              v.Status == VehicleStatus.InUse ? "bg-orange-500 animate-pulse" : "bg-slate-400";
+                    <div class="rounded-lg border @statusBg p-3">
+                        <div class="flex items-center justify-between mb-1">
+                            <span class="font-bold text-slate-700 text-sm">@v.Id</span>
+                            <span class="w-2.5 h-2.5 rounded-full @dot"></span>
+                        </div>
+                        <div class="text-xs text-slate-500">@v.Status</div>
+                        @if (v.Status == VehicleStatus.InUse && !string.IsNullOrEmpty(v.AssignedFlight))
+                        {
+                            <div class="text-xs font-bold text-orange-600 mt-1">✈ @v.AssignedFlight</div>
+                        }
+                    </div>
+                }
+            </div>
+        </div>
+    }
+
+    <!-- Active Service Operations -->
+    @if (activeFlights != null && activeFlights.Any())
+    {
+        <div class="bg-white border border-slate-200 rounded-xl shadow-sm overflow-hidden">
+            <div class="bg-slate-50 border-b border-slate-200 px-5 py-3">
+                <h2 class="font-bold text-slate-700">🔧 Active Turnaround Operations</h2>
+            </div>
+            <div class="divide-y divide-slate-100">
+                @foreach (var f in activeFlights)
+                {
+                    var servPct = f.ServicingComplete ? 100 : f.ServicingStarted ? 60 : 0;
+                    <div class="px-5 py-4 flex items-center justify-between">
+                        <div>
+                            <div class="font-bold text-slate-800">@f.FlightNumber</div>
+                            <div class="text-xs text-slate-500 mt-0.5">@f.DestName · Gate @(string.IsNullOrEmpty(f.AssignedGate) ? "TBD" : f.AssignedGate)</div>
+                        </div>
+                        <div class="flex items-center gap-4">
+                            <div class="w-40">
+                                <div class="text-xs text-slate-500 mb-1">Servicing Progress</div>
+                                <div class="h-2 bg-slate-200 rounded-full overflow-hidden">
+                                    <div class="h-full rounded-full @(f.ServicingComplete ? "bg-green-500" : "bg-orange-400") transition-all" style="width: @servPct%"></div>
+                                </div>
+                            </div>
+                            <span class="text-xs font-semibold @(f.ServicingComplete ? "text-green-600" : "text-orange-600")">
+                                @(f.ServicingComplete ? "Complete" : "In Progress")
+            </span>
+                        </div>
+                    </div>
+                }
+            </div>
+        </div>
+    }
+</div>
+
+@section Scripts {
+<script>
+    // Auto-refresh every 5 seconds
+    setTimeout(() => location.reload(), 5000);
+</script>
+}

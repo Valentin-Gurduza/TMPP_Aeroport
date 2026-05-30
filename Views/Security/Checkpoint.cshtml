@@ -1,113 +1,291 @@
-@model dynamic
 @{
-    ViewData["Title"] = "Security Checkpoint";
+    ViewData["Title"] = "Security Checkpoint - Live Scanner";
     Layout = "~/Views/Shared/_LayoutCorporate.cshtml";
-    
-    var baggageLogs = ViewBag.BaggageLogs as List<string>;
-    var isApproved = ViewBag.IsApproved as bool?;
 }
 
-<div class="max-w-4xl mx-auto space-y-6 animate-fade-in-up">
+<div class="max-w-7xl mx-auto space-y-6 animate-fade-in-up pt-4">
     <!-- Header -->
     <div class="flex items-center justify-between mb-8">
         <div>
             <h1 class="text-3xl font-extrabold text-slate-800 tracking-tight flex items-center">
                 <span class="material-symbols-outlined mr-3 text-4xl text-blue-600">policy</span>
-                Security Checkpoint
+                Security Checkpoint (Live Scanner)
             </h1>
-            <p class="text-slate-500 mt-2 text-lg">Chain of Responsibility: Multi-stage Baggage Screening</p>
+        </div>
+        <div>
+            <button onclick="fetchPendingBaggages()" class="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-lg transition border border-slate-300">
+                <span class="material-symbols-outlined align-middle mr-1 text-sm">refresh</span> Refresh Queue
+            </button>
+        </div>
+    </div>
+
+    <!-- Conveyor Belt Queue -->
+    <div class="bg-white border border-slate-200 rounded-2xl shadow-sm overflow-hidden mb-6 relative">
+        <div class="bg-slate-50 border-b border-slate-200 px-6 py-4 flex justify-between items-center">
+            <h2 class="text-lg font-bold text-slate-800">Live Security Conveyor</h2>
+            <div class="flex gap-2">
+                <button onclick="scanBatch()" id="btn-scan" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-lg shadow-sm transition flex items-center">
+                    <span class="material-symbols-outlined text-sm mr-2">play_arrow</span> Start Belt
+                </button>
+            </div>
+        </div>
+        
+        <!-- Animated Scanner Zones overlay -->
+        <div class="absolute inset-0 top-[68px] pointer-events-none flex justify-center items-stretch z-10 opacity-20">
+            <div class="w-1/4 border-r-4 border-blue-500 border-dashed relative">
+                <div class="absolute bottom-2 right-2 text-blue-800 font-black text-2xl">WEIGHT</div>
+            </div>
+            <div class="w-1/4 border-r-4 border-purple-500 border-dashed relative">
+                <div class="absolute bottom-2 right-2 text-purple-800 font-black text-2xl">X-RAY</div>
+            </div>
+            <div class="w-1/4 border-r-4 border-red-500 border-dashed relative">
+                <div class="absolute bottom-2 right-2 text-red-800 font-black text-2xl">EXPLOSIVES</div>
+            </div>
+        </div>
+
+        <div class="p-6 bg-slate-200 overflow-x-auto relative min-h-[200px]" style="background-image: repeating-linear-gradient(90deg, transparent, transparent 40px, rgba(0,0,0,0.05) 40px, rgba(0,0,0,0.05) 80px);">
+            <div id="conveyor-belt" class="flex space-x-6 min-w-max pb-4 relative z-20 items-center h-full">
+                <!-- Items populated via JS -->
+                <div class="text-slate-500 italic w-full text-center py-4" id="conveyor-empty">No pending baggage on the belt.</div>
+            </div>
         </div>
     </div>
 
     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-        
-        <!-- Input Form -->
-        <div class="bg-white border border-slate-200 rounded-2xl shadow-sm overflow-hidden h-full">
-            <div class="bg-slate-50 border-b border-slate-200 px-6 py-4">
-                <h2 class="text-lg font-bold text-slate-800">Scan Baggage</h2>
+        <!-- Manual Inspection Queue (Flagged) -->
+        <div class="bg-white border border-slate-200 rounded-2xl shadow-sm overflow-hidden h-[400px] flex flex-col">
+            <div class="bg-red-50 border-b border-red-200 px-6 py-4 flex items-center justify-between">
+                <h2 class="text-lg font-bold text-red-800 flex items-center">
+                    <span class="material-symbols-outlined mr-2">warning</span> Requires Manual Inspection
+                </h2>
+                <span class="bg-red-200 text-red-800 text-xs font-bold px-2 py-1 rounded-full" id="flagged-count">0</span>
             </div>
-            
-            <div class="p-6">
-                <form action="/Security/Checkpoint" method="get" class="space-y-6">
-                    <div>
-                        <label class="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">Baggage Weight (kg)</label>
-                        <input type="number" step="0.1" name="weight" value="20" class="w-full px-4 py-2.5 rounded-lg border border-slate-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition outline-none font-medium text-slate-700" required />
-                    </div>
-
-                    <div class="space-y-3 pt-2">
-                        <label class="flex items-center space-x-3 p-3 border border-slate-200 rounded-lg cursor-pointer hover:bg-slate-50 transition">
-                            <input type="checkbox" name="hasSuspicious" value="true" class="w-5 h-5 text-blue-600 rounded border-slate-300 focus:ring-blue-500" />
-                            <span class="text-sm font-bold text-slate-700">Contains Suspicious Items (Fails X-Ray)</span>
-                        </label>
-
-                        <label class="flex items-center space-x-3 p-3 border border-slate-200 rounded-lg cursor-pointer hover:bg-slate-50 transition">
-                            <input type="checkbox" name="hasExplosive" value="true" class="w-5 h-5 text-blue-600 rounded border-slate-300 focus:ring-blue-500" />
-                            <span class="text-sm font-bold text-slate-700">Contains Explosive Traces</span>
-                        </label>
-                    </div>
-
-                    <button type="submit" class="w-full py-3 bg-slate-800 hover:bg-slate-900 text-white rounded-xl font-bold shadow-md transition flex items-center justify-center">
-                        <span class="material-symbols-outlined mr-2">conveyor_belt</span>
-                        Send Through Scanner
-                    </button>
-                </form>
+            <div class="p-4 overflow-y-auto flex-1 space-y-3" id="flagged-queue">
+                <div class="text-slate-500 italic text-center py-4" id="flagged-empty">No flagged baggage.</div>
             </div>
         </div>
 
-        <!-- Screening Results -->
-        <div class="bg-white border border-slate-200 rounded-2xl shadow-sm overflow-hidden h-full flex flex-col">
-            <div class="bg-slate-50 border-b border-slate-200 px-6 py-4 flex items-center justify-between">
-                <h2 class="text-lg font-bold text-slate-800">Screening Process Logs</h2>
-                @if (isApproved.HasValue)
-                {
-                    if (isApproved.Value)
-                    {
-                        <span class="bg-green-100 text-green-800 border border-green-200 px-3 py-1 rounded-full text-xs font-bold flex items-center">
-                            <span class="material-symbols-outlined text-sm mr-1">check_circle</span> APPROVED
-                        </span>
-                    }
-                    else
-                    {
-                        <span class="bg-red-100 text-red-800 border border-red-200 px-3 py-1 rounded-full text-xs font-bold flex items-center">
-                            <span class="material-symbols-outlined text-sm mr-1">cancel</span> REJECTED
-                        </span>
-                    }
-                }
+        <!-- Scanner Live Logs -->
+        <div class="bg-slate-900 border border-slate-800 rounded-2xl shadow-sm overflow-hidden h-[400px] flex flex-col">
+            <div class="bg-slate-800 border-b border-slate-700 px-6 py-4">
+                <h2 class="text-lg font-bold text-white flex items-center">
+                    <span class="material-symbols-outlined mr-2">terminal</span> Scanner Logs
+                </h2>
             </div>
-            
-            <div class="p-6 bg-slate-900 flex-grow font-mono text-sm text-slate-300">
-                @if (baggageLogs != null && baggageLogs.Any())
-                {
-                    <ul class="space-y-3">
-                        @foreach (var log in baggageLogs)
-                        {
-                            <li class="flex items-start">
-                                @if (log.Contains("FAILED") || log.Contains("REJECTED") || log.Contains("ALERT"))
-                                {
-                                    <span class="text-red-500 mr-2">✖</span>
-                                    <span class="text-red-400 font-bold">@log</span>
-                                }
-                                else if (log.Contains("PASSED") || log.Contains("CLEAR"))
-                                {
-                                    <span class="text-green-500 mr-2">✔</span>
-                                    <span class="text-green-400">@log</span>
-                                }
-                                else
-                                {
-                                    <span class="text-blue-500 mr-2">ℹ</span>
-                                    <span>@log</span>
-                                }
-                            </li>
-                        }
-                    </ul>
-                }
-                else
-                {
-                    <div class="text-slate-500 italic h-full flex items-center justify-center">
-                        Waiting for baggage scan...
-                    </div>
-                }
+            <div class="p-4 overflow-y-auto flex-1 font-mono text-sm text-slate-300" id="scanner-logs">
+                <div class="text-slate-600 italic text-center py-4" id="logs-empty">System ready. Waiting for scan...</div>
             </div>
         </div>
     </div>
 </div>
+
+@section Scripts {
+    <script>
+        let pendingBaggages = [];
+        let flaggedBaggages = [];
+
+        document.addEventListener("DOMContentLoaded", function() {
+            fetchPendingBaggages();
+        });
+
+        async function fetchPendingBaggages() {
+            try {
+                const response = await fetch('/Security/GetPendingBaggages');
+                const data = await response.json();
+                
+                pendingBaggages = data.filter(b => b.securityStatus === 'Pending');
+                flaggedBaggages = data.filter(b => b.securityStatus === 'Flagged');
+                
+                renderConveyor();
+                renderFlagged();
+            } catch (error) {
+                console.error("Error fetching baggages:", error);
+                toastr.error("Failed to load conveyor belt.");
+            }
+        }
+
+        function renderConveyor() {
+            const container = document.getElementById("conveyor-belt");
+            const emptyState = document.getElementById("conveyor-empty");
+            const btnScan = document.getElementById("btn-scan");
+            
+            // Clear current (keep empty state hidden or visible later)
+            container.innerHTML = '';
+            
+            if (pendingBaggages.length === 0) {
+                container.appendChild(emptyState);
+                emptyState.style.display = 'block';
+                btnScan.disabled = true;
+                btnScan.classList.add('opacity-50', 'cursor-not-allowed');
+                return;
+            }
+            
+            btnScan.disabled = false;
+            btnScan.classList.remove('opacity-50', 'cursor-not-allowed');
+
+            pendingBaggages.forEach(bag => {
+                const bagEl = document.createElement("div");
+                bagEl.className = "bg-white p-4 rounded-xl shadow-md border-l-4 border-blue-500 w-48 flex-shrink-0 relative overflow-hidden transition-all duration-500 transform translate-x-0";
+                bagEl.id = `bag-${bag.id}`;
+                bagEl.innerHTML = `
+                    <div class="text-xs text-slate-500 font-bold mb-1">Flight ${bag.flightId || 'UNK'}</div>
+                    <div class="font-mono font-bold text-slate-800 text-lg mb-2">${bag.tagCode}</div>
+                    <div class="flex items-center text-xs text-slate-500">
+                        <span class="material-symbols-outlined text-[14px] mr-1">scale</span> ${bag.weight} kg
+                    </div>
+                `;
+                container.appendChild(bagEl);
+            });
+        }
+
+        function renderFlagged() {
+            const container = document.getElementById("flagged-queue");
+            document.getElementById("flagged-count").innerText = flaggedBaggages.length;
+            
+            if (flaggedBaggages.length === 0) {
+                container.innerHTML = '<div class="text-slate-500 italic text-center py-4">No flagged baggage.</div>';
+                return;
+            }
+
+            container.innerHTML = '';
+            flaggedBaggages.forEach(bag => {
+                const bagEl = document.createElement("div");
+                bagEl.className = "bg-white p-4 rounded-xl border border-red-200 flex items-center justify-between shadow-sm";
+                bagEl.id = `flag-${bag.id}`;
+                bagEl.innerHTML = `
+                    <div>
+                        <div class="font-mono font-bold text-red-700">${bag.tagCode}</div>
+                        <div class="text-xs text-slate-500">Weight: ${bag.weight} kg | Flight: ${bag.flightId || 'UNK'}</div>
+                    </div>
+                    <div class="flex space-x-2">
+                        <button onclick="manualInspect(${bag.id}, true)" class="px-3 py-1.5 bg-green-100 hover:bg-green-200 text-green-700 rounded text-xs font-bold transition" title="Clear Baggage">
+                            Clear
+                        </button>
+                        <button onclick="manualInspect(${bag.id}, false)" class="px-3 py-1.5 bg-red-100 hover:bg-red-200 text-red-700 rounded text-xs font-bold transition" title="Confiscate">
+                            Confiscate
+                        </button>
+                    </div>
+                `;
+                container.appendChild(bagEl);
+            });
+        }
+
+        async function scanBatch() {
+            if (pendingBaggages.length === 0) return;
+            
+            const btnScan = document.getElementById("btn-scan");
+            btnScan.disabled = true;
+            btnScan.innerHTML = '<span class="material-symbols-outlined text-sm mr-2 animate-spin">sync</span> Scanning...';
+
+            const idsToScan = pendingBaggages.map(b => b.id).slice(0, 5); // Scan max 5 at a time for demo
+
+            try {
+                const response = await fetch('/Security/ScanBatch', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(idsToScan)
+                });
+                
+                if (!response.ok) {
+                    throw new Error("Network response was not ok");
+                }
+            } catch (error) {
+                console.error(error);
+                toastr.error("Error starting scan.");
+                btnScan.innerHTML = '<span class="material-symbols-outlined text-sm mr-2">play_arrow</span> Start Belt';
+                btnScan.disabled = false;
+            }
+        }
+
+        // Wire SignalR handler safely — retry until globalConnection is established
+        function wireSecuritySignalR() {
+            if (window.globalConnection && window.globalConnection.state === 'Connected') {
+                window.globalConnection.on("ScannerStatus", function (data) {
+                    const bagEl = document.getElementById(`bag-${data.id}`);
+                    if (!bagEl) return;
+
+                    if (data.stage === "Weight") {
+                        bagEl.style.transform = "translateX(250px)";
+                        bagEl.classList.add("border-purple-500");
+                    } 
+                    else if (data.stage === "Complete") {
+                        if (data.status === "Cleared") {
+                            bagEl.style.transform = "translateX(600px)";
+                            bagEl.classList.replace("border-blue-500", "border-green-500");
+                            bagEl.classList.replace("border-purple-500", "border-green-500");
+                            setTimeout(() => {
+                                bagEl.classList.add('opacity-0');
+                                setTimeout(() => bagEl.remove(), 500);
+                            }, 500);
+                        } else {
+                            bagEl.style.transform = "translateX(450px)";
+                            bagEl.classList.replace("border-blue-500", "border-red-500");
+                            bagEl.classList.replace("border-purple-500", "border-red-500");
+                            bagEl.classList.add("bg-red-50");
+                            setTimeout(() => {
+                                bagEl.classList.add('opacity-0');
+                                setTimeout(() => bagEl.remove(), 500);
+                            }, 1000);
+                        }
+                        
+                        if (data.logs) {
+                            addLogs(data.tag, data.logs);
+                        }
+                        setTimeout(fetchPendingBaggages, 1500);
+                    }
+                });
+            } else {
+                // Not connected yet — retry in 300ms
+                setTimeout(wireSecuritySignalR, 300);
+            }
+        }
+        wireSecuritySignalR();
+
+        async function manualInspect(id, clearBaggage) {
+            try {
+                const response = await fetch(`/Security/ManualInspect`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                    body: new URLSearchParams({ baggageId: id, clearBaggage: clearBaggage })
+                });
+                const result = await response.json();
+                
+                if (result.success) {
+                    if (clearBaggage) {
+                        toastr.success("Baggage manually cleared.");
+                        if (result.logs) addLogs("MANUAL", result.logs);
+                    } else {
+                        toastr.error("Baggage confiscated.");
+                    }
+                    fetchPendingBaggages();
+                }
+            } catch(e) {
+                console.error(e);
+            }
+        }
+
+        function addLogs(tag, logs) {
+            const container = document.getElementById("scanner-logs");
+            document.getElementById("logs-empty")?.remove();
+
+            const header = document.createElement("div");
+            header.className = "text-blue-400 font-bold mt-2";
+            header.innerText = `--- Scanning ${tag} ---`;
+            container.prepend(header);
+
+            // Reverse logs so newest are at top
+            [...logs].reverse().forEach(log => {
+                const li = document.createElement("div");
+                li.className = "mb-1";
+                if (log.includes("❌") || log.includes("🚨")) {
+                    li.innerHTML = `<span class="text-red-400">${log}</span>`;
+                } else if (log.includes("✅") || log.includes("👨‍✈️")) {
+                    li.innerHTML = `<span class="text-green-400">${log}</span>`;
+                } else {
+                    li.innerText = log;
+                }
+                container.prepend(li);
+            });
+        }
+    </script>
+}

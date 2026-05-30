@@ -20,6 +20,14 @@ namespace TMPP_Aeroport.Models
         [MaxLength(100)]
         public string Airline { get; set; } = string.Empty;
 
+        [MaxLength(20)]
+        public string Type { get; set; } = "Passenger"; // Passenger, Cargo
+
+        public int MaxBaggageKg { get; set; } = 5000;
+
+        [MaxLength(50)]
+        public string SeatConfiguration { get; set; } = "Economy Only";
+
         // Navigation property
         public ICollection<Flight> Flights { get; set; } = new List<Flight>();
     }

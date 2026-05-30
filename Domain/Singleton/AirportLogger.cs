@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace TMPP_Aeroport.Domain.Singleton
 {
@@ -14,6 +15,9 @@ namespace TMPP_Aeroport.Domain.Singleton
         // O listă internă pentru a ține evidența log-urilor în memorie pe parcursul rulării
         private readonly List<string> _logs;
 
+        // Optional: scope factory for DB persistence (set once at startup)
+        private IServiceScopeFactory? _scopeFactory;
+
         // 1. Constructorul MEREU privat! Nicio altă clasă nu poate folosi 'new AirportLogger()'
         private AirportLogger()
         {
@@ -24,19 +28,41 @@ namespace TMPP_Aeroport.Domain.Singleton
         // 2. Metoda / Proprietatea statică pentru acces global la instanța unică
         public static AirportLogger Instance
         {
-            get
-            {
-                return _instance.Value;
-            }
+            get { return _instance.Value; }
+        }
+
+        // Bridge between in-memory Singleton and DB AuditLogs — call once at startup from Program.cs
+        public void Configure(IServiceScopeFactory scopeFactory)
+        {
+            _scopeFactory = scopeFactory;
         }
 
         // Metodele de business ale entității unice:
-        public void Log(string message)
+        public void Log(string message, string category = "System")
         {
             var formattedMessage = $"[{DateTime.Now:HH:mm:ss}] {message}";
             _logs.Add(formattedMessage);
-            
-            // Console.WriteLine(formattedMessage);
+
+            // Unified logging: also persist to DB if scope factory is configured
+            if (_scopeFactory != null)
+            {
+                try
+                {
+                    using var scope = _scopeFactory.CreateScope();
+                    var db = scope.ServiceProvider.GetRequiredService<TMPP_Aeroport.Data.ApplicationDbContext>();
+                    db.AuditLogs.Add(new TMPP_Aeroport.Models.AuditLog
+                    {
+                        Message = formattedMessage,
+                        Category = category,
+                        Timestamp = DateTime.UtcNow
+                    });
+                    db.SaveChanges();
+                }
+                catch
+                {
+                    // Fail silently — don't crash the app due to logging
+                }
+            }
         }
 
         public IReadOnlyList<string> GetLogs()

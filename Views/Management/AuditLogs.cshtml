@@ -12,7 +12,6 @@
                 <span class="material-symbols-outlined mr-3 text-4xl text-blue-600">admin_panel_settings</span>
                 System Audit Logs
             </h1>
-            <p class="text-slate-500 mt-2 text-lg">Singleton Pattern: Centralized Global Logging Instance</p>
         </div>
         <div class="bg-slate-100 border border-slate-200 px-4 py-2 rounded-xl flex items-center space-x-2">
             <span class="relative flex h-3 w-3">
@@ -26,21 +25,27 @@
     <div class="bg-white border border-slate-200 rounded-2xl shadow-sm overflow-hidden h-full flex flex-col">
         <div class="bg-slate-50 border-b border-slate-200 px-6 py-4 flex items-center justify-between">
             <h2 class="text-lg font-bold text-slate-800">Terminal Output</h2>
-            <button class="text-slate-400 hover:text-slate-600 transition" onclick="location.reload()" title="Refresh Logs">
-                <span class="material-symbols-outlined">refresh</span>
-            </button>
+            <div class="flex items-center space-x-4 w-1/2 justify-end">
+                <div class="relative w-full max-w-sm">
+                    <span class="material-symbols-outlined absolute left-3 top-2.5 text-slate-400">search</span>
+                    <input type="text" id="log-search" onkeyup="filterLogs()" placeholder="Search logs..." class="w-full pl-10 pr-4 py-2 rounded-lg border border-slate-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition text-sm">
+                </div>
+                <button class="text-slate-400 hover:text-slate-600 transition" onclick="location.reload()" title="Refresh Logs">
+                    <span class="material-symbols-outlined mt-1">refresh</span>
+                </button>
+            </div>
         </div>
         
         <div class="p-0 bg-slate-900 flex-grow h-[600px] overflow-y-auto font-mono text-sm">
             @if (Model != null && Model.Any())
             {
-                <div class="p-6 space-y-2">
+                <div class="p-6 space-y-2" id="logs-container">
                     @foreach (var log in Model)
                     {
                         var timestamp = log.Length > 20 ? log.Substring(0, 19) : "";
                         var msg = log.Length > 20 ? log.Substring(20) : log;
                         
-                        <div class="text-slate-300 hover:bg-slate-800 p-1 rounded transition">
+                        <div class="log-row text-slate-300 hover:bg-slate-800 p-1 rounded transition">
                             <span class="text-slate-500 mr-2">@timestamp</span>
                             @if (msg.Contains("[Builder]")) { <span class="text-amber-400 font-bold">@msg</span> }
                             else if (msg.Contains("Error") || msg.Contains("Failed")) { <span class="text-red-400 font-bold">@msg</span> }
@@ -59,3 +64,22 @@
         </div>
     </div>
 </div>
+
+@section Scripts {
+    <script>
+        function filterLogs() {
+            let input = document.getElementById('log-search');
+            let filter = input.value.toLowerCase();
+            let rows = document.getElementsByClassName('log-row');
+
+            for (let i = 0; i < rows.length; i++) {
+                let txtValue = rows[i].textContent || rows[i].innerText;
+                if (txtValue.toLowerCase().indexOf(filter) > -1) {
+                    rows[i].style.display = "";
+                } else {
+                    rows[i].style.display = "none";
+                }
+            }
+        }
+    </script>
+}

@@ -40,11 +40,10 @@
             LIVE TRACKING SYSTEM
         </div>
         <h1 class="text-3xl font-bold text-slate-800">Advanced European Radar</h1>
-        <p class="text-slate-500 mt-1">Observer, Mediator & Flyweight Pattern — Real-time physics simulation.</p>
     </div>
     
     <div class="flex items-center gap-4">
-        <!-- Runway Lights Control (Command Pattern) -->
+        <!-- Runway Lights Control -->
         <button id="toggle-lights-btn" class="bg-slate-800 hover:bg-slate-700 active:bg-slate-900 text-white px-4 py-2.5 rounded-lg border border-slate-700 shadow-sm flex items-center gap-2 text-sm font-bold transition">
             <span class="material-symbols-outlined text-[18px] text-amber-400">lightbulb</span>
             <span>Toggle Runway Lights</span>
@@ -75,25 +74,95 @@
     </div>
 </div>
 
-<div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-2 relative">
-    <div id="radar-map"></div>
-    
-    <!-- Legend -->
-    <div class="absolute bottom-6 right-6 z-[1000] bg-white/90 backdrop-blur-sm p-4 rounded-xl border border-slate-200 shadow-lg pointer-events-none">
-        <h4 class="text-xs font-bold text-slate-700 uppercase tracking-wider mb-3">Map Legend</h4>
-        <div class="space-y-2">
-            <div class="flex items-center gap-2">
-                <div class="w-6 h-6 flex items-center justify-center bg-blue-100 rounded-md">
-                    <span class="w-3 h-3 block bg-blue-500" style="clip-path: polygon(50% 0%, 100% 50%, 50% 100%, 0% 50%);"></span>
+<div class="flex flex-col lg:flex-row gap-4 h-[calc(100vh-12rem)] min-h-[600px]">
+    <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-2 relative flex-grow h-full z-10">
+        <div id="radar-map" class="w-full h-full rounded-xl"></div>
+        
+        <!-- Legend -->
+        <div class="absolute bottom-6 right-6 z-[1000] bg-white/90 backdrop-blur-sm p-4 rounded-xl border border-slate-200 shadow-lg pointer-events-none">
+            <h4 class="text-xs font-bold text-slate-700 uppercase tracking-wider mb-3">Map Legend</h4>
+            <div class="space-y-2">
+                <div class="flex items-center gap-2">
+                    <div class="w-6 h-6 flex items-center justify-center bg-blue-100 rounded-md">
+                        <span class="w-3 h-3 block bg-blue-500" style="clip-path: polygon(50% 0%, 100% 50%, 50% 100%, 0% 50%);"></span>
+                    </div>
+                    <span class="text-sm text-slate-600 font-medium">Commercial Flight</span>
                 </div>
-                <span class="text-sm text-slate-600 font-medium">Commercial Flight</span>
+                <div class="flex items-center gap-2">
+                    <span class="w-3 h-3 rounded-full bg-red-500 border-2 border-white shadow-sm ml-1.5"></span>
+                    <span class="text-sm text-slate-600 font-medium ml-1.5">Major Airport (Hub)</span>
+                </div>
             </div>
-            <div class="flex items-center gap-2">
-                <span class="w-3 h-3 rounded-full bg-red-500 border-2 border-white shadow-sm ml-1.5"></span>
-                <span class="text-sm text-slate-600 font-medium ml-1.5">Major Airport (Hub)</span>
+        </div>
+    </div>
+
+    <!-- ATC Side Panel (Hidden by default) -->
+    <div id="atc-side-panel" class="w-full lg:w-80 bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden hidden flex-col h-full shrink-0 transition-all duration-300 transform translate-x-4 opacity-0">
+        <div class="bg-slate-900 text-white p-4 border-b border-slate-800 flex justify-between items-center">
+            <div>
+                <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">SELECTED FLIGHT</p>
+                <h2 id="panel-flight-number" class="text-2xl font-black text-blue-400 tracking-tight">--</h2>
             </div>
-            <div class="flex items-center gap-2 mt-2 pt-2 border-t border-slate-200">
-                <span class="text-xs text-slate-500">Tip: Click on a plane to view its trajectory.</span>
+            <button id="close-panel-btn" class="text-slate-400 hover:text-white transition">
+                <span class="material-symbols-outlined">close</span>
+            </button>
+        </div>
+        
+        <div class="p-5 flex-1 overflow-y-auto">
+            <div class="flex items-center justify-between mb-6 bg-slate-50 p-3 rounded-xl border border-slate-100">
+                <div class="text-center w-5/12">
+                    <p class="text-[10px] text-slate-400 font-bold uppercase">ORIGIN</p>
+                    <p id="panel-origin" class="font-bold text-slate-700 mt-1 truncate">--</p>
+                </div>
+                <div class="w-2/12 flex justify-center text-blue-400">
+                    <span class="material-symbols-outlined">flight_takeoff</span>
+                </div>
+                <div class="text-center w-5/12">
+                    <p class="text-[10px] text-slate-400 font-bold uppercase">DEST</p>
+                    <p id="panel-dest" class="font-bold text-slate-700 mt-1 truncate">--</p>
+                </div>
+            </div>
+
+            <div class="space-y-4 mb-6">
+                <div>
+                    <p class="text-[10px] text-slate-500 font-bold uppercase mb-1">CURRENT STATUS</p>
+                    <div id="panel-status" class="bg-blue-100 text-blue-700 font-bold py-2 px-3 rounded-lg text-sm text-center uppercase tracking-wider border border-blue-200">
+                        --
+                    </div>
+                </div>
+                
+                <div class="grid grid-cols-2 gap-3">
+                    <div class="bg-slate-50 p-3 rounded-xl border border-slate-100">
+                        <p class="text-[10px] text-slate-500 font-bold uppercase mb-1 flex items-center gap-1"><span class="material-symbols-outlined text-[14px]">speed</span> SPEED</p>
+                        <p class="font-bold text-slate-800"><span id="panel-speed">~900</span> <span class="text-xs text-slate-400">km/h</span></p>
+                    </div>
+                    <div class="bg-slate-50 p-3 rounded-xl border border-slate-100">
+                        <p class="text-[10px] text-slate-500 font-bold uppercase mb-1 flex items-center gap-1"><span class="material-symbols-outlined text-[14px]">height</span> ALTITUDE</p>
+                        <p class="font-bold text-slate-800"><span id="panel-alt">35,000</span> <span class="text-xs text-slate-400">ft</span></p>
+                    </div>
+                </div>
+
+                <div>
+                    <p class="text-[10px] text-slate-500 font-bold uppercase mb-1 flex items-center gap-1"><span class="material-symbols-outlined text-[14px]">cloud</span> DESTINATION WEATHER</p>
+                    <div id="panel-weather" class="bg-slate-50 p-3 rounded-xl border border-slate-100 font-bold text-slate-800 flex justify-between items-center">
+                        <span class="text-sm text-slate-500 italic">Fetching...</span>
+                    </div>
+                </div>
+            </div>
+
+            <hr class="border-slate-100 mb-4" />
+
+            <h3 class="text-xs font-bold text-slate-400 uppercase tracking-widest mb-3">ATC Quick Commands</h3>
+            <div class="grid grid-cols-3 gap-2">
+                <button onclick="sendATCCommand('HoldPosition')" class="bg-amber-50 hover:bg-amber-100 text-amber-700 border border-amber-200 py-2 px-1 rounded-lg text-[10px] font-bold flex flex-col items-center justify-center gap-1 transition" title="Hold Position">
+                    <span class="material-symbols-outlined text-[18px]">front_hand</span> HOLD
+                </button>
+                <button onclick="sendATCCommand('ReturnBase')" class="bg-red-50 hover:bg-red-100 text-red-700 border border-red-200 py-2 px-1 rounded-lg text-[10px] font-bold flex flex-col items-center justify-center gap-1 transition" title="Return to Base">
+                    <span class="material-symbols-outlined text-[18px]">u_turn_left</span> RETURN
+                </button>
+                <button onclick="sendATCCommand('ClearLanding')" class="bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-200 py-2 px-1 rounded-lg text-[10px] font-bold flex flex-col items-center justify-center gap-1 transition" title="Clear Landing">
+                    <span class="material-symbols-outlined text-[18px]">flight_land</span> LAND
+                </button>
             </div>
         </div>
     </div>
@@ -214,65 +283,151 @@
                 return (brng + 360) % 360;
             }
 
-            // ==========================================
-            // 5. SignalR Listener (Observer Pattern)
+            // 5. SignalR Listener
             // ==========================================
             const markers = {};
+            const flightInfos = {}; // flightNumber -> { originName, destName }
             let activeLine = null;
             let activeLineFlightId = null;
 
-            function generatePopupContent(f) {
-                const statusColor = f.status === 'Airborne' ? 'text-blue-500' : 'text-emerald-500';
-                return `
-                    <div class="min-w-[180px] p-1">
-                        <div class="font-black text-lg text-slate-800 border-b border-slate-200 pb-1 mb-2">${f.flightNumber}</div>
-                        <div class="flex flex-col gap-1 text-sm mb-2 bg-slate-50 p-2 rounded border border-slate-100">
-                            <div class="flex justify-between items-center w-full">
-                                <span class="text-slate-600 font-bold whitespace-nowrap overflow-hidden text-ellipsis">${f.originName}</span>
-                            </div>
-                            <div class="flex justify-center my-1">
-                                <span class="material-symbols-outlined text-[16px] text-blue-400 rotate-90">flight</span>
-                            </div>
-                            <div class="flex justify-between items-center w-full">
-                                <span class="text-slate-600 font-bold whitespace-nowrap overflow-hidden text-ellipsis">${f.destName}</span>
-                            </div>
-                        </div>
-                        <div class="text-xs font-semibold ${statusColor} bg-slate-100 px-2 py-1.5 rounded inline-block w-full text-center mt-1 border border-slate-200 uppercase tracking-widest shadow-sm">
-                            ${f.status}
-                        </div>
-                    </div>
-                `;
-            }
-
-            function getCombinedPopupContent(f, marker) {
-                let weatherHtml = '';
-                if (marker._weatherCache !== null && marker._weatherCache !== undefined) {
-                    weatherHtml = `
-                        <div class="mt-2 p-2 bg-blue-50 rounded border border-blue-100 flex items-center justify-between">
-                            <span class="text-xs text-blue-800 font-bold flex items-center gap-1">
-                                <span class="material-symbols-outlined text-[12px] align-middle">cloud</span> Dest Temp (Adapter)
-                            </span>
-                            <span class="text-sm font-black text-blue-600">${marker._weatherCache.toFixed(1)}°C</span>
-                        </div>
-                    `;
-                } else {
-                    weatherHtml = `
-                        <div class="mt-2 p-2 bg-slate-50 rounded border border-slate-100 flex items-center justify-center">
-                            <span class="text-xs text-slate-500 italic">Fetching weather via Adapter...</span>
-                        </div>
-                    `;
-                }
-                return generatePopupContent(f) + weatherHtml;
-            }
-
-            // If user clicks anywhere else on map, remove trajectory
-            map.on('click', () => {
+            const panel = document.getElementById('atc-side-panel');
+            const closeBtn = document.getElementById('close-panel-btn');
+            
+            closeBtn.addEventListener('click', () => {
+                panel.classList.add('hidden', 'translate-x-4', 'opacity-0');
                 if (activeLine) {
                     map.removeLayer(activeLine);
                     activeLine = null;
                     activeLineFlightId = null;
                 }
             });
+
+            async function populateSidePanel(f, marker) {
+                document.getElementById('panel-flight-number').innerText = f.flightNumber;
+                document.getElementById('panel-origin').innerText = f.originName || 'OTP';
+                document.getElementById('panel-dest').innerText = f.destName || 'Unknown';
+                document.getElementById('panel-status').innerText = f.status;
+
+                let alt = 35000;
+                let speed = 900;
+                if (f.status.includes("Holding") || f.status.includes("Descent")) {
+                    alt = 15000 + Math.floor(Math.random() * 5000);
+                    speed = 400 + Math.floor(Math.random() * 100);
+                } else if (f.status.includes("Landed") || f.status.includes("Boarding") || f.status.includes("Scheduled") || f.status.includes("Awaiting")) {
+                    alt = 0;
+                    speed = 0;
+                } else if (f.status.includes("Airborne")) {
+                    alt = 35000 + Math.floor(Math.random() * 1000);
+                    speed = 850 + Math.floor(Math.random() * 50);
+                }
+
+                document.getElementById('panel-speed').innerText = speed;
+                document.getElementById('panel-alt').innerText = alt.toLocaleString();
+                
+                if (marker._weatherCache !== null && marker._weatherCache !== undefined) {
+                    if (marker._weatherCache === "Error") {
+                        document.getElementById('panel-weather').innerHTML = `<span class="text-red-600 text-sm italic">API Error</span>`;
+                    } else {
+                        document.getElementById('panel-weather').innerHTML = `<span class="text-blue-600">${marker._weatherCache.toFixed(1)}°C</span>`;
+                    }
+                } else {
+                    document.getElementById('panel-weather').innerHTML = `<span class="text-sm text-slate-500 italic">Fetching...</span>`;
+                    // Fetch weather
+                    try {
+                        const response = await fetch('/Airport/GetWeatherForCity?city=' + encodeURIComponent(f.destName));
+                        if (response.ok) {
+                            const data = await response.json();
+                            marker._weatherCache = data.temperatureCelsius;
+                            document.getElementById('panel-weather').innerHTML = `<span class="text-blue-600">${marker._weatherCache.toFixed(1)}°C</span>`;
+                        } else {
+                            marker._weatherCache = "Error";
+                            document.getElementById('panel-weather').innerHTML = `<span class="text-red-600 text-sm italic">API Error</span>`;
+                        }
+                    } catch(e) {
+                        marker._weatherCache = "Error";
+                        document.getElementById('panel-weather').innerHTML = `<span class="text-red-600 text-sm italic">API Error</span>`;
+                    }
+                }
+                
+                panel.classList.remove('hidden');
+                // Trigger reflow
+                void panel.offsetWidth;
+                panel.classList.remove('translate-x-4', 'opacity-0');
+            }
+
+            // If user clicks anywhere else on map, remove trajectory and close panel
+            map.on('click', () => {
+                if (activeLine) {
+                    map.removeLayer(activeLine);
+                    activeLine = null;
+                    activeLineFlightId = null;
+                }
+                panel.classList.add('hidden', 'translate-x-4', 'opacity-0');
+            });
+
+            window.sendATCCommand = async function(commandType) {
+                if (!activeLineFlightId) return;
+                
+                // Show a toast notification
+                toastr.info(`Sending ${commandType} command to ${activeLineFlightId}...`, "ATC Command");
+                
+                try {
+                    const formData = new FormData();
+                    formData.append('commandType', commandType);
+                    formData.append('commandFlight', activeLineFlightId);
+                    
+                    // Send command to backend
+                    await fetch('/ATC/HandleTowerCommand', {
+                        method: 'POST',
+                        body: formData
+                    });
+                    toastr.success(`Command ${commandType} executed for ${activeLineFlightId}`, "ATC Command");
+                } catch(e) {
+                    console.error("Command failed", e);
+                }
+            };
+
+            // Initial fetch from Flyweight API endpoint
+            async function loadInitialRadarData() {
+                try {
+                    const res = await fetch('/ATC/RadarData');
+                    const data = await res.json();
+                    console.log("Flyweight Cache Size on Server:", data.cacheSize);
+                    
+                    document.getElementById('active-count').innerText = data.blips.length;
+                    
+                    data.blips.forEach(b => {
+                        const iconColor = b.flightNumber.startsWith('RO') ? '#3b82f6' : '#94a3b8';
+                        const bearing = 0; // default for initial
+                        
+                        markers[b.flightNumber] = L.marker([b.lat, b.lng], { 
+                            icon: iconFactory.getIcon(iconColor, bearing)
+                        }).addTo(map);
+
+                        markers[b.flightNumber]._weatherCache = null;
+                        
+                        // Create a fake 'f' object
+                        flightInfos[b.flightNumber] = { originName: b.origin, destName: b.destination };
+
+                        const f = {
+                            flightNumber: b.flightNumber,
+                            originName: b.origin,
+                            destName: b.destination,
+                            status: b.status
+                        };
+
+                        markers[b.flightNumber].on('click', (e) => {
+                            L.DomEvent.stopPropagation(e);
+                            populateSidePanel(f, markers[b.flightNumber]);
+                        });
+                    });
+                    
+                } catch(e) {
+                    console.error("Failed to fetch initial radar data", e);
+                }
+            }
+            
+            loadInitialRadarData();
 
             // Use the globalConnection established in _LayoutCorporate.cshtml
             if (window.globalConnection) {
@@ -293,11 +448,8 @@
 
                             markers[f.flightNumber]._weatherCache = null;
 
-                            markers[f.flightNumber].bindPopup(() => {
-                                return getCombinedPopupContent(f, markers[f.flightNumber]);
-                            });
-
-                            markers[f.flightNumber].on('click', async () => {
+                            markers[f.flightNumber].on('click', async (e) => {
+                                L.DomEvent.stopPropagation(e);
                                 if (activeLine) map.removeLayer(activeLine);
                                 activeLineFlightId = f.flightNumber;
                                 activeLine = L.polyline([
@@ -310,29 +462,21 @@
                                     opacity: 0.8
                                 }).addTo(map);
 
-                                // Fetch weather via Adapter API
-                                try {
-                                    const response = await fetch('/Airport/GetWeatherForCity?city=' + encodeURIComponent(f.destName));
-                                    const data = await response.json();
-                                    markers[f.flightNumber]._weatherCache = data.temperatureCelsius;
-                                    
-                                    // Force popup update if it's open
-                                    if (markers[f.flightNumber].isPopupOpen()) {
-                                        markers[f.flightNumber].setPopupContent(getCombinedPopupContent(f, markers[f.flightNumber]));
-                                    }
-                                } catch(e) {
-                                    console.error("Weather fetch failed", e);
-                                }
+                                await populateSidePanel(f, markers[f.flightNumber]);
                             });
                         } else {
                             // Update existing marker
+                            const info = flightInfos[f.flightNumber] || { originName: 'OTP', destName: 'Unknown' };
+                            f.originName = info.originName;
+                            f.destName = info.destName;
+
                             markers[f.flightNumber].setLatLng([f.currentLat, f.currentLng]);
                             
                             // Only update icon if bearing changed significantly to avoid constant DOM updates
                             markers[f.flightNumber].setIcon(iconFactory.getIcon(iconColor, bearing));
 
-                            if (markers[f.flightNumber].isPopupOpen()) {
-                                markers[f.flightNumber].setPopupContent(getCombinedPopupContent(f, markers[f.flightNumber]));
+                            if (activeLineFlightId === f.flightNumber && !panel.classList.contains('hidden')) {
+                                populateSidePanel(f, markers[f.flightNumber]);
                             }
                         }
                     });
@@ -363,7 +507,7 @@
                         
                         // Toast notification
                         const toast = document.createElement('div');
-                        toast.innerHTML = '<span class="material-symbols-outlined">lightbulb</span> Runway Lights Activated (Command Pattern)';
+                        toast.innerHTML = '<span class="material-symbols-outlined">lightbulb</span> Runway Lights Activated';
                         toast.style.cssText = 'position:fixed; bottom:20px; left:20px; background:#3b82f6; color:white; padding:15px 25px; border-radius:8px; font-family:sans-serif; font-weight:bold; display:flex; gap:10px; align-items:center; box-shadow:0 10px 25px rgba(0,0,0,0.5); z-index:9999; animation: slideInLeft 0.3s ease-out;';
                         document.body.appendChild(toast);
                         setTimeout(() => { toast.style.animation = 'slideOutLeft 0.3s ease-in'; setTimeout(() => toast.remove(), 300); }, 4000);

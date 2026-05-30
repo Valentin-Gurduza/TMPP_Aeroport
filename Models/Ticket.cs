@@ -16,7 +16,22 @@ namespace TMPP_Aeroport.Models
 
         [Required]
         [MaxLength(50)]
-        public string TicketState { get; set; } = "WaitingForPayment"; // Expected: WaitingForPayment, Validating, Issued
+        public string TicketState { get; set; } = "WaitingForPayment"; // Expected: WaitingForPayment, PaymentProcessing, Issued, CheckedIn, Boarded, Completed, Cancelled
+
+        [MaxLength(20)]
+        public string SecurityStatus { get; set; } = "Pending";
+
+        public DateTime? CheckInAt { get; set; }
+
+        public DateTime? BoardedAt { get; set; }
+
+        [MaxLength(50)]
+        public string FareClass { get; set; } = "Economy";
+
+        public int BaggageWeight { get; set; }
+
+        [MaxLength(50)]
+        public string StrategyApplied { get; set; } = string.Empty;
 
         // Foreign Key to Flight
         public int FlightId { get; set; }

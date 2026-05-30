@@ -25,9 +25,10 @@ builder.Services.ConfigureApplicationCookie(options =>
 builder.Services.AddControllersWithViews();
 builder.Services.AddSignalR(); // Adăugat pentru Faza 4 (Real-time WebSockets)
 
-// DIP (Dependency Inversion Principle): Modulele de nivel înalt (Controllers) nu trebuie să depindă de cele de nivel jos (Services), ci de abstracții.
-builder.Services.AddSingleton<TMPP_Aeroport.Domain.Interfaces.IFlightService, TMPP_Aeroport.Services.FlightService>();
-builder.Services.AddSingleton<TMPP_Aeroport.Domain.Interfaces.IAircraftService, TMPP_Aeroport.Services.AircraftService>();
+// Removed old in-memory services
+
+// Register Object Pool - Ground Support Equipment Fleet (must be before FlightSimulationService)
+builder.Services.AddSingleton<TMPP_Aeroport.Domain.ObjectPool.GroundVehiclePool>();
 
 // Global Background Simulation (Registered as Singleton so it can be injected in Controllers, and HostedService to run in background)
 builder.Services.AddSingleton<TMPP_Aeroport.Services.FlightSimulationService>();
@@ -36,6 +37,9 @@ builder.Services.AddHostedService(provider => provider.GetRequiredService<TMPP_A
 // Register Adapter Pattern Services
 builder.Services.AddSingleton<TMPP_Aeroport.Domain.Adapter.LegacyWeatherSystem>();
 builder.Services.AddSingleton<TMPP_Aeroport.Domain.Adapter.IAirportWeatherService, TMPP_Aeroport.Domain.Adapter.WeatherAdapter>();
+
+// Register Mediator Pattern ATCTower as Singleton so state persists across requests
+builder.Services.AddSingleton<TMPP_Aeroport.Domain.Mediator.IATCMediator, TMPP_Aeroport.Domain.Mediator.ATCTower>();
 
 var app = builder.Build();
 
@@ -71,6 +75,11 @@ using (var scope = app.Services.CreateScope())
     try
     {
         await TMPP_Aeroport.Data.DbSeeder.SeedRolesAndAdminAsync(services);
+        
+        // Unified logging: wire Singleton AirportLogger to DB persistence
+        TMPP_Aeroport.Domain.Singleton.AirportLogger.Instance.Configure(
+            app.Services.GetRequiredService<Microsoft.Extensions.DependencyInjection.IServiceScopeFactory>()
+        );
     }
     catch (Exception ex)
     {

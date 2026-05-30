@@ -4,53 +4,53 @@
 }
 
 <div class="mb-8">
-    <h1 class="text-3xl font-bold text-slate-800">Airport Overview</h1>
-    <p class="text-slate-500 mt-1">Real-time statistics and operational metrics for SAMS.</p>
+    <h1 class="text-3xl font-display font-bold text-slate-800 dark:text-white">Airport Overview</h1>
+    <p class="text-slate-500 dark:text-slate-400 mt-1">Real-time statistics and operational metrics for SAMS.</p>
 </div>
 
 <!-- Key Metrics Grid -->
 <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
     <!-- Active Flights -->
-    <div class="bg-white rounded-2xl p-6 shadow-sm border border-slate-200 flex items-center">
-        <div class="w-14 h-14 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center mr-4">
-            <span class="material-symbols-outlined text-3xl">flight_takeoff</span>
+    <div class="glass-card rounded-2xl p-6 flex items-center transition-transform hover:scale-[1.02]">
+        <div class="w-14 h-14 rounded-xl bg-blue-50 text-blue-600 dark:bg-blue-500/10 dark:text-blue-400 flex items-center justify-center mr-4">
+            <span class="material-symbols-rounded text-[28px]">flight_takeoff</span>
         </div>
         <div>
-            <p class="text-sm font-semibold text-slate-500 uppercase tracking-wider">Active Flights</p>
-            <h3 class="text-2xl font-bold text-slate-800">@Model.ActiveFlights</h3>
+            <p class="text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest">Active Flights</p>
+            <h3 class="text-3xl font-display font-bold text-slate-800 dark:text-white mt-0.5">@Model.ActiveFlights</h3>
         </div>
     </div>
 
     <!-- Total Passengers -->
-    <div class="bg-white rounded-2xl p-6 shadow-sm border border-slate-200 flex items-center">
-        <div class="w-14 h-14 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center mr-4">
-            <span class="material-symbols-outlined text-3xl">groups</span>
+    <div class="glass-card rounded-2xl p-6 flex items-center transition-transform hover:scale-[1.02]">
+        <div class="w-14 h-14 rounded-xl bg-indigo-50 text-indigo-600 dark:bg-indigo-500/10 dark:text-indigo-400 flex items-center justify-center mr-4">
+            <span class="material-symbols-rounded text-[28px]">groups</span>
         </div>
         <div>
-            <p class="text-sm font-semibold text-slate-500 uppercase tracking-wider">Registered Pax</p>
-            <h3 class="text-2xl font-bold text-slate-800">@Model.TotalPassengers</h3>
+            <p class="text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest">Registered Pax</p>
+            <h3 class="text-3xl font-display font-bold text-slate-800 dark:text-white mt-0.5">@Model.TotalPassengers</h3>
         </div>
     </div>
 
     <!-- Total Revenue -->
-    <div class="bg-white rounded-2xl p-6 shadow-sm border border-slate-200 flex items-center">
-        <div class="w-14 h-14 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center mr-4">
-            <span class="material-symbols-outlined text-3xl">payments</span>
+    <div class="glass-card rounded-2xl p-6 flex items-center transition-transform hover:scale-[1.02]">
+        <div class="w-14 h-14 rounded-xl bg-emerald-50 text-emerald-600 dark:bg-emerald-500/10 dark:text-emerald-400 flex items-center justify-center mr-4">
+            <span class="material-symbols-rounded text-[28px]">payments</span>
         </div>
         <div>
-            <p class="text-sm font-semibold text-slate-500 uppercase tracking-wider">Revenue</p>
-            <h3 class="text-2xl font-bold text-slate-800">€@Model.TotalRevenue.ToString("N0")</h3>
+            <p class="text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest">Revenue</p>
+            <h3 class="text-3xl font-display font-bold text-slate-800 dark:text-white mt-0.5">€@Model.TotalRevenue.ToString("N0")</h3>
         </div>
     </div>
 
     <!-- Total Aircrafts -->
-    <div class="bg-white rounded-2xl p-6 shadow-sm border border-slate-200 flex items-center">
-        <div class="w-14 h-14 rounded-xl bg-purple-50 text-purple-600 flex items-center justify-center mr-4">
-            <span class="material-symbols-outlined text-3xl">airlines</span>
+    <div class="glass-card rounded-2xl p-6 flex items-center transition-transform hover:scale-[1.02]">
+        <div class="w-14 h-14 rounded-xl bg-purple-50 text-purple-600 dark:bg-purple-500/10 dark:text-purple-400 flex items-center justify-center mr-4">
+            <span class="material-symbols-rounded text-[28px]">airlines</span>
         </div>
         <div>
-            <p class="text-sm font-semibold text-slate-500 uppercase tracking-wider">Fleet Size</p>
-            <h3 class="text-2xl font-bold text-slate-800">@Model.TotalAircrafts</h3>
+            <p class="text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest">Fleet Size</p>
+            <h3 class="text-3xl font-display font-bold text-slate-800 dark:text-white mt-0.5">@Model.TotalAircrafts</h3>
         </div>
     </div>
 </div>
@@ -58,47 +58,47 @@
 <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
     
     <!-- Recent Activity -->
-    <div class="lg:col-span-2 bg-white rounded-2xl shadow-sm border border-slate-200">
-        <div class="px-6 py-5 border-b border-slate-200 flex justify-between items-center">
-            <h3 class="text-lg font-bold text-slate-800">Recent Flights</h3>
-            <a asp-controller="Flights" asp-action="Index" class="text-sm font-semibold text-blue-600 hover:text-blue-800">View All</a>
+    <div class="lg:col-span-2 glass-card rounded-2xl overflow-hidden flex flex-col">
+        <div class="px-6 py-5 border-b border-slate-200/60 dark:border-slate-700/60 flex justify-between items-center bg-white/50 dark:bg-slate-800/30">
+            <h3 class="text-lg font-display font-bold text-slate-800 dark:text-white">Recent Flights</h3>
+            <a asp-controller="Flights" asp-action="Index" class="text-sm font-semibold text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300">View All</a>
         </div>
-        <div class="p-0 overflow-x-auto">
+        <div class="p-0 overflow-x-auto flex-1">
             <table class="w-full text-left border-collapse">
                 <thead>
-                    <tr class="bg-slate-50">
-                        <th class="px-6 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wider">Flight</th>
-                        <th class="px-6 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wider">Destination</th>
-                        <th class="px-6 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wider">Time</th>
-                        <th class="px-6 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wider">Status</th>
+                    <tr class="bg-slate-50/50 dark:bg-slate-800/20">
+                        <th class="px-6 py-3 text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Flight</th>
+                        <th class="px-6 py-3 text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Destination</th>
+                        <th class="px-6 py-3 text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Time</th>
+                        <th class="px-6 py-3 text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Status</th>
                     </tr>
                 </thead>
-                <tbody class="divide-y divide-slate-100">
+                <tbody class="divide-y divide-slate-100 dark:divide-slate-800/50">
                     @foreach (var flight in Model.RecentFlights)
                     {
                         var statusColor = flight.Status switch
                         {
-                            "Scheduled" => "text-blue-600 bg-blue-50",
-                            "Boarding" => "text-amber-600 bg-amber-50",
-                            "Airborne" => "text-emerald-600 bg-emerald-50",
-                            "Landed" => "text-slate-600 bg-slate-100",
-                            "Cancelled" => "text-red-600 bg-red-50",
-                            _ => "text-slate-600 bg-slate-50"
+                            "Scheduled" => "text-blue-600 bg-blue-50 dark:text-blue-400 dark:bg-blue-500/10 ring-blue-500/20",
+                            "Boarding" => "text-amber-600 bg-amber-50 dark:text-amber-400 dark:bg-amber-500/10 ring-amber-500/20 animate-pulse",
+                            "Airborne" => "text-emerald-600 bg-emerald-50 dark:text-emerald-400 dark:bg-emerald-500/10 ring-emerald-500/20",
+                            "Landed" => "text-slate-600 bg-slate-100 dark:text-slate-400 dark:bg-slate-500/10 ring-slate-500/20",
+                            "Cancelled" => "text-red-600 bg-red-50 dark:text-red-400 dark:bg-red-500/10 ring-red-500/20",
+                            _ => "text-slate-600 bg-slate-50 dark:text-slate-400 dark:bg-slate-500/10 ring-slate-500/20"
                         };
 
-                        <tr class="hover:bg-slate-50 transition">
+                        <tr class="hover:bg-slate-50 dark:hover:bg-slate-800/30 transition-colors">
                             <td class="px-6 py-4">
                                 <div class="flex items-center">
-                                    <div class="w-8 h-8 rounded bg-slate-100 text-slate-500 flex items-center justify-center mr-3">
-                                        <span class="material-symbols-outlined text-[18px]">flight</span>
+                                    <div class="w-8 h-8 rounded bg-slate-100 dark:bg-slate-700 text-slate-500 dark:text-slate-300 flex items-center justify-center mr-3 shadow-sm ring-1 ring-slate-200 dark:ring-slate-600">
+                                        <span class="material-symbols-rounded text-[18px]">flight</span>
                                     </div>
-                                    <span class="font-bold text-slate-800">@flight.FlightNumber</span>
+                                    <span class="font-bold font-mono text-slate-800 dark:text-slate-200">@flight.FlightNumber</span>
                                 </div>
                             </td>
-                            <td class="px-6 py-4 text-slate-600 font-medium">@flight.Destination</td>
-                            <td class="px-6 py-4 text-slate-500 text-sm">@flight.DepartureTime.ToString("dd MMM HH:mm")</td>
+                            <td class="px-6 py-4 text-slate-600 dark:text-slate-300 font-medium">@flight.Destination</td>
+                            <td class="px-6 py-4 text-slate-500 dark:text-slate-400 text-sm font-mono">@flight.DepartureTime.ToString("dd MMM HH:mm")</td>
                             <td class="px-6 py-4">
-                                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold @statusColor">
+                                <span class="inline-flex items-center px-2.5 py-1 rounded-md text-[11px] font-bold uppercase tracking-wider ring-1 @statusColor">
                                     @flight.Status
                                 </span>
                             </td>
@@ -107,7 +107,7 @@
                     @if (((IEnumerable<dynamic>)Model.RecentFlights).Count() == 0)
                     {
                         <tr>
-                            <td colspan="4" class="px-6 py-8 text-center text-slate-500">
+                            <td colspan="4" class="px-6 py-8 text-center text-slate-500 dark:text-slate-400 font-medium">
                                 No recent flights found.
                             </td>
                         </tr>
@@ -120,45 +120,48 @@
     <!-- System Status & Quick Actions -->
     <div class="space-y-8">
         <!-- Quick Actions -->
-        <div class="bg-gradient-to-br from-slate-800 to-slate-900 rounded-2xl p-6 shadow-sm text-white">
-            <h3 class="text-lg font-bold mb-4">Quick Actions</h3>
-            <div class="space-y-3">
-                <a asp-controller="Flights" asp-action="Index" class="flex items-center p-3 rounded-xl bg-white/10 hover:bg-white/20 transition border border-white/5">
-                    <span class="material-symbols-outlined mr-3">calendar_month</span>
-                    <span class="font-medium">Manage Schedule</span>
+        <div class="bg-gradient-to-br from-slate-800 to-slate-900 dark:from-indigo-950 dark:to-slate-900 rounded-2xl p-6 shadow-lg shadow-slate-900/20 border border-slate-700/50 text-white relative overflow-hidden">
+            <!-- Decorative Glow -->
+            <div class="absolute -top-10 -right-10 w-40 h-40 bg-blue-500/20 rounded-full blur-3xl"></div>
+            
+            <h3 class="text-lg font-display font-bold mb-4 relative z-10">Quick Actions</h3>
+            <div class="space-y-3 relative z-10">
+                <a asp-controller="Flights" asp-action="Index" class="flex items-center p-3 rounded-xl bg-white/5 hover:bg-white/10 transition-all border border-white/5 hover:border-white/20 group">
+                    <span class="material-symbols-rounded mr-3 text-blue-400 group-hover:scale-110 transition-transform">calendar_month</span>
+                    <span class="font-medium text-slate-200 group-hover:text-white">Manage Schedule</span>
                 </a>
-                <a asp-controller="Fleet" asp-action="Index" class="flex items-center p-3 rounded-xl bg-white/10 hover:bg-white/20 transition border border-white/5">
-                    <span class="material-symbols-outlined mr-3">settings_applications</span>
-                    <span class="font-medium">Fleet Maintenance</span>
+                <a asp-controller="Fleet" asp-action="Index" class="flex items-center p-3 rounded-xl bg-white/5 hover:bg-white/10 transition-all border border-white/5 hover:border-white/20 group">
+                    <span class="material-symbols-rounded mr-3 text-purple-400 group-hover:scale-110 transition-transform">settings_applications</span>
+                    <span class="font-medium text-slate-200 group-hover:text-white">Fleet Maintenance</span>
                 </a>
-                <a asp-controller="Airport" asp-action="CheckIn" class="flex items-center p-3 rounded-xl bg-white/10 hover:bg-white/20 transition border border-white/5">
-                    <span class="material-symbols-outlined mr-3">how_to_reg</span>
-                    <span class="font-medium">Passenger Check-in</span>
+                <a asp-controller="Airport" asp-action="CheckIn" class="flex items-center p-3 rounded-xl bg-white/5 hover:bg-white/10 transition-all border border-white/5 hover:border-white/20 group">
+                    <span class="material-symbols-rounded mr-3 text-emerald-400 group-hover:scale-110 transition-transform">how_to_reg</span>
+                    <span class="font-medium text-slate-200 group-hover:text-white">Passenger Check-in</span>
                 </a>
             </div>
         </div>
         
         <!-- Environment Stats -->
-        <div class="bg-white rounded-2xl p-6 shadow-sm border border-slate-200">
-            <h3 class="text-lg font-bold text-slate-800 mb-4">System Capacity</h3>
-            <div class="space-y-4">
+        <div class="glass-card rounded-2xl p-6">
+            <h3 class="text-lg font-display font-bold text-slate-800 dark:text-white mb-5">System Capacity</h3>
+            <div class="space-y-5">
                 <div>
-                    <div class="flex justify-between items-center mb-1">
-                        <span class="text-sm font-medium text-slate-600">Total Tickets Sold</span>
-                        <span class="text-sm font-bold text-slate-800">@Model.TotalTickets</span>
+                    <div class="flex justify-between items-center mb-1.5">
+                        <span class="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest">Tickets Sold</span>
+                        <span class="text-sm font-bold font-mono text-slate-800 dark:text-slate-200">@Model.TotalTickets</span>
                     </div>
-                    <div class="w-full bg-slate-100 rounded-full h-2">
-                        <div class="bg-blue-500 h-2 rounded-full" style="width: @(Model.TotalTickets > 1000 ? 100 : (Model.TotalTickets * 100 / 1000))%"></div>
+                    <div class="w-full bg-slate-100 dark:bg-slate-800 rounded-full h-1.5 overflow-hidden">
+                        <div class="bg-blue-500 dark:bg-blue-400 h-1.5 rounded-full" style="width: @(Model.TotalTickets > 1000 ? 100 : (Model.TotalTickets * 100 / 1000))%"></div>
                     </div>
                 </div>
                 
                 <div>
-                    <div class="flex justify-between items-center mb-1">
-                        <span class="text-sm font-medium text-slate-600">Active Fleet Usage</span>
-                        <span class="text-sm font-bold text-slate-800">@(Model.TotalAircrafts > 0 ? (Model.ActiveFlights * 100 / Model.TotalAircrafts) : 0)%</span>
+                    <div class="flex justify-between items-center mb-1.5">
+                        <span class="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest">Fleet Usage</span>
+                        <span class="text-sm font-bold font-mono text-slate-800 dark:text-slate-200">@(Model.TotalAircrafts > 0 ? (Model.ActiveFlights * 100 / Model.TotalAircrafts) : 0)%</span>
                     </div>
-                    <div class="w-full bg-slate-100 rounded-full h-2">
-                        <div class="bg-emerald-500 h-2 rounded-full" style="width: @(Model.TotalAircrafts > 0 ? (Model.ActiveFlights * 100 / Model.TotalAircrafts) : 0)%"></div>
+                    <div class="w-full bg-slate-100 dark:bg-slate-800 rounded-full h-1.5 overflow-hidden">
+                        <div class="bg-emerald-500 dark:bg-emerald-400 h-1.5 rounded-full" style="width: @(Model.TotalAircrafts > 0 ? (Model.ActiveFlights * 100 / Model.TotalAircrafts) : 0)%"></div>
                     </div>
                 </div>
             </div>

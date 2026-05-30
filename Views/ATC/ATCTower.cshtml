@@ -45,7 +45,7 @@
                                 <div class="font-bold text-slate-800 text-lg">@req.FlightNumber</div>
                                 <div class="text-sm font-medium text-orange-600 mb-3">@req.Status</div>
                                 
-                                <form action="/ATC/ATCTower" method="post" class="flex space-x-2">
+                                <form action="/ATC/HandleTowerCommand" method="post" class="flex space-x-2">
                                     <input type="hidden" name="commandFlight" value="@req.FlightNumber" />
                                     @if(req.Status.Contains("Takeoff"))
                                     {
@@ -77,96 +77,197 @@
             </div>
         </div>
 
-        <!-- Middle Col: Radio Comms -->
-        <div class="lg:col-span-1">
-            <div class="bg-white border border-slate-200 rounded-2xl shadow-sm overflow-hidden h-full">
-                <div class="bg-slate-50 border-b border-slate-200 px-6 py-4">
-                    <h2 class="text-lg font-bold text-slate-800 flex items-center">
-                        <span class="material-symbols-outlined mr-2 text-blue-600">headset_mic</span>
-                        Radio Communications
-                    </h2>
-                </div>
+        <!-- Chat UI (Middle & Right Col combined) -->
+        <div class="lg:col-span-2">
+            <div class="bg-white border border-slate-200 rounded-2xl shadow-sm overflow-hidden h-[600px] flex">
                 
-                <div class="p-6">
-                    <form action="/ATC/ATCTower" method="post" class="space-y-6">
-                        <div>
-                            <label class="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">Select Aircraft (Colleague)</label>
-                            <select name="senderFlightNumber" class="w-full px-4 py-2.5 rounded-lg border border-slate-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition outline-none font-medium text-slate-700" required>
-                                <option value="">-- Choose Aircraft --</option>
-                                @if (flights != null)
-                                {
-                                    foreach (var f in flights)
-                                    {
-                                        <option value="@f.FlightNumber">@f.FlightNumber (@f.Status)</option>
-                                    }
-                                }
-                            </select>
-                        </div>
-
-                        <div class="space-y-3">
-                            <button type="submit" name="actionType" value="Landing" class="w-full py-3 bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-300 rounded-xl font-bold flex justify-center items-center transition">
-                                <span class="material-symbols-outlined mr-2 text-lg">flight_land</span>
-                                Request Landing Clearance
-                            </button>
-                            
-                            <div class="relative flex items-center py-2">
-                                <div class="flex-grow border-t border-slate-200"></div>
-                                <span class="flex-shrink-0 mx-4 text-slate-400 text-xs font-semibold uppercase">Or Send Custom Msg</span>
-                                <div class="flex-grow border-t border-slate-200"></div>
-                            </div>
-                            
-                            <div>
-                                <textarea name="message" rows="3" placeholder="Message content..." class="w-full px-4 py-3 rounded-lg border border-slate-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition outline-none font-medium text-slate-700"></textarea>
-                            </div>
-                            
-                            <button type="submit" name="actionType" value="Message" class="w-full py-3 bg-blue-600 hover:bg-blue-700 text-white shadow-md rounded-xl font-bold flex justify-center items-center transition">
-                                <span class="material-symbols-outlined mr-2 text-lg">send</span>
-                                Transmit to Tower
-                            </button>
-                        </div>
-                    </form>
-                </div>
-            </div>
-        </div>
-
-        <!-- Right Col: Mediator Logs -->
-        <div class="lg:col-span-1">
-            <div class="bg-white border border-slate-200 rounded-2xl shadow-sm overflow-hidden h-full flex flex-col">
-                <div class="bg-slate-50 border-b border-slate-200 px-6 py-4">
-                    <h2 class="text-lg font-bold text-slate-800 flex items-center">
-                        <span class="material-symbols-outlined mr-2 text-slate-600">terminal</span>
-                        Tower Logs
-                    </h2>
-                </div>
-                
-                <div class="p-0 bg-slate-900 flex-grow h-[500px] overflow-y-auto font-mono text-sm">
-                    @if (towerLogs != null && towerLogs.Any())
-                    {
-                        foreach (var log in towerLogs)
+                <!-- Chat Sidebar (Flights List) -->
+                <div class="w-1/3 border-r border-slate-200 bg-slate-50 flex flex-col">
+                    <div class="p-4 border-b border-slate-200">
+                        <h3 class="font-bold text-slate-700 flex items-center">
+                            <span class="material-symbols-outlined mr-2 text-sm">flight</span> Airborne Flights
+                        </h3>
+                    </div>
+                    <div class="overflow-y-auto flex-1 p-2 space-y-1">
+                        @if (flights != null)
                         {
-                            <div class="px-6 py-3 border-b border-slate-800 text-slate-300 hover:bg-slate-800 transition">
-                                @if (log.Contains("[TOWER]"))
+                            foreach (var f in flights)
+                            {
+                                <button onclick="selectFlightForChat('@f.FlightNumber')" class="w-full text-left p-3 rounded-lg hover:bg-white border border-transparent hover:border-slate-200 transition focus:outline-none focus:bg-blue-50 focus:border-blue-200 flight-selector" id="sel-@f.FlightNumber">
+                                    <div class="font-bold text-slate-800">@f.FlightNumber</div>
+                                    <div class="text-xs text-slate-500">@f.Status</div>
+                                </button>
+                            }
+                        }
+                    </div>
+                </div>
+
+                <!-- Chat Area -->
+                <div class="w-2/3 flex flex-col bg-slate-100 relative">
+                    <!-- Chat Header -->
+                    <div class="bg-white border-b border-slate-200 px-6 py-4 flex justify-between items-center z-10 shadow-sm">
+                        <div class="flex items-center">
+                            <div class="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 mr-3">
+                                <span class="material-symbols-outlined">headset_mic</span>
+                            </div>
+                            <div>
+                                <h2 class="text-lg font-bold text-slate-800" id="chat-title">TOWER FREQUENCY</h2>
+                                <p class="text-xs text-emerald-500 font-bold" id="chat-subtitle">Listening on ALL CHANNELS</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Chat Messages -->
+                    <div class="flex-1 overflow-y-auto p-6 space-y-4 flex flex-col" id="chat-messages">
+                        <div class="text-center text-xs font-bold text-slate-400 uppercase tracking-widest my-4">Today</div>
+                        
+                        @if (towerLogs != null && towerLogs.Any())
+                        {
+                            foreach (var log in towerLogs)
+                            {
+                                if (log.Contains("[TOWER]"))
                                 {
-                                    <span class="text-blue-400 font-bold">@log</span>
-                                }
-                                else if (log.Contains("LANDING"))
-                                {
-                                    <span class="text-green-400">@log</span>
+                                    <div class="flex justify-end">
+                                        <div class="bg-blue-600 text-white rounded-2xl rounded-tr-sm px-4 py-2 max-w-[80%] shadow-sm">
+                                            <p class="text-sm">@log</p>
+                                        </div>
+                                    </div>
                                 }
                                 else
                                 {
-                                    @log
+                                    <div class="flex justify-start">
+                                        <div class="bg-white border border-slate-200 text-slate-700 rounded-2xl rounded-tl-sm px-4 py-2 max-w-[80%] shadow-sm">
+                                            <p class="text-sm">@log</p>
+                                        </div>
+                                    </div>
                                 }
-                            </div>
+                            }
                         }
-                    }
-                    else
-                    {
-                        <div class="p-6 text-slate-500 italic">No communication logs yet.</div>
-                    }
+                        else
+                        {
+                            <div class="text-center py-4 text-slate-400 text-sm italic" id="empty-chat-msg">No messages yet.</div>
+                        }
+                    </div>
+
+                    <!-- Chat Input -->
+                    <div class="bg-white border-t border-slate-200 p-4">
+                        <form id="chat-form" onsubmit="sendChat(event)" class="flex gap-2 relative">
+                            <input type="hidden" id="active-flight" name="senderFlightNumber" value="" />
+                            
+                            <button type="button" onclick="sendQuickCommand('Landing')" class="bg-slate-100 hover:bg-slate-200 text-slate-600 p-3 rounded-xl transition border border-slate-200" title="Request Landing">
+                                <span class="material-symbols-outlined text-lg">flight_land</span>
+                            </button>
+
+                            <input type="text" id="chat-input" name="message" placeholder="Select a flight to send message..." disabled required class="flex-1 bg-slate-50 border border-slate-300 rounded-xl px-4 py-3 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition text-sm disabled:opacity-50">
+                            
+                            <button type="submit" id="chat-submit" disabled class="bg-blue-600 hover:bg-blue-700 text-white px-6 rounded-xl font-bold shadow-md transition flex items-center disabled:opacity-50">
+                                <span class="material-symbols-outlined text-sm mr-1">send</span> Send
+                            </button>
+                        </form>
+                    </div>
                 </div>
             </div>
         </div>
 
     </div>
 </div>
+
+@section Scripts {
+    <script>
+        let currentFlight = null;
+
+        function selectFlightForChat(flightNum) {
+            currentFlight = flightNum;
+            document.getElementById('active-flight').value = flightNum;
+            document.getElementById('chat-title').innerText = "Comm: " + flightNum;
+            document.getElementById('chat-subtitle').innerText = "Encrypted Channel";
+            
+            // Enable inputs
+            document.getElementById('chat-input').disabled = false;
+            document.getElementById('chat-input').placeholder = `Message to ${flightNum}...`;
+            document.getElementById('chat-submit').disabled = false;
+
+            // Highlight selected
+            document.querySelectorAll('.flight-selector').forEach(el => {
+                el.classList.remove('bg-blue-50', 'border-blue-200');
+            });
+            document.getElementById('sel-' + flightNum).classList.add('bg-blue-50', 'border-blue-200');
+        }
+
+        async function sendChat(e) {
+            e.preventDefault();
+            const msg = document.getElementById('chat-input').value;
+            if(!msg || !currentFlight) return;
+
+            document.getElementById('chat-input').value = '';
+
+            try {
+                const formData = new URLSearchParams();
+                formData.append('senderFlightNumber', currentFlight);
+                formData.append('message', msg);
+
+                await fetch('/ATC/SendChatMessage', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                    body: formData
+                });
+            } catch(err) {
+                console.error(err);
+                toastr.error("Failed to send message");
+            }
+        }
+
+        async function sendQuickCommand(actionType) {
+            if(!currentFlight) {
+                toastr.warning("Select a flight first.");
+                return;
+            }
+            try {
+                const formData = new URLSearchParams();
+                formData.append('senderFlightNumber', currentFlight);
+                formData.append('actionType', actionType);
+
+                await fetch('/ATC/SendChatMessage', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                    body: formData
+                });
+            } catch(err) {
+                console.error(err);
+            }
+        }
+
+        // Listen for incoming SignalR Chat
+        if (window.globalConnection) {
+            window.globalConnection.on("ReceiveATCChat", function (flight, msg, role) {
+                const chatArea = document.getElementById('chat-messages');
+                const emptyMsg = document.getElementById('empty-chat-msg');
+                if(emptyMsg) emptyMsg.remove();
+
+                const div = document.createElement('div');
+                
+                if (role === 'System' || flight === 'TOWER') {
+                    // Tower message (Right aligned)
+                    div.className = "flex justify-end animate-fade-in-up";
+                    div.innerHTML = `
+                        <div class="bg-blue-600 text-white rounded-2xl rounded-tr-sm px-4 py-2 max-w-[80%] shadow-sm">
+                            <p class="text-sm">${msg}</p>
+                        </div>
+                    `;
+                } else {
+                    // Aircraft message (Left aligned)
+                    div.className = "flex justify-start animate-fade-in-up";
+                    div.innerHTML = `
+                        <div class="bg-white border border-slate-200 text-slate-700 rounded-2xl rounded-tl-sm px-4 py-2 max-w-[80%] shadow-sm">
+                            <p class="text-xs font-bold text-slate-400 mb-1">${flight}</p>
+                            <p class="text-sm">${msg}</p>
+                        </div>
+                    `;
+                }
+
+                chatArea.appendChild(div);
+                chatArea.scrollTop = chatArea.scrollHeight; // Auto-scroll to bottom
+            });
+        }
+    </script>
+}

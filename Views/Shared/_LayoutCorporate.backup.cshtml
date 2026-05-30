@@ -1,0 +1,423 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description" content="Smart Airport Management System (SAMS) Enterprise Dashboard. Manage flights, fleet, passengers, and security control." />
+    <meta name="author" content="Valentin / SAMS Dev Team" />
+    <title>@ViewData["Title"] - Smart Airport Management</title>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>✈️</text></svg>">
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet" />
+    <script id="tailwind-config">
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: {
+                            50: '#eff6ff',
+                            100: '#dbeafe',
+                            500: '#3b82f6',
+                            600: '#2563eb',
+                            700: '#1d4ed8',
+                            900: '#1e3a8a',
+                        },
+                        surface: '#ffffff',
+                        background: '#f8fafc',
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body { font-family: 'Inter', sans-serif; background-color: #f8fafc; }
+        .material-symbols-outlined { font-variation-settings: 'FILL' 1, 'wght' 400, 'GRAD' 0, 'opsz' 24; }
+        .sidebar-link { transition: all 0.2s; }
+        .sidebar-link:hover { background-color: #eff6ff; color: #2563eb; }
+        .sidebar-link.active { background-color: #eff6ff; color: #2563eb; border-right: 3px solid #2563eb; }
+        
+        /* Overriding some dark classes from previous views */
+        .glass-card, .glass-panel { 
+            background: #ffffff !important; 
+            border: 1px solid #e2e8f0 !important; 
+            box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06) !important; 
+            color: #1e293b !important;
+        }
+        .text-cyan-400, .text-cyan-500 { color: #2563eb !important; }
+        .glow-cyan { text-shadow: none !important; }
+    </style>
+    
+    <!-- Toastr Notifications -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.css" rel="stylesheet" />
+
+    @await RenderSectionAsync("Styles", required: false)
+</head>
+<body class="text-slate-800 antialiased h-screen flex overflow-hidden">
+
+    <!-- Sidebar -->
+    <aside class="w-64 bg-white border-r border-slate-200 flex flex-col h-full flex-shrink-0 z-20">
+        <div class="h-16 flex items-center px-6 border-b border-slate-200">
+            <span class="material-symbols-outlined text-primary-600 mr-2">flight_takeoff</span>
+            <span class="font-bold text-lg text-slate-900 tracking-tight">SAMS Enterprise</span>
+        </div>
+        
+        <div id="sidebar-scroll-area" class="p-4 flex-1 overflow-y-auto">
+            <div class="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2 mt-4 px-3">Main</div>
+            <nav class="space-y-1">
+                <a asp-controller="Airport" asp-action="Index" class="sidebar-link flex items-center px-3 py-2 text-sm font-medium rounded-md text-slate-700 @(ViewContext.RouteData.Values["action"]?.ToString() == "Index" ? "active" : "")">
+                    <span class="material-symbols-outlined mr-3 text-[20px]">dashboard</span> Dashboard
+                </a>
+                <a asp-controller="Airport" asp-action="CheckIn" class="sidebar-link flex items-center px-3 py-2 text-sm font-medium rounded-md text-slate-700 @(ViewContext.RouteData.Values["action"]?.ToString() == "CheckIn" ? "active" : "")">
+                    <span class="material-symbols-outlined mr-3 text-[20px]">how_to_reg</span> Check-In
+                </a>
+            </nav>
+
+            <div class="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2 mt-6 px-3">Passenger</div>
+            <nav class="space-y-1">
+                <a asp-controller="Tickets" asp-action="MyTickets" class="sidebar-link flex items-center px-3 py-2 text-sm font-medium rounded-md text-slate-700 @(ViewContext.RouteData.Values["action"]?.ToString() == "MyTickets" ? "active" : "")">
+                    <span class="material-symbols-outlined mr-3 text-[20px]">confirmation_number</span> My Tickets
+                </a>
+                <a asp-controller="Tickets" asp-action="StrategyDemo" class="sidebar-link flex items-center px-3 py-2 text-sm font-medium rounded-md text-slate-700 @(ViewContext.RouteData.Values["action"]?.ToString() == "StrategyDemo" ? "active" : "")">
+                    <span class="material-symbols-outlined mr-3 text-[20px]">calculate</span> Check Prices
+                </a>
+            </nav>
+
+            <div class="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2 mt-6 px-3">ATC (Air Traffic)</div>
+            <nav class="space-y-1">
+                <a asp-controller="ATC" asp-action="Radar" class="sidebar-link flex items-center px-3 py-2 text-sm font-medium rounded-md text-slate-700 @(ViewContext.RouteData.Values["action"]?.ToString() == "Radar" ? "active" : "")">
+                    <span class="material-symbols-outlined mr-3 text-[20px]">radar</span> Live Radar <span class="ml-auto w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+                </a>
+                <a asp-controller="ATC" asp-action="ATCTower" class="sidebar-link flex items-center px-3 py-2 text-sm font-medium rounded-md text-slate-700 @(ViewContext.RouteData.Values["action"]?.ToString() == "ATCTower" ? "active" : "")">
+                    <span class="material-symbols-outlined mr-3 text-[20px]">settings_input_antenna</span> ATC Tower
+                    <span id="atctower-notif-dot" class="ml-auto w-2 h-2 rounded-full bg-orange-500 hidden animate-pulse"></span>
+                </a>
+                <a asp-controller="ATC" asp-action="Alerts" class="sidebar-link flex items-center px-3 py-2 text-sm font-medium rounded-md text-slate-700 @(ViewContext.RouteData.Values["action"]?.ToString() == "Alerts" ? "active" : "")">
+                    <span class="material-symbols-outlined mr-3 text-[20px]">notifications</span> Global Alerts
+                    <span id="alerts-notif-dot" class="ml-auto w-2 h-2 rounded-full bg-orange-500 hidden animate-pulse"></span>
+                </a>
+                <a asp-controller="ATC" asp-action="RunwayLights" class="sidebar-link flex items-center px-3 py-2 text-sm font-medium rounded-md text-slate-700 @(ViewContext.RouteData.Values["action"]?.ToString() == "RunwayLights" ? "active" : "")">
+                    <span class="material-symbols-outlined mr-3 text-[20px]">lightbulb</span> Runway Lights
+                </a>
+            </nav>
+
+            <div class="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2 mt-6 px-3">Ground Ops</div>
+            <nav class="space-y-1">
+                <a asp-controller="Flights" asp-action="Index" class="sidebar-link flex items-center px-3 py-2 text-sm font-medium rounded-md text-slate-700 @(ViewContext.RouteData.Values["controller"]?.ToString() == "Flights" ? "active" : "")">
+                    <span class="material-symbols-outlined mr-3 text-[20px]">flight_takeoff</span> Live FIDS Board
+                </a>
+                <a asp-controller="GroundOps" asp-action="PreFlightChecks" class="sidebar-link flex items-center px-3 py-2 text-sm font-medium rounded-md text-slate-700 @(ViewContext.RouteData.Values["action"]?.ToString() == "PreFlightChecks" ? "active" : "")">
+                    <span class="material-symbols-outlined mr-3 text-[20px]">checklist</span> Pre-Flight SOP
+                </a>
+                <a asp-controller="GroundOps" asp-action="TerminalDisplays" class="sidebar-link flex items-center px-3 py-2 text-sm font-medium rounded-md text-slate-700 @(ViewContext.RouteData.Values["action"]?.ToString() == "TerminalDisplays" ? "active" : "")">
+                    <span class="material-symbols-outlined mr-3 text-[20px]">tv</span> Terminal Displays
+                </a>
+                <a asp-controller="GroundOps" asp-action="GateAssignments" class="sidebar-link flex items-center px-3 py-2 text-sm font-medium rounded-md text-slate-700 @(ViewContext.RouteData.Values["action"]?.ToString() == "GateAssignments" ? "active" : "")">
+                    <span class="material-symbols-outlined mr-3 text-[20px]">storefront</span> Gate Manager
+                </a>
+                <a asp-controller="GroundOps" asp-action="CargoManifest" class="sidebar-link flex items-center px-3 py-2 text-sm font-medium rounded-md text-slate-700 @(ViewContext.RouteData.Values["action"]?.ToString() == "CargoManifest" ? "active" : "")">
+                    <span class="material-symbols-outlined mr-3 text-[20px]">luggage</span> Cargo Manifest
+                </a>
+                <a asp-controller="GroundOps" asp-action="BaggageRouting" class="sidebar-link flex items-center px-3 py-2 text-sm font-medium rounded-md text-slate-700 @(ViewContext.RouteData.Values["action"]?.ToString() == "BaggageRouting" ? "active" : "")">
+                    <span class="material-symbols-outlined mr-3 text-[20px]">conveyor_belt</span> Baggage BHS
+                </a>
+                <a asp-controller="GroundOps" asp-action="GroundVehicles" class="sidebar-link flex items-center px-3 py-2 text-sm font-medium rounded-md text-slate-700 @(ViewContext.RouteData.Values["action"]?.ToString() == "GroundVehicles" ? "active" : "")">
+                    <span class="material-symbols-outlined mr-3 text-[20px]">airport_shuttle</span> GSE Fleet
+                </a>
+            </nav>
+            
+            <div class="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2 mt-6 px-3">Security</div>
+            <nav class="space-y-1">
+                <a asp-controller="Security" asp-action="Checkpoint" class="sidebar-link flex items-center px-3 py-2 text-sm font-medium rounded-md text-slate-700 @(ViewContext.RouteData.Values["action"]?.ToString() == "Checkpoint" ? "active" : "")">
+                    <span class="material-symbols-outlined mr-3 text-[20px]">policy</span> Security Scanners
+                    <span id="security-notif-dot" class="ml-auto w-2 h-2 rounded-full bg-red-600 hidden animate-pulse"></span>
+                </a>
+            </nav>
+
+            <div class="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2 mt-6 px-3">Management</div>
+            <nav class="space-y-1">
+                <a asp-controller="Airport" asp-action="BuilderDemo" class="sidebar-link flex items-center px-3 py-2 text-sm font-medium rounded-md text-slate-700 @(ViewContext.RouteData.Values["action"]?.ToString() == "BuilderDemo" ? "active" : "")">
+                    <span class="material-symbols-outlined mr-3 text-[20px]">event_note</span> Itineraries
+                </a>
+                <a asp-controller="Management" asp-action="FlightScheduler" class="sidebar-link flex items-center px-3 py-2 text-sm font-medium rounded-md text-slate-700 @(ViewContext.RouteData.Values["action"]?.ToString() == "FlightScheduler" ? "active" : "")">
+                    <span class="material-symbols-outlined mr-3 text-[20px]">event</span> Flight Scheduler
+                </a>
+                <a asp-controller="Management" asp-action="AuditLogs" class="sidebar-link flex items-center px-3 py-2 text-sm font-medium rounded-md text-slate-700 @(ViewContext.RouteData.Values["action"]?.ToString() == "AuditLogs" ? "active" : "")">
+                    <span class="material-symbols-outlined mr-3 text-[20px]">admin_panel_settings</span> Audit Logs
+                </a>
+                <a asp-controller="Management" asp-action="Analytics" class="sidebar-link flex items-center px-3 py-2 text-sm font-medium rounded-md text-slate-700 @(ViewContext.RouteData.Values["action"]?.ToString() == "Analytics" ? "active" : "")">
+                    <span class="material-symbols-outlined mr-3 text-[20px]">analytics</span> Export Data
+                </a>
+                <a asp-controller="Fleet" asp-action="Index" class="sidebar-link flex items-center px-3 py-2 text-sm font-medium rounded-md text-slate-700 @(ViewContext.RouteData.Values["controller"]?.ToString() == "Fleet" ? "active" : "")">
+                    <span class="material-symbols-outlined mr-3 text-[20px]">flight</span> Fleet
+                </a>
+                @if (User.IsInRole("Admin"))
+                {
+                    <a asp-controller="Admin" asp-action="Index" class="sidebar-link flex items-center px-3 py-2 text-sm font-medium rounded-md text-slate-700 @(ViewContext.RouteData.Values["controller"]?.ToString() == "Admin" ? "active" : "")">
+                        <span class="material-symbols-outlined mr-3 text-[20px]">manage_accounts</span> User Mgmt
+                    </a>
+                }
+            </nav>
+
+
+        </div>
+        
+        <div class="p-4 border-t border-slate-200">
+            <div class="flex items-center">
+                <div class="flex-shrink-0">
+                    @{
+                        var initial = "U";
+                        if (User.Identity?.IsAuthenticated == true && !string.IsNullOrEmpty(User.Identity.Name))
+                        {
+                            initial = User.Identity.Name.Substring(0, 1).ToUpper();
+                        }
+                    }
+                    <div class="h-8 w-8 rounded-full bg-primary-100 flex items-center justify-center text-primary-700 font-bold">
+                        @initial
+                    </div>
+                </div>
+                <div class="ml-3 w-full">
+                    <partial name="_LoginPartialCorporate" />
+                </div>
+            </div>
+        </div>
+    </aside>
+
+    <!-- Main Wrapper -->
+    <div class="flex-1 flex flex-col min-w-0 bg-background">
+        <!-- Top Header -->
+        <header class="bg-white border-b border-slate-200 h-16 flex items-center justify-between px-6 z-10 shadow-sm">
+            <div class="flex items-center">
+                <h1 class="text-xl font-semibold text-slate-800">@ViewData["Title"]</h1>
+            </div>
+            <div class="flex items-center space-x-4">
+                <!-- Notifications Bell -->
+                <div class="relative group cursor-pointer" id="notif-dropdown-wrapper">
+                    <div class="p-2 bg-slate-50 rounded-full border border-slate-200 hover:bg-slate-100 transition" onclick="toggleNotifDropdown(event)">
+                        <span class="material-symbols-outlined text-slate-500">notifications</span>
+                    </div>
+                    <!-- Badge -->
+                    <span id="notif-badge" class="absolute top-0 right-0 h-4 w-4 bg-red-500 text-white text-[10px] font-bold flex items-center justify-center rounded-full hidden">0</span>
+                    
+                    <!-- Dropdown -->
+                    <div id="notif-dropdown" class="hidden absolute right-0 mt-2 w-80 bg-white rounded-xl shadow-lg border border-slate-200 z-50 overflow-hidden flex flex-col max-h-[400px]">
+                        <div class="bg-slate-50 px-4 py-3 border-b border-slate-200 flex justify-between items-center">
+                            <span class="font-bold text-slate-700">Notifications</span>
+                            <button class="text-xs text-blue-600 font-semibold hover:underline" onclick="clearNotifs(event)">Clear all</button>
+                        </div>
+                        <div id="notif-list" class="flex-1 overflow-y-auto">
+                            <div class="p-4 text-center text-slate-400 text-sm italic" id="empty-notifs">No notifications yet.</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Weather Indicator -->
+                <div class="flex items-center bg-slate-50 px-3 py-1.5 rounded-lg border border-slate-200" id="weather-widget">
+                    <span class="material-symbols-outlined text-slate-400 mr-2 text-[18px]" id="weather-icon">wb_sunny</span>
+                    <div class="flex flex-col">
+                        <span class="text-[10px] font-bold text-slate-400 uppercase leading-none mb-0.5">WEATHER</span>
+                        <span id="weather-label" class="text-xs font-bold text-slate-700 leading-none">Clear</span>
+                    </div>
+                </div>
+
+                <!-- Virtual Clock -->
+                <div class="flex items-center bg-slate-50 px-3 py-1.5 rounded-lg border border-slate-200">
+                    <span class="material-symbols-outlined text-slate-400 mr-2 text-[18px]">schedule</span>
+                    <div class="flex flex-col">
+                        <span class="text-[10px] font-bold text-slate-400 uppercase leading-none mb-0.5">VIRTUAL TIME <span id="clock-speed" class="text-blue-500 ml-1">1x</span></span>
+                        <span id="virtual-clock" class="text-sm font-bold text-slate-700 leading-none" style="font-variant-numeric: tabular-nums;">Syncing...</span>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <!-- Main Content Area -->
+        <main class="flex-1 overflow-y-auto p-6">
+            <div class="max-w-7xl mx-auto">
+                @if (TempData["SuccessMessage"] != null)
+                {
+                    <div class="mb-6 rounded-lg bg-emerald-50 p-4 border border-emerald-200 flex items-start">
+                        <div class="flex-shrink-0">
+                            <span class="material-symbols-outlined text-emerald-600">check_circle</span>
+                        </div>
+                        <div class="ml-3">
+                            <h3 class="text-sm font-medium text-emerald-800">Success</h3>
+                            <div class="mt-1 text-sm text-emerald-700">
+                                @TempData["SuccessMessage"]
+                            </div>
+                        </div>
+                    </div>
+                }
+                
+                @RenderBody()
+            </div>
+        </main>
+    </div>
+
+    <!-- Global Notification System (SignalR + Toastr) -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/8.0.0/signalr.min.js"></script>
+    
+    <script>
+        toastr.options = {
+            "closeButton": true,
+            "progressBar": true,
+            "positionClass": "toast-top-right",
+            "timeOut": "5000",
+        };
+
+        window.globalConnection = new signalR.HubConnectionBuilder()
+            .withUrl("/flightHub")
+            .build();
+
+        window.globalConnection.on("TimeUpdate", function (data) {
+            document.getElementById("virtual-clock").innerText = data.virtualTime;
+            document.getElementById("clock-speed").innerText = data.speed + "x";
+            // Update weather widget if data comes with weather
+            if (data.weather && data.weatherType) {
+                const lbl = document.getElementById("weather-label");
+                const ico = document.getElementById("weather-icon");
+                const widget = document.getElementById("weather-widget");
+                if (lbl) lbl.innerText = data.weatherType;
+                if (ico) {
+                    if (data.weatherType === "Storm") { ico.innerText = "thunderstorm"; widget.style.borderColor = "#ef4444"; widget.style.backgroundColor = "#fef2f2"; }
+                    else if (data.weatherType === "Fog") { ico.innerText = "foggy"; widget.style.borderColor = "#f59e0b"; widget.style.backgroundColor = "#fffbeb"; }
+                    else { ico.innerText = "wb_sunny"; widget.style.borderColor = ""; widget.style.backgroundColor = ""; }
+                }
+            }
+        });
+
+        window.globalConnection.on("WeatherChanged", function (data) {
+            const label = data.type === "Storm" ? "⛈️ STORM" : data.type === "Fog" ? "🌫️ FOG" : "☀️ CLEAR";
+            if (data.type === "Storm") {
+                toastr.error(`⛈️ Weather Alert: ${data.description}`, "WEATHER SYSTEM");
+            } else {
+                toastr.warning(`🌤️ Weather changed: ${data.description}`, "Weather Update");
+            }
+            // Show dot on ATC Tower
+            const dot = document.getElementById('atctower-notif-dot');
+            if(dot) dot.classList.remove('hidden');
+            addNotificationItem("Weather Changed", data.description, "flight");
+        });
+
+        window.globalConnection.on("BoardingProgress", function (data) {
+            // Only show in console - could display in FIDS if on that page
+            if (data.boarded === data.total) {
+                toastr.success(`✅ ${data.flightNumber}: Boarding complete! All ${data.total} passengers boarded.`, "Boarding");
+            }
+        });
+
+        let notifCount = 0;
+
+        function toggleNotifDropdown(e) {
+            e.stopPropagation();
+            document.getElementById('notif-dropdown').classList.toggle('hidden');
+        }
+
+        document.addEventListener('click', function(e) {
+            if (!document.getElementById('notif-dropdown-wrapper').contains(e.target)) {
+                document.getElementById('notif-dropdown').classList.add('hidden');
+            }
+        });
+
+        function clearNotifs(e) {
+            e.stopPropagation();
+            notifCount = 0;
+            document.getElementById('notif-badge').classList.add('hidden');
+            document.getElementById('notif-badge').innerText = "0";
+            document.getElementById('notif-list').innerHTML = '<div class="p-4 text-center text-slate-400 text-sm italic" id="empty-notifs">No notifications yet.</div>';
+            
+            const alertDot = document.getElementById('alerts-notif-dot');
+            if(alertDot) alertDot.classList.add('hidden');
+            
+            const secDot = document.getElementById('security-notif-dot');
+            if(secDot) secDot.classList.add('hidden');
+        }
+
+        function addNotificationItem(title, msg, type) {
+            const emptyMsg = document.getElementById('empty-notifs');
+            if(emptyMsg) emptyMsg.remove();
+            
+            const list = document.getElementById('notif-list');
+            const icon = type === 'security' ? '<span class="material-symbols-outlined text-red-500 text-xl mr-3 mt-1">shield</span>' : '<span class="material-symbols-outlined text-blue-500 text-xl mr-3 mt-1">flight_takeoff</span>';
+            const bgClass = type === 'security' ? 'bg-red-50' : 'bg-slate-50';
+            
+            const item = document.createElement('div');
+            item.className = `p-3 border-b border-slate-100 flex items-start hover:${bgClass} transition`;
+            item.innerHTML = `
+                ${icon}
+                <div class="flex-1">
+                    <p class="text-sm font-bold text-slate-800">${title}</p>
+                    <p class="text-xs text-slate-600 mt-0.5">${msg}</p>
+                </div>
+            `;
+            list.prepend(item);
+        }
+
+        window.globalConnection.on("FlightStateChanged", function (data) {
+            let msg = `Flight <b>${data.flightNumber}</b> status changed: <br/> ${data.oldStatus} &rarr; <b>${data.newStatus}</b>`;
+            if (data.newStatus === "Airborne") {
+                toastr.info(`✈️ Departed from ${data.origin}! <br/> ${msg}`, "Takeoff Detected");
+            } else if (data.newStatus === "Landed") {
+                toastr.success(`🛬 Arrived at ${data.destination}! <br/> ${msg}`, "Landing Detected");
+            } else if (data.newStatus === "Boarding") {
+                toastr.warning(`📢 Boarding started! <br/> ${msg}`, "Boarding");
+            } else if (data.newStatus.includes("EMERGENCY")) {
+                toastr.error(`🚨 ATC ALERT! <br/> ${msg}`, "EMERGENCY");
+            } else {
+                toastr.info(msg, "Flight Update");
+            }
+            
+            // Update badge
+            notifCount++;
+            let badge = document.getElementById("notif-badge");
+            badge.innerText = notifCount;
+            badge.classList.remove("hidden");
+            badge.classList.add("animate-bounce");
+            setTimeout(() => badge.classList.remove("animate-bounce"), 1000);
+            
+            addNotificationItem("Flight Update", `Flight ${data.flightNumber} -> ${data.newStatus}`, "flight");
+            
+            const alertDot = document.getElementById('alerts-notif-dot');
+            if(alertDot) alertDot.classList.remove('hidden');
+        });
+
+        window.globalConnection.on("SecurityAlert", function (data) {
+            toastr.error(`🚨 CHECKPOINT ${data.checkpointId}: <br/> ${data.message}`, `SECURITY - ${data.level}`);
+            
+            notifCount++;
+            let badge = document.getElementById("notif-badge");
+            badge.innerText = notifCount;
+            badge.classList.remove("hidden");
+            
+            addNotificationItem(`Security Alert [${data.level}]`, `CP: ${data.checkpointId} - ${data.message}`, "security");
+            
+            const secDot = document.getElementById('security-notif-dot');
+            if(secDot) secDot.classList.remove('hidden');
+        });
+
+        window.globalConnection.start().catch(err => console.error(err.toString()));
+
+        // Keep sidebar scroll position
+        document.addEventListener("DOMContentLoaded", function () {
+            const sidebarScroll = document.getElementById('sidebar-scroll-area');
+            if (sidebarScroll) {
+                const scrollPos = sessionStorage.getItem('sidebarScrollPos');
+                if (scrollPos) {
+                    sidebarScroll.scrollTop = parseInt(scrollPos, 10);
+                }
+
+                window.addEventListener('beforeunload', function () {
+                    sessionStorage.setItem('sidebarScrollPos', sidebarScroll.scrollTop);
+                });
+            }
+        });
+    </script>
+
+    @await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>

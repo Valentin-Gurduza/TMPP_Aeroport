@@ -66,6 +66,8 @@ namespace TMPP_Aeroport.Domain.Composite
         private string _containerId;
         private List<ILuggageItem> _children = new List<ILuggageItem>();
 
+        public IReadOnlyCollection<ILuggageItem> Children => _children.AsReadOnly();
+
         public LuggageContainer(string containerId)
         {
             _containerId = containerId;
