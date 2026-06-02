@@ -6,20 +6,20 @@
 <div class="max-w-xl mx-auto">
     <div class="mb-6 flex items-center gap-4">
         <a asp-action="Index" class="text-slate-400 hover:text-slate-600 transition">
-            <span class="material-symbols-outlined text-2xl">arrow_back</span>
+            <span class="material-symbols-rounded text-2xl">arrow_back</span>
         </a>
         <div>
-            <h1 class="text-2xl font-bold text-slate-800">Update ATC Status</h1>
+            <h1 class="text-2xl font-bold text-slate-800 dark:text-slate-200">Update ATC Status</h1>
             <p class="text-sm text-slate-500">Flight @Model.FlightNumber to @Model.Destination</p>
         </div>
     </div>
 
-    <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-8 text-center">
+    <div class="bg-white dark:bg-slate-900 dark:text-slate-200 rounded-xl shadow-sm border border-slate-200 p-8 text-center">
         <div class="inline-flex items-center justify-center w-16 h-16 bg-blue-50 text-blue-600 rounded-full mb-6">
-            <span class="material-symbols-outlined text-3xl">radar</span>
+            <span class="material-symbols-rounded text-3xl">radar</span>
         </div>
         
-        <h3 class="text-lg font-bold text-slate-800 mb-2">@Model.FlightNumber</h3>
+        <h3 class="text-lg font-bold text-slate-800 dark:text-slate-200 mb-2">@Model.FlightNumber</h3>
         <p class="text-slate-500 mb-8">@Model.Aircraft?.RegistrationCode • @Model.DepartureTime.ToString("dd MMM HH:mm")</p>
 
         <form asp-action="EditStatus" method="post">
@@ -33,11 +33,11 @@
                 {
                     <div class="relative">
                         <input type="radio" name="status" value="@s" id="status_@s" class="peer sr-only" @(Model.Status == s ? "checked" : "")>
-                        <label for="status_@s" class="flex cursor-pointer rounded-lg border bg-white p-4 shadow-sm focus:outline-none transition-all peer-checked:border-blue-500 peer-checked:ring-1 peer-checked:ring-blue-500 peer-checked:bg-blue-50 border-slate-300 hover:bg-slate-50 items-center justify-between">
+                        <label for="status_@s" class="flex cursor-pointer rounded-lg border bg-white dark:bg-slate-900 dark:text-slate-200 p-4 shadow-sm focus:outline-none transition-all peer-checked:border-blue-500 peer-checked:ring-1 peer-checked:ring-blue-500 peer-checked:bg-blue-50 border-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 items-center justify-between">
                             <span class="flex flex-col">
                                 <span class="block text-sm font-medium text-slate-900 uppercase tracking-widest">@s</span>
                             </span>
-                            <span class="material-symbols-outlined text-slate-200 peer-checked:text-blue-600 transition-colors">check_circle</span>
+                            <span class="material-symbols-rounded text-slate-200 peer-checked:text-blue-600 transition-colors">check_circle</span>
                         </label>
                     </div>
                 }

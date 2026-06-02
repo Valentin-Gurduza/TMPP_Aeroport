@@ -82,7 +82,7 @@ namespace TMPP_Aeroport.Controllers
 
             if (user == null)
             {
-                return View("NotFound");
+                return NotFound();
             }
 
             var roles = await _userManager.GetRolesAsync(user);

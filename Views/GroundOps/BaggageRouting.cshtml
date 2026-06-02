@@ -4,6 +4,7 @@
     var stages = ViewBag.Stages as string[];
     var bags = ViewBag.Bags as List<TMPP_Aeroport.Models.BaggageItem>;
     var stageLabels = new Dictionary<string, string> {
+        {"PendingCheckIn", "⏳ Pending Drop-off"},
         {"CheckedIn", "✅ Checked In"},
         {"OnConveyor", "🔄 On Conveyor"},
         {"XRayScreening", "🔬 X-Ray Screening"},
@@ -11,14 +12,16 @@
         {"LoadedOnAircraft", "✈️ Loaded"}
     };
     var stageColors = new Dictionary<string, string> {
-        {"CheckedIn", "border-slate-400 bg-slate-50"},
+        {"PendingCheckIn", "border-slate-300 bg-slate-50"},
+        {"CheckedIn", "border-indigo-400 bg-indigo-50"},
         {"OnConveyor", "border-blue-400 bg-blue-50"},
         {"XRayScreening", "border-orange-400 bg-orange-50"},
         {"Sorted", "border-green-400 bg-green-50"},
         {"LoadedOnAircraft", "border-emerald-500 bg-emerald-50"}
     };
     var headerColors = new Dictionary<string, string> {
-        {"CheckedIn", "bg-slate-600"},
+        {"PendingCheckIn", "bg-slate-500"},
+        {"CheckedIn", "bg-indigo-600"},
         {"OnConveyor", "bg-blue-600"},
         {"XRayScreening", "bg-orange-500"},
         {"Sorted", "bg-green-600"},
@@ -26,20 +29,20 @@
     };
 }
 
-<div class="space-y-6">
+<div class="space-y-6" id="baggage-board">
     <div class="flex items-center justify-between">
         <div>
             <h1 class="text-2xl font-bold text-slate-800 dark:text-white/90 flex items-center">
-                <span class="material-symbols-outlined mr-3 text-blue-600 text-3xl">conveyor_belt</span>
+                <span class="material-symbols-rounded mr-3 text-blue-600 text-3xl">conveyor_belt</span>
                 Baggage Handling System
             </h1>
-            <p class="text-slate-500 dark:text-gray-400 mt-1">Live baggage pipeline — State Pattern</p>
+            <p class="text-slate-500 dark:text-gray-400 mt-1">Live baggage pipeline</p>
         </div>
         <div class="flex gap-3">
-            <div class="flex items-center gap-2 text-xs text-slate-500 dark:text-gray-400 bg-white dark:bg-gray-900 border border-slate-200 dark:border-gray-700 rounded-xl px-3 py-2">
-                <span class="material-symbols-outlined text-[16px] animate-spin" style="animation-duration:3s">sync</span>
-                Refresh in <span id="refresh-countdown" class="font-bold text-slate-700 dark:text-gray-300 mx-1">10</span>s
-            </div>
+            <button onclick="location.reload()" class="flex items-center gap-2 text-xs text-slate-700 hover:bg-slate-100 dark:hover:bg-gray-800 dark:text-gray-300 bg-white dark:bg-gray-900 border border-slate-200 dark:border-gray-700 rounded-xl px-4 py-2 font-bold transition shadow-sm">
+                <span class="material-symbols-rounded text-[16px]">refresh</span>
+                Refresh Kanban
+            </button>
             <div class="bg-white dark:bg-gray-900 border border-slate-200 dark:border-gray-700 rounded-xl px-4 py-2 text-center">
                 <div class="text-2xl font-bold text-slate-800 dark:text-white/90">@(bags?.Count ?? 0)</div>
                 <div class="text-xs text-slate-500 dark:text-gray-400">Total Bags</div>
@@ -56,29 +59,29 @@
     </div>
 
     <!-- Kanban Board -->
-    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4" style="min-height: 60vh;">
+    <div class="flex gap-4 overflow-x-auto pb-4" style="min-height: 60vh;">
         @if (stages != null)
         {
             foreach (var stage in stages)
             {
                 var stageBags = bags?.Where(b => b.BaggageStage == stage).ToList() ?? new List<TMPP_Aeroport.Models.BaggageItem>();
-                var borderColor = stageColors.GetValueOrDefault(stage, "border-slate-300 bg-slate-50");
+                var borderColor = stageColors.GetValueOrDefault(stage, "border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/50");
                 var headerColor = headerColors.GetValueOrDefault(stage, "bg-slate-600");
-                <div class="flex flex-col rounded-xl border-2 @borderColor overflow-hidden">
+                <div class="flex flex-col rounded-xl border-2 @borderColor overflow-hidden min-w-[250px] max-w-[300px] flex-1">
                     <div class="@headerColor text-white px-3 py-2 flex justify-between items-center">
                         <span class="text-xs font-bold">@stageLabels.GetValueOrDefault(stage, stage)</span>
-                        <span class="bg-white/20 text-white text-xs font-bold rounded-full px-2 py-0.5">@stageBags.Count</span>
+                        <span class="bg-white dark:bg-slate-900 dark:text-slate-200/20 text-white text-xs font-bold rounded-full px-2 py-0.5">@stageBags.Count</span>
                     </div>
                     <div class="flex-1 p-2 space-y-2 overflow-y-auto max-h-[65vh]">
                         @foreach (var bag in stageBags)
                         {
-                            var secColor = bag.SecurityStatus == "Flagged" ? "border-red-400 bg-red-50" :
-                                          bag.SecurityStatus == "Cleared" ? "border-green-300 bg-green-50" :
-                                          "border-slate-200 bg-white";
+                            var secColor = bag.SecurityStatus == "Flagged" ? "border-red-400 bg-red-50 dark:bg-red-900/30 dark:border-red-800" :
+                                          bag.SecurityStatus == "Cleared" ? "border-green-300 bg-green-50 dark:bg-green-900/30 dark:border-green-800" :
+                                          "border-slate-200 bg-white dark:bg-slate-800 dark:border-slate-700";
                             <div class="p-2 rounded-lg border @secColor shadow-sm">
-                                <div class="font-bold text-slate-700 text-xs">@bag.TagCode</div>
+                                <div class="font-bold text-slate-700 dark:text-slate-300 text-xs">@bag.TagCode</div>
                                 <div class="text-[10px] text-slate-500 mt-0.5">@bag.Type · @bag.Weight kg</div>
-                                <div class="text-[10px] font-semibold mt-1 @(bag.SecurityStatus == "Flagged" ? "text-red-600" : "text-slate-600")">
+                                <div class="text-[10px] font-semibold mt-1 @(bag.SecurityStatus == "Flagged" ? "text-red-600 dark:text-red-400" : "text-slate-600 dark:text-slate-400")">
                                     @(bag.Flight?.FlightNumber ?? "N/A")
                                 </div>
                                 @if (bag.SecurityStatus == "Flagged")
@@ -89,8 +92,8 @@
                         }
                         @if (!stageBags.Any())
                         {
-                            <div class="text-center py-8 text-slate-300">
-                                <span class="material-symbols-outlined text-3xl block mb-1">inbox</span>
+                            <div class="text-center py-8 text-slate-400 dark:text-slate-600">
+                                <span class="material-symbols-rounded text-3xl block mb-1">inbox</span>
                                 <span class="text-xs">Empty</span>
                             </div>
                         }
@@ -102,27 +105,4 @@
 </div>
 
 @section Scripts {
-<script>
-    // Auto-advance baggage stages via AJAX every 8 seconds
-    async function advanceBaggageStages() {
-        try {
-            const resp = await fetch('/GroundOps/AdvanceBaggageStages', { method: 'POST' });
-            if (resp.ok) {
-                setTimeout(() => location.reload(), 500);
-            }
-        } catch(e) { console.error(e); }
-    }
-
-    // Auto-refresh every 10 seconds with countdown indicator
-    let countdown = 10;
-    const countdownEl = document.getElementById('refresh-countdown');
-    const interval = setInterval(() => {
-        countdown--;
-        if (countdownEl) countdownEl.textContent = countdown;
-        if (countdown <= 0) {
-            clearInterval(interval);
-            location.reload();
-        }
-    }, 1000);
-</script>
 }

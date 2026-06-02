@@ -1,4 +1,4 @@
-@model TMPP_Aeroport.Models.DashboardViewModel
+﻿@model TMPP_Aeroport.Models.DashboardViewModel
 @{
     ViewData["Title"] = "Dashboard";
 }
@@ -126,15 +126,18 @@
             
             <h3 class="text-lg font-display font-bold mb-4 relative z-10">Quick Actions</h3>
             <div class="space-y-3 relative z-10">
-                <a asp-controller="Flights" asp-action="Index" class="flex items-center p-3 rounded-xl bg-white dark:bg-slate-900 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-white/10 transition-all border border-slate-100 dark:border-white/5 hover:border-slate-200 dark:hover:border-white/20 group">
+                <a asp-controller="Flights" asp-action="Index" class="flex items-center p-3 rounded-xl bg-white dark:bg-slate-900/5 hover:bg-slate-900/10 transition-all border border-white/5 hover:border-white/20 group">
                     <span class="material-symbols-rounded mr-3 text-blue-400 group-hover:scale-110 transition-transform">calendar_month</span>
                     <span class="font-medium text-slate-200 group-hover:text-white">Manage Schedule</span>
                 </a>
-                <a asp-controller="Fleet" asp-action="Index" class="flex items-center p-3 rounded-xl bg-white dark:bg-slate-900 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-white/10 transition-all border border-slate-100 dark:border-white/5 hover:border-slate-200 dark:hover:border-white/20 group">
+                <a asp-controller="Fleet" asp-action="Index" class="flex items-center p-3 rounded-xl bg-white dark:bg-slate-900/5 hover:bg-slate-900/10 transition-all border border-white/5 hover:border-white/20 group">
                     <span class="material-symbols-rounded mr-3 text-purple-400 group-hover:scale-110 transition-transform">settings_applications</span>
                     <span class="font-medium text-slate-200 group-hover:text-white">Fleet Maintenance</span>
                 </a>
-
+                <a asp-controller="Airport" asp-action="CheckIn" class="flex items-center p-3 rounded-xl bg-white dark:bg-slate-900/5 hover:bg-slate-900/10 transition-all border border-white/5 hover:border-white/20 group">
+                    <span class="material-symbols-rounded mr-3 text-emerald-400 group-hover:scale-110 transition-transform">how_to_reg</span>
+                    <span class="font-medium text-slate-200 group-hover:text-white">Passenger Check-in</span>
+                </a>
             </div>
         </div>
         
@@ -165,3 +168,6 @@
         </div>
     </div>
 </div>
+
+
+

@@ -11,7 +11,7 @@
     <div class="mb-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div class="flex items-center gap-4">
             <a href="/Tickets/Book" class="flex h-10 w-10 items-center justify-center rounded-full bg-white text-gray-500 shadow-sm hover:bg-gray-50 hover:text-gray-700 transition dark:bg-gray-800 dark:text-gray-400 dark:hover:bg-gray-700 dark:hover:text-gray-300">
-                <span class="material-symbols-outlined">arrow_back</span>
+                <span class="material-symbols-rounded">arrow_back</span>
             </a>
             <div>
                 <h1 class="text-2xl font-bold text-gray-800 dark:text-white/90">Select Your Seats</h1>
@@ -21,7 +21,7 @@
         
         <!-- Summary Pill -->
         <div class="flex items-center gap-3 bg-white dark:bg-gray-800 px-4 py-2.5 rounded-full shadow-sm border border-gray-200 dark:border-gray-700">
-            <span class="material-symbols-outlined text-blue-500">airline_seat_recline_extra</span>
+            <span class="material-symbols-rounded text-blue-500">airline_seat_recline_extra</span>
             <span class="text-sm font-medium text-gray-700 dark:text-gray-300">
                 <span x-text="selectedSeats.length">0</span> seats selected
             </span>
@@ -39,7 +39,7 @@
                 <!-- Cockpit -->
                 <div class="h-32 bg-gray-200 dark:bg-gray-800 rounded-t-[100%] flex flex-col items-center justify-end pb-4 relative overflow-hidden">
                     <div class="absolute top-8 w-24 h-8 bg-blue-900/20 dark:bg-black/40 rounded-full blur-sm"></div>
-                    <span class="material-symbols-outlined text-gray-400 dark:text-gray-600 text-3xl">flight</span>
+                    <span class="material-symbols-rounded text-gray-400 dark:text-gray-600 text-3xl">flight</span>
                     <span class="text-xs font-bold text-gray-500 dark:text-gray-500 mt-2 tracking-widest uppercase">Front</span>
                 </div>
                 
@@ -66,7 +66,7 @@
                                             </span>
                                             @if(isTaken)
                                             {
-                                                <span class="absolute material-symbols-outlined text-gray-400 dark:text-gray-600 text-[16px]">close</span>
+                                                <span class="absolute material-symbols-rounded text-gray-400 dark:text-gray-600 text-[16px]">close</span>
                                             }
                                         </button>
                                     }
@@ -94,7 +94,7 @@
                                             </span>
                                             @if(isTaken)
                                             {
-                                                <span class="absolute material-symbols-outlined text-gray-400 dark:text-gray-600 text-[16px]">close</span>
+                                                <span class="absolute material-symbols-rounded text-gray-400 dark:text-gray-600 text-[16px]">close</span>
                                             }
                                         </button>
                                     }
@@ -122,7 +122,7 @@
                 </div>
                 <div class="flex items-center gap-2">
                     <div class="w-6 h-6 rounded-t-lg border-2 border-gray-300 bg-gray-200 flex justify-center items-center dark:border-gray-700 dark:bg-gray-800">
-                        <span class="material-symbols-outlined text-gray-400 text-[12px]">close</span>
+                        <span class="material-symbols-rounded text-gray-400 text-[12px]">close</span>
                     </div>
                     <span class="text-sm text-gray-600 dark:text-gray-400">Taken</span>
                 </div>
@@ -186,7 +186,7 @@
                             :class="selectedSeats.length === 0 ? 'bg-gray-300 text-gray-500 cursor-not-allowed dark:bg-gray-700' : 'bg-blue-600 hover:bg-blue-700 text-white shadow-lg shadow-blue-600/30'"
                             class="w-full py-4 rounded-xl text-sm font-bold tracking-wide transition-all flex justify-center items-center gap-2">
                         <span>Checkout</span>
-                        <span class="material-symbols-outlined">shopping_cart_checkout</span>
+                        <span class="material-symbols-rounded">shopping_cart_checkout</span>
                     </button>
                     
                     <p class="text-center text-xs text-gray-400 mt-4 px-4">
@@ -200,8 +200,8 @@
 
 @section Scripts {
     <script>
-        document.addEventListener('alpine:init', () => {
-            Alpine.data('seatSelector', () => ({
+        function seatSelector() {
+            return {
                 selectedSeats: [],
                 basePrice: 120, // default economy
                 
@@ -244,7 +244,7 @@
                         toastr.error("Please select at least one seat before proceeding.");
                     }
                 }
-            }))
-        })
+            };
+        }
     </script>
 }

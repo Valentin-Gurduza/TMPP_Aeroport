@@ -21,31 +21,14 @@ namespace TMPP_Aeroport.Controllers
         }
 
         // Prototype & Abstract Factory: Flight Scheduler UI
-        public IActionResult FlightScheduler()
+        public async Task<IActionResult> FlightScheduler(int? pageNumber)
         {
-            var flights = _context.Flights.Include(f => f.Aircraft).ToList();
-            return View(flights);
+            var flights = _context.Flights.Include(f => f.Aircraft).AsNoTracking().OrderBy(f => f.DepartureTime);
+            int pageSize = 10;
+            return View(await TMPP_Aeroport.Models.PaginatedList<TMPP_Aeroport.Models.Flight>.CreateAsync(flights, pageNumber ?? 1, pageSize));
         }
 
-        // AJAX API: Clone Flight
-        [HttpPost]
-        public IActionResult CloneFlight(int id)
-        {
-            var original = _context.Flights.FirstOrDefault(f => f.Id == id);
-            if (original != null)
-            {
-                // Bug Fix: Prototype Pattern now uses ICloneable correctly
-                var clone = (TMPP_Aeroport.Models.Flight)original.Clone();
-                clone.FlightNumber = original.FlightNumber + "-C";
-                clone.DepartureTime = original.DepartureTime.AddDays(1);
-                clone.Status = TMPP_Aeroport.Models.FlightStatus.Draft;
-                _context.Flights.Add(clone);
-                _context.SaveChanges();
-                
-                return Json(new { success = true, clonedFlight = clone.FlightNumber });
-            }
-            return Json(new { success = false });
-        }
+
 
         // --- Memento Pattern: Edit Flight Config & Undo ---
         private static readonly Dictionary<int, TMPP_Aeroport.Domain.Memento.FlightConfigHistory> _mementoHistories = new Dictionary<int, TMPP_Aeroport.Domain.Memento.FlightConfigHistory>();
@@ -82,17 +65,13 @@ namespace TMPP_Aeroport.Controllers
             if (flight == null || !_mementoHistories.ContainsKey(flightId)) return Json(new { success = false, message = "No history available." });
 
             var originator = new TMPP_Aeroport.Domain.Memento.FlightConfigurator();
-            // Originator needs current state if we want to log it, but undo overwrites it anyway.
-            // Just call Undo which will restore the originator to the previous state.
             _mementoHistories[flightId].Undo(originator);
 
             if (string.IsNullOrEmpty(originator.Gate) && originator.DepartureTime == DateTime.MinValue)
             {
-                 // Stack was empty or undo failed
                  return Json(new { success = false, message = "No further undo steps available." });
             }
 
-            // Apply restored state to DB
             flight.Gate = originator.Gate;
             flight.DepartureTime = originator.DepartureTime;
             _context.SaveChanges();
@@ -100,33 +79,30 @@ namespace TMPP_Aeroport.Controllers
             return Json(new { success = true, message = "Flight configuration restored to previous state.", newGate = flight.Gate, newTime = flight.DepartureTime.ToString("yyyy-MM-ddTHH:mm:ss") });
         }
 
-        // AJAX API: Generate Document
-        [HttpGet]
-        public IActionResult GenerateDocument(string type)
+        [HttpPost]
+        public async Task<IActionResult> CloneFlight(int id)
         {
-            TMPP_Aeroport.Domain.AbstractFactory.IFlightDocumentFactory factory;
-            if (type.ToLower() == "business")
-                factory = new TMPP_Aeroport.Domain.AbstractFactory.BusinessDocumentFactory();
-            else
-                factory = new TMPP_Aeroport.Domain.AbstractFactory.EconomyDocumentFactory();
+            var flight = await _context.Flights.FindAsync(id);
+            if (flight == null)
+            {
+                return Json(new { success = false, message = "Flight not found." });
+            }
 
-            var boardingPass = factory.CreateBoardingPass();
-            var baggageTag = factory.CreateBaggageTag();
+            // Prototype Pattern usage
+            var clonedFlight = (TMPP_Aeroport.Models.Flight)flight.Clone();
             
-            boardingPass.PassengerName = "Sample Passenger";
-            boardingPass.FlightNumber = "GENERIC-001";
-            baggageTag.Code = "BGG-SAMPLE";
+            // Adjust details for the cloned flight
+            clonedFlight.DepartureTime = clonedFlight.DepartureTime.AddDays(1); // clone it for the next day
+            clonedFlight.Status = "Scheduled";
+            clonedFlight.FlightNumber = clonedFlight.FlightNumber + "-C"; // mark as clone just to be safe
+            
+            _context.Flights.Add(clonedFlight);
+            await _context.SaveChangesAsync();
 
-            return Json(new { 
-                success = true, 
-                ticketType = type,
-                passenger = boardingPass.PassengerName,
-                flight = boardingPass.FlightNumber,
-                details = boardingPass.GetTicketDetails(),
-                tagCode = baggageTag.Code,
-                tagColor = baggageTag.GetTagColor()
-            });
+            return Json(new { success = true, message = $"Flight {flight.FlightNumber} cloned successfully for {clonedFlight.DepartureTime:yyyy-MM-dd}." });
         }
+
+
 
         // Singleton: System Audit Logs
         public IActionResult AuditLogs()
@@ -234,13 +210,16 @@ namespace TMPP_Aeroport.Controllers
                 element.Accept(delayVisitor);
             }
 
-            // Apply delays to the database
-            foreach (var delayedFlight in delayVisitor.DelayedFlights)
+            // Apply delays to the database using a single query
+            var delayedIds = delayVisitor.DelayedFlights.Select(d => d.Id).ToList();
+            var flightsToUpdate = await _context.Flights.Where(f => delayedIds.Contains(f.Id)).ToListAsync();
+
+            foreach (var flight in flightsToUpdate)
             {
-                var flight = await _context.Flights.FindAsync(delayedFlight.Id);
-                if (flight != null)
+                var delayedData = delayVisitor.DelayedFlights.FirstOrDefault(d => d.Id == flight.Id);
+                if (delayedData != null)
                 {
-                    flight.DepartureTime = delayedFlight.DepartureTime; // This is the updated time
+                    flight.DepartureTime = delayedData.DepartureTime;
                 }
             }
 

@@ -31,19 +31,35 @@ namespace TMPP_Aeroport.Controllers
                 .Where(t => t.UserId == userId)
                 .OrderByDescending(t => t.Flight!.DepartureTime);
 
+            int page = Math.Max(1, pageNumber ?? 1);
             int pageSize = 10;
-            return View(await PaginatedList<Ticket>.CreateAsync(tickets.AsNoTracking(), pageNumber ?? 1, pageSize));
+            return View(await PaginatedList<Ticket>.CreateAsync(tickets.AsNoTracking(), page, pageSize));
         }
 
         // GET: /Tickets/Book
-        public async Task<IActionResult> Book()
+        public async Task<IActionResult> Book(string? to)
         {
-            var flights = await _context.Flights
+            var query = _context.Flights
                 .Include(f => f.Aircraft)
-                .Where(f => f.Status == "Scheduled")
+                .Where(f => f.Status == "Scheduled");
+
+            if (!string.IsNullOrEmpty(to))
+            {
+                query = query.Where(f => f.Destination == to);
+            }
+
+            var flights = await query
                 .OrderBy(f => f.DepartureTime)
                 .Take(20)
                 .ToListAsync();
+
+            ViewBag.AllDestinations = await _context.Flights
+                .Where(f => f.Status == "Scheduled")
+                .Select(f => f.Destination)
+                .Distinct()
+                .ToListAsync();
+                
+            ViewBag.SelectedTo = to;
 
             return View(flights);
         }
@@ -137,12 +153,20 @@ namespace TMPP_Aeroport.Controllers
             var context = new TMPP_Aeroport.Domain.Strategy.TicketContext(strategy);
             decimal price = (decimal)context.GetFinalPrice((double)basePrice);
 
+            string? passengerName = null;
+            var appUser = await _userManager.GetUserAsync(User);
+            if (appUser != null)
+            {
+                passengerName = !string.IsNullOrWhiteSpace(appUser.FirstName) ? $"{appUser.FirstName} {appUser.LastName}" : appUser.UserName;
+            }
+
             foreach (var seat in seats)
             {
                 var ticket = new Ticket
                 {
                     FlightId = flightId,
                     UserId = userId,
+                    PassengerName = passengerName,
                     SeatNumber = seat,
                     Price = price,
                     TicketState = "WaitingForPayment",
@@ -329,104 +353,6 @@ namespace TMPP_Aeroport.Controllers
             return Json(new { success = false, message = "Could not board flight." });
         }
 
-        // --- Design Patterns Moved from AirportController ---
 
-        // 1. Strategy Pattern Usage
-        public async Task<IActionResult> StrategyDemo(int? flightId, string strategyType = "regular")
-        {
-            var flights = await _context.Flights.Include(f => f.Aircraft).Where(f => f.Status == "Scheduled").Take(10).ToListAsync();
-            ViewBag.Flights = flights;
-
-            var userId = _userManager.GetUserId(User);
-            int previousTickets = await _context.Tickets.CountAsync(t => t.UserId == userId);
-            int frequentFlyerPoints = previousTickets * 100;
-
-            double basePrice = 150; // Default fallback
-            Models.Flight? selectedFlight = null;
-
-            if (flightId.HasValue)
-            {
-                selectedFlight = flights.FirstOrDefault(f => f.Id == flightId.Value);
-                if (selectedFlight != null)
-                {
-                    // Calculate base price dynamically based on duration/distance (mock)
-                    basePrice = selectedFlight.Aircraft?.Type == "Wide-body" ? 250 : 120;
-                }
-            }
-
-            TMPP_Aeroport.Domain.Strategy.ITicketPricingStrategy strategy;
-
-            switch (strategyType.ToLower())
-            {
-                case "vip":
-                    strategy = new TMPP_Aeroport.Domain.Strategy.VipPricingStrategy();
-                    break;
-                case "lastminute":
-                    strategy = new TMPP_Aeroport.Domain.Strategy.LastMinutePricingStrategy();
-                    break;
-                case "frequentflyer":
-                    strategy = new TMPP_Aeroport.Domain.Strategy.FrequentFlyerPricingStrategy(frequentFlyerPoints);
-                    break;
-                case "regular":
-                default:
-                    strategy = new TMPP_Aeroport.Domain.Strategy.RegularPricingStrategy();
-                    break;
-            }
-
-            var context = new TMPP_Aeroport.Domain.Strategy.TicketContext(strategy);
-            double finalPrice = context.GetFinalPrice(basePrice);
-
-            ViewBag.SelectedFlight = selectedFlight;
-            ViewBag.BasePrice = basePrice;
-            ViewBag.FinalPrice = finalPrice;
-            ViewBag.SelectedStrategy = strategyType;
-            ViewBag.FrequentFlyerPoints = frequentFlyerPoints;
-
-            return View();
-        }
-
-        // 2. State Pattern Usage — Ticket machine (any logged in user)
-        private static readonly System.Collections.Concurrent.ConcurrentDictionary<string, TMPP_Aeroport.Domain.State.TicketMachine> _ticketMachines = new();
-
-        private TMPP_Aeroport.Domain.State.TicketMachine GetTicketMachine()
-        {
-            var key = (User.Identity?.IsAuthenticated == true ? User.Identity.Name : null) ?? HttpContext.Connection.RemoteIpAddress?.ToString() ?? "unknown";
-            return _ticketMachines.GetOrAdd(key, _ => new TMPP_Aeroport.Domain.State.TicketMachine());
-        }
-
-        public IActionResult StateDemo(string actionType, int amount = 0)
-        {
-            var ticketMachine = GetTicketMachine();
-
-            if (actionType == "Insert")
-            {
-                ticketMachine.InsertMoney(amount);
-            }
-            else if (actionType == "Request")
-            {
-                ticketMachine.RequestTicket();
-            }
-            else if (actionType == "Dispense")
-            {
-                int initialLogCount = ticketMachine.Logs.Count;
-                ticketMachine.Dispense();
-                
-                // If a new log was added and it indicates success
-                if (ticketMachine.Logs.Count > initialLogCount && ticketMachine.Logs.Last().Contains("Ticket printed and dispensed"))
-                {
-                    ViewBag.ShouldDownloadPDF = true;
-                }
-            }
-            else if (actionType == "ResetLogs")
-            {
-                ticketMachine.Logs.Clear();
-            }
-
-            ViewBag.CurrentState = ticketMachine.State.GetType().Name;
-            ViewBag.Balance = ticketMachine.Balance;
-            ViewBag.Logs = new List<string>(ticketMachine.Logs);
-
-            return View();
-        }
     }
 }

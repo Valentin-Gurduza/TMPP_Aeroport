@@ -13,8 +13,8 @@
     <!-- Header -->
     <div class="flex items-center justify-between mb-8">
         <div>
-            <h1 class="text-3xl font-extrabold text-slate-800 tracking-tight flex items-center">
-                <span class="material-symbols-outlined mr-3 text-4xl text-blue-600">radar</span>
+            <h1 class="text-3xl font-extrabold text-slate-800 dark:text-slate-200 tracking-tight flex items-center">
+                <span class="material-symbols-rounded mr-3 text-4xl text-blue-600">radar</span>
                 ATC Tower Operations
             </h1>
             <p class="text-slate-500 mt-2 text-lg">Central Mediator for Air Traffic Control and Aircraft Communications</p>
@@ -25,10 +25,10 @@
         
         <!-- Left Col: Pending Clearance Requests -->
         <div class="lg:col-span-1 space-y-6">
-            <div class="bg-white border border-slate-200 rounded-2xl shadow-sm overflow-hidden flex flex-col">
-                <div class="bg-slate-50 border-b border-slate-200 px-6 py-4 flex items-center justify-between">
-                    <h2 class="text-lg font-bold text-slate-800 flex items-center">
-                        <span class="material-symbols-outlined mr-2 text-orange-500">warning</span>
+            <div class="bg-white dark:bg-slate-900 dark:text-slate-200 border border-slate-200 rounded-2xl shadow-sm overflow-hidden flex flex-col">
+                <div class="bg-slate-50 dark:bg-slate-800 dark:text-slate-200 border-b border-slate-200 px-6 py-4 flex items-center justify-between">
+                    <h2 class="text-lg font-bold text-slate-800 dark:text-slate-200 flex items-center">
+                        <span class="material-symbols-rounded mr-2 text-orange-500">warning</span>
                         Pending Clearances
                     </h2>
                     <span class="px-2 py-1 bg-orange-100 text-orange-700 font-bold rounded-full text-xs">
@@ -42,7 +42,7 @@
                         foreach(var req in pendingRequests)
                         {
                             <div class="p-4 rounded-xl border border-orange-200 bg-orange-50 relative">
-                                <div class="font-bold text-slate-800 text-lg">@req.FlightNumber</div>
+                                <div class="font-bold text-slate-800 dark:text-slate-200 text-lg">@req.FlightNumber</div>
                                 <div class="text-sm font-medium text-orange-600 mb-3">@req.Status</div>
                                 
                                 <form action="/ATC/HandleTowerCommand" method="post" class="flex space-x-2">
@@ -59,7 +59,7 @@
                                             Clear Landing
                                         </button>
                                         <button type="submit" name="commandType" value="Divert" class="py-2 px-3 bg-slate-600 text-white rounded-lg text-sm font-bold shadow-md hover:bg-slate-700 transition" title="Divert to Nearest">
-                                            <span class="material-symbols-outlined text-sm">alt_route</span>
+                                            <span class="material-symbols-rounded text-sm">alt_route</span>
                                         </button>
                                     }
                                 </form>
@@ -69,7 +69,7 @@
                     else
                     {
                         <div class="text-center py-10">
-                            <span class="material-symbols-outlined text-4xl text-slate-300 mb-3 block">check_circle</span>
+                            <span class="material-symbols-rounded text-4xl text-slate-300 mb-3 block">check_circle</span>
                             <p class="text-slate-500 font-medium">No pending clearance requests.</p>
                         </div>
                     }
@@ -79,13 +79,13 @@
 
         <!-- Chat UI (Middle & Right Col combined) -->
         <div class="lg:col-span-2">
-            <div class="bg-white border border-slate-200 rounded-2xl shadow-sm overflow-hidden h-[600px] flex">
+            <div class="bg-white dark:bg-slate-900 dark:text-slate-200 border border-slate-200 rounded-2xl shadow-sm overflow-hidden h-[600px] flex">
                 
                 <!-- Chat Sidebar (Flights List) -->
-                <div class="w-1/3 border-r border-slate-200 bg-slate-50 flex flex-col">
+                <div class="w-1/3 border-r border-slate-200 bg-slate-50 dark:bg-slate-800 dark:text-slate-200 flex flex-col">
                     <div class="p-4 border-b border-slate-200">
-                        <h3 class="font-bold text-slate-700 flex items-center">
-                            <span class="material-symbols-outlined mr-2 text-sm">flight</span> Airborne Flights
+                        <h3 class="font-bold text-slate-700 dark:text-slate-300 flex items-center">
+                            <span class="material-symbols-rounded mr-2 text-sm">flight</span> Airborne Flights
                         </h3>
                     </div>
                     <div class="overflow-y-auto flex-1 p-2 space-y-1">
@@ -93,8 +93,8 @@
                         {
                             foreach (var f in flights)
                             {
-                                <button onclick="selectFlightForChat('@f.FlightNumber')" class="w-full text-left p-3 rounded-lg hover:bg-white border border-transparent hover:border-slate-200 transition focus:outline-none focus:bg-blue-50 focus:border-blue-200 flight-selector" id="sel-@f.FlightNumber">
-                                    <div class="font-bold text-slate-800">@f.FlightNumber</div>
+                                <button onclick="selectFlightForChat('@f.FlightNumber')" class="w-full text-left p-3 rounded-lg hover:bg-white dark:bg-slate-900 dark:text-slate-200 border border-transparent hover:border-slate-200 transition focus:outline-none focus:bg-blue-50 focus:border-blue-200 flight-selector" id="sel-@f.FlightNumber">
+                                    <div class="font-bold text-slate-800 dark:text-slate-200">@f.FlightNumber</div>
                                     <div class="text-xs text-slate-500">@f.Status</div>
                                 </button>
                             }
@@ -105,13 +105,13 @@
                 <!-- Chat Area -->
                 <div class="w-2/3 flex flex-col bg-slate-100 relative">
                     <!-- Chat Header -->
-                    <div class="bg-white border-b border-slate-200 px-6 py-4 flex justify-between items-center z-10 shadow-sm">
+                    <div class="bg-white dark:bg-slate-900 dark:text-slate-200 border-b border-slate-200 px-6 py-4 flex justify-between items-center z-10 shadow-sm">
                         <div class="flex items-center">
                             <div class="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 mr-3">
-                                <span class="material-symbols-outlined">headset_mic</span>
+                                <span class="material-symbols-rounded">headset_mic</span>
                             </div>
                             <div>
-                                <h2 class="text-lg font-bold text-slate-800" id="chat-title">TOWER FREQUENCY</h2>
+                                <h2 class="text-lg font-bold text-slate-800 dark:text-slate-200" id="chat-title">TOWER FREQUENCY</h2>
                                 <p class="text-xs text-emerald-500 font-bold" id="chat-subtitle">Listening on ALL CHANNELS</p>
                             </div>
                         </div>
@@ -136,7 +136,7 @@
                                 else
                                 {
                                     <div class="flex justify-start">
-                                        <div class="bg-white border border-slate-200 text-slate-700 rounded-2xl rounded-tl-sm px-4 py-2 max-w-[80%] shadow-sm">
+                                        <div class="bg-white dark:bg-slate-900 dark:text-slate-200 border border-slate-200 text-slate-700 rounded-2xl rounded-tl-sm px-4 py-2 max-w-[80%] shadow-sm">
                                             <p class="text-sm">@log</p>
                                         </div>
                                     </div>
@@ -150,18 +150,18 @@
                     </div>
 
                     <!-- Chat Input -->
-                    <div class="bg-white border-t border-slate-200 p-4">
+                    <div class="bg-white dark:bg-slate-900 dark:text-slate-200 border-t border-slate-200 p-4">
                         <form id="chat-form" onsubmit="sendChat(event)" class="flex gap-2 relative">
                             <input type="hidden" id="active-flight" name="senderFlightNumber" value="" />
                             
                             <button type="button" onclick="sendQuickCommand('Landing')" class="bg-slate-100 hover:bg-slate-200 text-slate-600 p-3 rounded-xl transition border border-slate-200" title="Request Landing">
-                                <span class="material-symbols-outlined text-lg">flight_land</span>
+                                <span class="material-symbols-rounded text-lg">flight_land</span>
                             </button>
 
-                            <input type="text" id="chat-input" name="message" placeholder="Select a flight to send message..." disabled required class="flex-1 bg-slate-50 border border-slate-300 rounded-xl px-4 py-3 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition text-sm disabled:opacity-50">
+                            <input type="text" id="chat-input" name="message" placeholder="Select a flight to send message..." disabled required class="flex-1 bg-slate-50 dark:bg-slate-800 dark:text-slate-200 border border-slate-300 rounded-xl px-4 py-3 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition text-sm disabled:opacity-50">
                             
                             <button type="submit" id="chat-submit" disabled class="bg-blue-600 hover:bg-blue-700 text-white px-6 rounded-xl font-bold shadow-md transition flex items-center disabled:opacity-50">
-                                <span class="material-symbols-outlined text-sm mr-1">send</span> Send
+                                <span class="material-symbols-rounded text-sm mr-1">send</span> Send
                             </button>
                         </form>
                     </div>
@@ -258,7 +258,7 @@
                     // Aircraft message (Left aligned)
                     div.className = "flex justify-start animate-fade-in-up";
                     div.innerHTML = `
-                        <div class="bg-white border border-slate-200 text-slate-700 rounded-2xl rounded-tl-sm px-4 py-2 max-w-[80%] shadow-sm">
+                        <div class="bg-white dark:bg-slate-900 dark:text-slate-200 border border-slate-200 text-slate-700 rounded-2xl rounded-tl-sm px-4 py-2 max-w-[80%] shadow-sm">
                             <p class="text-xs font-bold text-slate-400 mb-1">${flight}</p>
                             <p class="text-sm">${msg}</p>
                         </div>

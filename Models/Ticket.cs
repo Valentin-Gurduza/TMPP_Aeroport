@@ -30,7 +30,10 @@ namespace TMPP_Aeroport.Models
 
         public int BaggageWeight { get; set; }
 
-        [MaxLength(50)]
+        [MaxLength(100)]
+        public string? PassengerName { get; set; }
+
+        [MaxLength(255)]
         public string StrategyApplied { get; set; } = string.Empty;
 
         // Foreign Key to Flight

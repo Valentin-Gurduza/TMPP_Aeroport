@@ -3,29 +3,70 @@
     Layout = "~/Views/Shared/_LayoutCorporate.cshtml";
 }
 
+<style>
+    .conveyor-item {
+        transition: all 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+        transform-origin: center;
+        /* Ensure smooth width collapse */
+        overflow: hidden;
+        white-space: nowrap;
+    }
+    .conveyor-item.entering {
+        transform: translateX(-30px) scale(0.9);
+        opacity: 0;
+    }
+    .conveyor-item.moving {
+        transform: translateX(0) scale(1);
+        opacity: 1;
+        width: 12rem; /* w-48 = 12rem */
+        padding-left: 1rem;
+        padding-right: 1rem;
+        margin-right: 1.5rem; /* space-x-6 = 1.5rem margin */
+    }
+    .conveyor-item.cleared {
+        transform: translateX(50px) scale(0.5);
+        opacity: 0;
+        width: 0 !important;
+        margin-right: 0 !important;
+        padding-left: 0 !important;
+        padding-right: 0 !important;
+        border-width: 0 !important;
+    }
+    .conveyor-item.ejected {
+        transform: translateY(-50px) scale(0.5) rotate(15deg);
+        opacity: 0;
+        width: 0 !important;
+        margin-right: 0 !important;
+        padding-left: 0 !important;
+        padding-right: 0 !important;
+        border-width: 0 !important;
+    }
+</style>
+
 <div class="max-w-7xl mx-auto space-y-6 animate-fade-in-up pt-4">
     <!-- Header -->
     <div class="flex items-center justify-between mb-8">
         <div>
-            <h1 class="text-3xl font-extrabold text-slate-800 tracking-tight flex items-center">
-                <span class="material-symbols-outlined mr-3 text-4xl text-blue-600">policy</span>
+            <h1 class="text-3xl font-extrabold text-slate-800 dark:text-slate-200 tracking-tight flex items-center">
+                <span class="material-symbols-rounded mr-3 text-4xl text-blue-600">policy</span>
                 Security Checkpoint (Live Scanner)
             </h1>
         </div>
         <div>
-            <button onclick="fetchPendingBaggages()" class="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-lg transition border border-slate-300">
-                <span class="material-symbols-outlined align-middle mr-1 text-sm">refresh</span> Refresh Queue
+            <button onclick="fetchPendingBaggages()" class="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 dark:text-slate-300 font-bold rounded-lg transition border border-slate-300">
+                <span class="material-symbols-rounded align-middle mr-1 text-sm">refresh</span> Refresh Queue
             </button>
         </div>
     </div>
 
     <!-- Conveyor Belt Queue -->
-    <div class="bg-white border border-slate-200 rounded-2xl shadow-sm overflow-hidden mb-6 relative">
-        <div class="bg-slate-50 border-b border-slate-200 px-6 py-4 flex justify-between items-center">
-            <h2 class="text-lg font-bold text-slate-800">Live Security Conveyor</h2>
-            <div class="flex gap-2">
-                <button onclick="scanBatch()" id="btn-scan" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-lg shadow-sm transition flex items-center">
-                    <span class="material-symbols-outlined text-sm mr-2">play_arrow</span> Start Belt
+    <div class="bg-white dark:bg-slate-900 dark:text-slate-200 border border-slate-200 rounded-2xl shadow-sm overflow-hidden mb-6 relative">
+        <div class="bg-slate-50 dark:bg-slate-800 dark:text-slate-200 border-b border-slate-200 px-6 py-4 flex justify-between items-center">
+            <h2 class="text-lg font-bold text-slate-800 dark:text-slate-200">Live Security Conveyor</h2>
+            <div class="flex space-x-4">
+                <button onclick="toggleBelt()" id="btn-toggle-belt" class="flex items-center px-4 py-2 bg-green-600 hover:bg-green-700 text-white font-bold rounded-lg transition shadow-md">
+                    <span class="material-symbols-rounded text-sm mr-2" id="icon-toggle-belt">play_arrow</span>
+                    <span id="text-toggle-belt">Start Belt</span>
                 </button>
             </div>
         </div>
@@ -43,8 +84,8 @@
             </div>
         </div>
 
-        <div class="p-6 bg-slate-200 overflow-x-auto relative min-h-[200px]" style="background-image: repeating-linear-gradient(90deg, transparent, transparent 40px, rgba(0,0,0,0.05) 40px, rgba(0,0,0,0.05) 80px);">
-            <div id="conveyor-belt" class="flex space-x-6 min-w-max pb-4 relative z-20 items-center h-full">
+        <div class="p-6 bg-slate-200 overflow-x-auto relative min-h-[200px]">
+            <div id="conveyor-belt" class="flex min-w-max pb-4 relative z-20 items-center h-full">
                 <!-- Items populated via JS -->
                 <div class="text-slate-500 italic w-full text-center py-4" id="conveyor-empty">No pending baggage on the belt.</div>
             </div>
@@ -53,10 +94,10 @@
 
     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
         <!-- Manual Inspection Queue (Flagged) -->
-        <div class="bg-white border border-slate-200 rounded-2xl shadow-sm overflow-hidden h-[400px] flex flex-col">
+        <div class="bg-white dark:bg-slate-900 dark:text-slate-200 border border-slate-200 rounded-2xl shadow-sm overflow-hidden h-[400px] flex flex-col">
             <div class="bg-red-50 border-b border-red-200 px-6 py-4 flex items-center justify-between">
                 <h2 class="text-lg font-bold text-red-800 flex items-center">
-                    <span class="material-symbols-outlined mr-2">warning</span> Requires Manual Inspection
+                    <span class="material-symbols-rounded mr-2">warning</span> Requires Manual Inspection
                 </h2>
                 <span class="bg-red-200 text-red-800 text-xs font-bold px-2 py-1 rounded-full" id="flagged-count">0</span>
             </div>
@@ -69,7 +110,7 @@
         <div class="bg-slate-900 border border-slate-800 rounded-2xl shadow-sm overflow-hidden h-[400px] flex flex-col">
             <div class="bg-slate-800 border-b border-slate-700 px-6 py-4">
                 <h2 class="text-lg font-bold text-white flex items-center">
-                    <span class="material-symbols-outlined mr-2">terminal</span> Scanner Logs
+                    <span class="material-symbols-rounded mr-2">terminal</span> Scanner Logs
                 </h2>
             </div>
             <div class="p-4 overflow-y-auto flex-1 font-mono text-sm text-slate-300" id="scanner-logs">
@@ -80,212 +121,5 @@
 </div>
 
 @section Scripts {
-    <script>
-        let pendingBaggages = [];
-        let flaggedBaggages = [];
-
-        document.addEventListener("DOMContentLoaded", function() {
-            fetchPendingBaggages();
-        });
-
-        async function fetchPendingBaggages() {
-            try {
-                const response = await fetch('/Security/GetPendingBaggages');
-                const data = await response.json();
-                
-                pendingBaggages = data.filter(b => b.securityStatus === 'Pending');
-                flaggedBaggages = data.filter(b => b.securityStatus === 'Flagged');
-                
-                renderConveyor();
-                renderFlagged();
-            } catch (error) {
-                console.error("Error fetching baggages:", error);
-                toastr.error("Failed to load conveyor belt.");
-            }
-        }
-
-        function renderConveyor() {
-            const container = document.getElementById("conveyor-belt");
-            const emptyState = document.getElementById("conveyor-empty");
-            const btnScan = document.getElementById("btn-scan");
-            
-            // Clear current (keep empty state hidden or visible later)
-            container.innerHTML = '';
-            
-            if (pendingBaggages.length === 0) {
-                container.appendChild(emptyState);
-                emptyState.style.display = 'block';
-                btnScan.disabled = true;
-                btnScan.classList.add('opacity-50', 'cursor-not-allowed');
-                return;
-            }
-            
-            btnScan.disabled = false;
-            btnScan.classList.remove('opacity-50', 'cursor-not-allowed');
-
-            pendingBaggages.forEach(bag => {
-                const bagEl = document.createElement("div");
-                bagEl.className = "bg-white p-4 rounded-xl shadow-md border-l-4 border-blue-500 w-48 flex-shrink-0 relative overflow-hidden transition-all duration-500 transform translate-x-0";
-                bagEl.id = `bag-${bag.id}`;
-                bagEl.innerHTML = `
-                    <div class="text-xs text-slate-500 font-bold mb-1">Flight ${bag.flightId || 'UNK'}</div>
-                    <div class="font-mono font-bold text-slate-800 text-lg mb-2">${bag.tagCode}</div>
-                    <div class="flex items-center text-xs text-slate-500">
-                        <span class="material-symbols-outlined text-[14px] mr-1">scale</span> ${bag.weight} kg
-                    </div>
-                `;
-                container.appendChild(bagEl);
-            });
-        }
-
-        function renderFlagged() {
-            const container = document.getElementById("flagged-queue");
-            document.getElementById("flagged-count").innerText = flaggedBaggages.length;
-            
-            if (flaggedBaggages.length === 0) {
-                container.innerHTML = '<div class="text-slate-500 italic text-center py-4">No flagged baggage.</div>';
-                return;
-            }
-
-            container.innerHTML = '';
-            flaggedBaggages.forEach(bag => {
-                const bagEl = document.createElement("div");
-                bagEl.className = "bg-white p-4 rounded-xl border border-red-200 flex items-center justify-between shadow-sm";
-                bagEl.id = `flag-${bag.id}`;
-                bagEl.innerHTML = `
-                    <div>
-                        <div class="font-mono font-bold text-red-700">${bag.tagCode}</div>
-                        <div class="text-xs text-slate-500">Weight: ${bag.weight} kg | Flight: ${bag.flightId || 'UNK'}</div>
-                    </div>
-                    <div class="flex space-x-2">
-                        <button onclick="manualInspect(${bag.id}, true)" class="px-3 py-1.5 bg-green-100 hover:bg-green-200 text-green-700 rounded text-xs font-bold transition" title="Clear Baggage">
-                            Clear
-                        </button>
-                        <button onclick="manualInspect(${bag.id}, false)" class="px-3 py-1.5 bg-red-100 hover:bg-red-200 text-red-700 rounded text-xs font-bold transition" title="Confiscate">
-                            Confiscate
-                        </button>
-                    </div>
-                `;
-                container.appendChild(bagEl);
-            });
-        }
-
-        async function scanBatch() {
-            if (pendingBaggages.length === 0) return;
-            
-            const btnScan = document.getElementById("btn-scan");
-            btnScan.disabled = true;
-            btnScan.innerHTML = '<span class="material-symbols-outlined text-sm mr-2 animate-spin">sync</span> Scanning...';
-
-            const idsToScan = pendingBaggages.map(b => b.id).slice(0, 5); // Scan max 5 at a time for demo
-
-            try {
-                const response = await fetch('/Security/ScanBatch', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(idsToScan)
-                });
-                
-                if (!response.ok) {
-                    throw new Error("Network response was not ok");
-                }
-            } catch (error) {
-                console.error(error);
-                toastr.error("Error starting scan.");
-                btnScan.innerHTML = '<span class="material-symbols-outlined text-sm mr-2">play_arrow</span> Start Belt';
-                btnScan.disabled = false;
-            }
-        }
-
-        // Wire SignalR handler safely — retry until globalConnection is established
-        function wireSecuritySignalR() {
-            if (window.globalConnection && window.globalConnection.state === 'Connected') {
-                window.globalConnection.on("ScannerStatus", function (data) {
-                    const bagEl = document.getElementById(`bag-${data.id}`);
-                    if (!bagEl) return;
-
-                    if (data.stage === "Weight") {
-                        bagEl.style.transform = "translateX(250px)";
-                        bagEl.classList.add("border-purple-500");
-                    } 
-                    else if (data.stage === "Complete") {
-                        if (data.status === "Cleared") {
-                            bagEl.style.transform = "translateX(600px)";
-                            bagEl.classList.replace("border-blue-500", "border-green-500");
-                            bagEl.classList.replace("border-purple-500", "border-green-500");
-                            setTimeout(() => {
-                                bagEl.classList.add('opacity-0');
-                                setTimeout(() => bagEl.remove(), 500);
-                            }, 500);
-                        } else {
-                            bagEl.style.transform = "translateX(450px)";
-                            bagEl.classList.replace("border-blue-500", "border-red-500");
-                            bagEl.classList.replace("border-purple-500", "border-red-500");
-                            bagEl.classList.add("bg-red-50");
-                            setTimeout(() => {
-                                bagEl.classList.add('opacity-0');
-                                setTimeout(() => bagEl.remove(), 500);
-                            }, 1000);
-                        }
-                        
-                        if (data.logs) {
-                            addLogs(data.tag, data.logs);
-                        }
-                        setTimeout(fetchPendingBaggages, 1500);
-                    }
-                });
-            } else {
-                // Not connected yet — retry in 300ms
-                setTimeout(wireSecuritySignalR, 300);
-            }
-        }
-        wireSecuritySignalR();
-
-        async function manualInspect(id, clearBaggage) {
-            try {
-                const response = await fetch(`/Security/ManualInspect`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-                    body: new URLSearchParams({ baggageId: id, clearBaggage: clearBaggage })
-                });
-                const result = await response.json();
-                
-                if (result.success) {
-                    if (clearBaggage) {
-                        toastr.success("Baggage manually cleared.");
-                        if (result.logs) addLogs("MANUAL", result.logs);
-                    } else {
-                        toastr.error("Baggage confiscated.");
-                    }
-                    fetchPendingBaggages();
-                }
-            } catch(e) {
-                console.error(e);
-            }
-        }
-
-        function addLogs(tag, logs) {
-            const container = document.getElementById("scanner-logs");
-            document.getElementById("logs-empty")?.remove();
-
-            const header = document.createElement("div");
-            header.className = "text-blue-400 font-bold mt-2";
-            header.innerText = `--- Scanning ${tag} ---`;
-            container.prepend(header);
-
-            // Reverse logs so newest are at top
-            [...logs].reverse().forEach(log => {
-                const li = document.createElement("div");
-                li.className = "mb-1";
-                if (log.includes("❌") || log.includes("🚨")) {
-                    li.innerHTML = `<span class="text-red-400">${log}</span>`;
-                } else if (log.includes("✅") || log.includes("👨‍✈️")) {
-                    li.innerHTML = `<span class="text-green-400">${log}</span>`;
-                } else {
-                    li.innerText = log;
-                }
-                container.prepend(li);
-            });
-        }
-    </script>
+    <script src="~/js/security-scanner.js" asp-append-version="true"></script>
 }

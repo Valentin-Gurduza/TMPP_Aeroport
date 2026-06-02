@@ -69,35 +69,21 @@ namespace TMPP_Aeroport.Controllers
             return View();
         }
 
-        // Bridge Pattern: Terminal Displays
-        public IActionResult TerminalDisplays(string hardware = "led")
-        {
-            var departuresList = _dbContext.Flights.Where(f => f.Origin.Contains("OTP") || f.Origin.Contains("Bucharest")).OrderBy(f => f.DepartureTime).Take(6).ToList();
-            var arrivalsList = _dbContext.Flights.Where(f => f.Destination.Contains("OTP") || f.Destination.Contains("Bucharest")).OrderBy(f => f.ArrivalTime).Take(6).ToList();
 
-            // Fallback in case of no flights (demo DB might not have OTP flights exactly)
-            if (!departuresList.Any()) departuresList = _dbContext.Flights.OrderBy(f => f.DepartureTime).Take(6).ToList();
-            if (!arrivalsList.Any()) arrivalsList = _dbContext.Flights.OrderByDescending(f => f.DepartureTime).Take(6).ToList();
-
-            TMPP_Aeroport.Domain.Bridge.IDisplayRenderer renderer = (hardware == "web") ? 
-                new TMPP_Aeroport.Domain.Bridge.WebRenderer() : 
-                new TMPP_Aeroport.Domain.Bridge.LEDRenderer();
-
-            TMPP_Aeroport.Domain.Bridge.FlightBoard departures = new TMPP_Aeroport.Domain.Bridge.DeparturesBoard(renderer);
-            TMPP_Aeroport.Domain.Bridge.FlightBoard arrivals = new TMPP_Aeroport.Domain.Bridge.ArrivalsBoard(renderer);
-
-            ViewBag.Hardware = hardware;
-            ViewBag.DeparturesRender = departures.ShowBoard(departuresList);
-            ViewBag.ArrivalsRender = arrivals.ShowBoard(arrivalsList);
-
-            return View();
-        }
 
         // Memento Pattern: Gate Assignments
         private static readonly System.Collections.Concurrent.ConcurrentDictionary<string, TMPP_Aeroport.Domain.Memento.FlightConfigurator> _originators = new();
         private static readonly System.Collections.Concurrent.ConcurrentDictionary<string, TMPP_Aeroport.Domain.Memento.FlightConfigHistory> _caretakers = new();
 
-        private string GetSessionKey() => (User.Identity?.IsAuthenticated == true ? User.Identity.Name : null) ?? HttpContext.Connection.RemoteIpAddress?.ToString() ?? "unknown";
+        private string GetSessionKey() 
+        {
+            if (_originators.Count > 100 || _caretakers.Count > 100)
+            {
+                _originators.Clear();
+                _caretakers.Clear();
+            }
+            return (User.Identity?.IsAuthenticated == true ? User.Identity.Name : null) ?? HttpContext.Connection.RemoteIpAddress?.ToString() ?? "unknown";
+        }
 
         public async Task<IActionResult> GateAssignments(int? flightId, string actionType, string newGate)
         {
@@ -200,38 +186,11 @@ namespace TMPP_Aeroport.Controllers
         [HttpGet]
         public async Task<IActionResult> BaggageRouting()
         {
-            var stages = new[] { "CheckedIn", "OnConveyor", "XRayScreening", "Sorted", "LoadedOnAircraft" };
+            var stages = new[] { "PendingCheckIn", "CheckedIn", "OnConveyor", "XRayScreening", "Sorted", "LoadedOnAircraft" };
             var bags = await _dbContext.BaggageItems.Include(b => b.Flight).ToListAsync();
             ViewBag.Stages = stages;
             ViewBag.Bags = bags;
             return View();
-        }
-
-        // BHS: Auto-advance bag stages (called by JS timer)
-        [HttpPost]
-        public async Task<IActionResult> AdvanceBaggageStages()
-        {
-            var stages = new[] { "CheckedIn", "OnConveyor", "XRayScreening", "Sorted", "LoadedOnAircraft" };
-            var bags = await _dbContext.BaggageItems.Where(b => b.BaggageStage != "LoadedOnAircraft" && b.SecurityStatus != "Rejected").ToListAsync();
-            var now = DateTime.Now;
-            foreach (var bag in bags)
-            {
-                // Only advance if not recently updated (5+ seconds ago)
-                if (!bag.StageUpdatedAt.HasValue || (now - bag.StageUpdatedAt.Value).TotalSeconds >= 5)
-                {
-                    var idx = Array.IndexOf(stages, bag.BaggageStage);
-                    if (idx >= 0 && idx < stages.Length - 1)
-                    {
-                        bag.BaggageStage = stages[idx + 1];
-                        bag.StageUpdatedAt = now;
-                        // If flagged in XRay, hold it there
-                        if (bag.BaggageStage == "XRayScreening" && bag.SecurityStatus == "Flagged")
-                            bag.BaggageStage = "XRayScreening";
-                    }
-                }
-            }
-            await _dbContext.SaveChangesAsync();
-            return Ok();
         }
 
         // Feature 2: GSE - Ground Support Equipment Live View

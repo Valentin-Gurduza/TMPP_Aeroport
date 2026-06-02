@@ -41,6 +41,9 @@ builder.Services.AddSingleton<TMPP_Aeroport.Domain.Adapter.IAirportWeatherServic
 // Register Mediator Pattern ATCTower as Singleton so state persists across requests
 builder.Services.AddSingleton<TMPP_Aeroport.Domain.Mediator.IATCMediator, TMPP_Aeroport.Domain.Mediator.ATCTower>();
 
+// Register Flyweight Factory as Singleton to share aircraft models globally
+builder.Services.AddSingleton<TMPP_Aeroport.Domain.Flyweight.AircraftModelFactory>();
+
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
