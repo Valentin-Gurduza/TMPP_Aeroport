@@ -19,7 +19,16 @@ namespace TMPP_Aeroport.Domain.ObjectPool
                 _allVehicles.Add(new GroundVehicle { Id = $"TG-{i:D2}", Type = VehicleType.Tug, ServiceDurationMinutes = 10 });
         }
 
-        public IReadOnlyList<GroundVehicle> AllVehicles => _allVehicles.AsReadOnly();
+        public IReadOnlyList<GroundVehicle> AllVehicles 
+        {
+            get
+            {
+                lock (_lock)
+                {
+                    return _allVehicles.ToList().AsReadOnly();
+                }
+            }
+        }
 
         public GroundVehicle? AcquireVehicle(VehicleType type, string flightNumber, DateTime virtualNow)
         {
@@ -65,10 +74,18 @@ namespace TMPP_Aeroport.Domain.ObjectPool
 
         public List<GroundVehicle> GetVehiclesForFlight(string flightNumber)
         {
-            return _allVehicles.Where(v => v.AssignedFlight == flightNumber).ToList();
+            lock (_lock)
+            {
+                return _allVehicles.Where(v => v.AssignedFlight == flightNumber).ToList();
+            }
         }
 
-        public int AvailableCount(VehicleType type) =>
-            _allVehicles.Count(v => v.Type == type && v.Status == VehicleStatus.Available);
+        public int AvailableCount(VehicleType type)
+        {
+            lock (_lock)
+            {
+                return _allVehicles.Count(v => v.Type == type && v.Status == VehicleStatus.Available);
+            }
+        }
     }
 }

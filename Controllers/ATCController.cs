@@ -21,19 +21,22 @@ namespace TMPP_Aeroport.Controllers
         private readonly IHubContext<FlightHub> _hubContext;
         private readonly IServiceScopeFactory _scopeFactory;
         private readonly IATCMediator _tower;
+        private readonly TMPP_Aeroport.Domain.Flyweight.AircraftModelFactory _aircraftModelFactory;
 
-        public ATCController(ApplicationDbContext dbContext, FlightSimulationService flightSimulation, IHubContext<FlightHub> hubContext, IServiceScopeFactory scopeFactory, IATCMediator tower)
+        public ATCController(ApplicationDbContext dbContext, FlightSimulationService flightSimulation, IHubContext<FlightHub> hubContext, IServiceScopeFactory scopeFactory, IATCMediator tower, TMPP_Aeroport.Domain.Flyweight.AircraftModelFactory aircraftModelFactory)
         {
             _dbContext = dbContext;
             _flightSimulation = flightSimulation;
             _hubContext = hubContext;
             _scopeFactory = scopeFactory;
             _tower = tower;
+            _aircraftModelFactory = aircraftModelFactory;
         }
 
         // Live Radar Simulation
         public IActionResult Radar()
         {
+            ViewBag.CurrentSpeed = TMPP_Aeroport.Services.FlightSimulationService.GlobalSpeedMultiplier;
             return View();
         }
 
@@ -44,7 +47,7 @@ namespace TMPP_Aeroport.Controllers
             var activeFlights = _flightSimulation.GetActiveFlights()
                 .Where(f => f.Status == "Airborne" || f.Status.Contains("Holding"));
 
-            var factory = new TMPP_Aeroport.Domain.Flyweight.AircraftModelFactory();
+            var factory = _aircraftModelFactory;
             var blips = new List<object>();
 
             // The DB context is just to get aircraft model names since we only have FlightNumber in Simulation Service
@@ -131,10 +134,26 @@ namespace TMPP_Aeroport.Controllers
         {
             if (!string.IsNullOrEmpty(commandType) && !string.IsNullOrEmpty(commandFlight))
             {
+                // Proxy Integration: Check security before granting airspace commands
+                if (commandType == "ClearTakeoff" || commandType == "ClearLanding")
+                {
+                    var role = User.IsInRole("Admin") ? "Admin" : (User.IsInRole("ATC_Manager") ? "ATC_Manager" : "Staff");
+                    var proxy = new TMPP_Aeroport.Domain.Proxy.RunwayControlProxy(role);
+                    string result = proxy.GrantClearance(commandFlight, "MAIN RUNWAY");
+                    
+                    if (result.Contains("ACCESS DENIED"))
+                    {
+                        TempData["ErrorMessage"] = $"Security Proxy blocked command: {result}";
+                        return RedirectToAction("ATCTower");
+                    }
+                }
+
                 if (commandType == "ClearTakeoff") _flightSimulation.ApproveTakeoff(commandFlight);
                 else if (commandType == "ClearLanding") _flightSimulation.ApproveLanding(commandFlight);
                 else if (commandType == "ReturnBase") _flightSimulation.ReturnToOrigin(commandFlight);
                 else if (commandType == "Divert") _flightSimulation.DivertToNearest(commandFlight);
+                
+                TempData["SuccessMessage"] = $"Command {commandType} executed for {commandFlight}.";
             }
             return RedirectToAction("ATCTower");
         }

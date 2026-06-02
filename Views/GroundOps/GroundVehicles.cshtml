@@ -9,22 +9,22 @@
 <div class="space-y-6">
     <div class="flex items-center justify-between">
         <div>
-            <h1 class="text-2xl font-bold text-slate-800 flex items-center">
-                <span class="material-symbols-outlined mr-3 text-orange-500 text-3xl">airport_shuttle</span>
+            <h1 class="text-2xl font-bold text-slate-800 dark:text-slate-200 flex items-center">
+                <span class="material-symbols-rounded mr-3 text-orange-500 text-3xl">airport_shuttle</span>
                 Ground Support Equipment
             </h1>
-            <p class="text-slate-500 mt-1">Live vehicle fleet — Object Pool Pattern</p>
+            <p class="text-slate-500 mt-1">Live vehicle fleet control and dispatch</p>
         </div>
         <div class="flex gap-3">
-            <div class="bg-white border border-slate-200 rounded-xl px-4 py-2 text-center">
-                <div class="text-2xl font-bold text-slate-800">@(vehicles?.Count ?? 0)</div>
+            <div class="bg-white dark:bg-slate-900 dark:text-slate-200 border border-slate-200 rounded-xl px-4 py-2 text-center">
+                <div class="text-2xl font-bold text-slate-800 dark:text-slate-200">@(vehicles?.Count ?? 0)</div>
                 <div class="text-xs text-slate-500">Total Vehicles</div>
             </div>
-            <div class="bg-white border border-slate-200 rounded-xl px-4 py-2 text-center">
+            <div class="bg-white dark:bg-slate-900 dark:text-slate-200 border border-slate-200 rounded-xl px-4 py-2 text-center">
                 <div class="text-2xl font-bold text-green-600">@(vehicles?.Count(v => v.Status == VehicleStatus.Available) ?? 0)</div>
                 <div class="text-xs text-slate-500">Available</div>
             </div>
-            <div class="bg-white border border-slate-200 rounded-xl px-4 py-2 text-center">
+            <div class="bg-white dark:bg-slate-900 dark:text-slate-200 border border-slate-200 rounded-xl px-4 py-2 text-center">
                 <div class="text-2xl font-bold text-orange-500">@(vehicles?.Count(v => v.Status == VehicleStatus.InUse) ?? 0)</div>
                 <div class="text-xs text-slate-500">In Service</div>
             </div>
@@ -37,9 +37,9 @@
         var typeVehicles = vehicles?.Where(v => v.Type == vType).ToList() ?? new List<GroundVehicle>();
         var typeLabel = vType == VehicleType.FuelTruck ? "⛽ Fuel Trucks" :
                         vType == VehicleType.CateringTruck ? "🍽️ Catering Trucks" : "🚜 Tug / Pushback";
-        <div class="bg-white border border-slate-200 rounded-xl shadow-sm overflow-hidden">
-            <div class="bg-slate-50 border-b border-slate-200 px-5 py-3 flex justify-between items-center">
-                <h2 class="font-bold text-slate-700">@typeLabel</h2>
+        <div class="bg-white dark:bg-slate-900 dark:text-slate-200 border border-slate-200 rounded-xl shadow-sm overflow-hidden">
+            <div class="bg-slate-50 dark:bg-slate-800 dark:text-slate-200 border-b border-slate-200 px-5 py-3 flex justify-between items-center">
+                <h2 class="font-bold text-slate-700 dark:text-slate-300">@typeLabel</h2>
                 <span class="text-sm text-slate-500">@typeVehicles.Count(v => v.Status == VehicleStatus.Available) available</span>
             </div>
             <div class="p-4 grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-3">
@@ -51,7 +51,7 @@
                               v.Status == VehicleStatus.InUse ? "bg-orange-500 animate-pulse" : "bg-slate-400";
                     <div class="rounded-lg border @statusBg p-3">
                         <div class="flex items-center justify-between mb-1">
-                            <span class="font-bold text-slate-700 text-sm">@v.Id</span>
+                            <span class="font-bold text-slate-700 dark:text-slate-300 text-sm">@v.Id</span>
                             <span class="w-2.5 h-2.5 rounded-full @dot"></span>
                         </div>
                         <div class="text-xs text-slate-500">@v.Status</div>
@@ -68,9 +68,9 @@
     <!-- Active Service Operations -->
     @if (activeFlights != null && activeFlights.Any())
     {
-        <div class="bg-white border border-slate-200 rounded-xl shadow-sm overflow-hidden">
-            <div class="bg-slate-50 border-b border-slate-200 px-5 py-3">
-                <h2 class="font-bold text-slate-700">🔧 Active Turnaround Operations</h2>
+        <div class="bg-white dark:bg-slate-900 dark:text-slate-200 border border-slate-200 rounded-xl shadow-sm overflow-hidden">
+            <div class="bg-slate-50 dark:bg-slate-800 dark:text-slate-200 border-b border-slate-200 px-5 py-3">
+                <h2 class="font-bold text-slate-700 dark:text-slate-300">🔧 Active Turnaround Operations</h2>
             </div>
             <div class="divide-y divide-slate-100">
                 @foreach (var f in activeFlights)
@@ -78,7 +78,7 @@
                     var servPct = f.ServicingComplete ? 100 : f.ServicingStarted ? 60 : 0;
                     <div class="px-5 py-4 flex items-center justify-between">
                         <div>
-                            <div class="font-bold text-slate-800">@f.FlightNumber</div>
+                            <div class="font-bold text-slate-800 dark:text-slate-200">@f.FlightNumber</div>
                             <div class="text-xs text-slate-500 mt-0.5">@f.DestName · Gate @(string.IsNullOrEmpty(f.AssignedGate) ? "TBD" : f.AssignedGate)</div>
                         </div>
                         <div class="flex items-center gap-4">
@@ -102,6 +102,6 @@
 @section Scripts {
 <script>
     // Auto-refresh every 5 seconds
-    setTimeout(() => location.reload(), 5000);
+    // removed hard refresh to prevent visual bugs
 </script>
 }

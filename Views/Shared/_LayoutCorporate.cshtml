@@ -1,6 +1,14 @@
 <!DOCTYPE html>
 <html lang="en" x-data="{ darkMode: localStorage.getItem('theme') === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches) }" :class="{ 'dark': darkMode }" x-init="$watch('darkMode', val => localStorage.setItem('theme', val ? 'dark' : 'light'))">
 <head>
+    <script>
+        // Prevent FOUC (Flash of Unstyled Content) for Dark Mode
+        if (localStorage.getItem('theme') === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+            document.documentElement.classList.add('dark');
+        } else {
+            document.documentElement.classList.remove('dark');
+        }
+    </script>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="description" content="Smart Airport Management System (SAMS) Enterprise Dashboard. Manage flights, fleet, passengers, and security control." />
@@ -14,6 +22,8 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/8.0.0/signalr.min.js"></script>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
 
     <!-- Fonts & Icon Styles -->
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
@@ -174,6 +184,21 @@
     </style>
 
     @await RenderSectionAsync("Styles", required: false)
+    <!-- Turbo Drive for SPA-like navigation -->
+    <script src="https://unpkg.com/@@hotwired/turbo@8.0.4/dist/turbo.es2017-umd.js"></script>
+    <style>
+        .turbo-progress-bar {
+            height: 3px;
+            background-color: #3b82f6;
+        }
+    </style>
+    <!-- FOUC Prevention Script -->
+    <script>
+        if (localStorage.getItem('darkMode') === 'true' || 
+            (!('darkMode' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+            document.documentElement.classList.add('dark');
+        }
+    </script>
 </head>
 <body class="text-slate-800 bg-slate-100 dark:text-slate-200 dark:bg-sams-dark antialiased h-screen flex overflow-hidden transition-colors duration-300">
 
@@ -200,9 +225,7 @@
                 <a asp-controller="Airport" asp-action="Index" class="sidebar-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "Airport" && ViewContext.RouteData.Values["action"]?.ToString() == "Index" ? "active" : "")">
                     <span class="material-symbols-rounded sidebar-icon">dashboard</span> Dashboard
                 </a>
-                <a asp-controller="Airport" asp-action="CheckIn" class="sidebar-link @(ViewContext.RouteData.Values["action"]?.ToString() == "CheckIn" ? "active" : "")">
-                    <span class="material-symbols-rounded sidebar-icon">how_to_reg</span> Check-In
-                </a>
+
             </nav>
 
             <div class="nav-group-title">Passenger</div>
@@ -213,9 +236,7 @@
                 <a asp-controller="Tickets" asp-action="Book" class="sidebar-link @(ViewContext.RouteData.Values["action"]?.ToString() == "Book" || ViewContext.RouteData.Values["action"]?.ToString() == "Buy" ? "active" : "")">
                     <span class="material-symbols-rounded sidebar-icon">travel_explore</span> Book Flights
                 </a>
-                <a asp-controller="Tickets" asp-action="StateDemo" class="sidebar-link @(ViewContext.RouteData.Values["action"]?.ToString() == "StateDemo" ? "active" : "")">
-                    <span class="material-symbols-rounded sidebar-icon">point_of_sale</span> Ticket Machine
-                </a>
+
             </nav>
 
             <!-- ATC -->
@@ -253,9 +274,7 @@
                 <a asp-controller="GroundOps" asp-action="PreFlightChecks" class="sidebar-link @(ViewContext.RouteData.Values["action"]?.ToString() == "PreFlightChecks" ? "active" : "")">
                     <span class="material-symbols-rounded sidebar-icon">checklist</span> Pre-Flight SOP
                 </a>
-                <a asp-controller="GroundOps" asp-action="TerminalDisplays" class="sidebar-link @(ViewContext.RouteData.Values["action"]?.ToString() == "TerminalDisplays" ? "active" : "")">
-                    <span class="material-symbols-rounded sidebar-icon">tv</span> Terminal Displays
-                </a>
+
                 <a asp-controller="GroundOps" asp-action="GateAssignments" class="sidebar-link @(ViewContext.RouteData.Values["action"]?.ToString() == "GateAssignments" ? "active" : "")">
                     <span class="material-symbols-rounded sidebar-icon">storefront</span> Gate Manager
                 </a>
@@ -283,17 +302,14 @@
             <!-- MANAGEMENT -->
             <div class="nav-group-title">Management</div>
             <nav>
-                <a asp-controller="Airport" asp-action="BuilderDemo" class="sidebar-link @(ViewContext.RouteData.Values["action"]?.ToString() == "BuilderDemo" ? "active" : "")">
-                    <span class="material-symbols-rounded sidebar-icon">event_note</span> Itineraries
-                </a>
                 <a asp-controller="Management" asp-action="FlightScheduler" class="sidebar-link @(ViewContext.RouteData.Values["action"]?.ToString() == "FlightScheduler" ? "active" : "")">
                     <span class="material-symbols-rounded sidebar-icon">event</span> Flight Scheduler
                 </a>
                 <a asp-controller="Management" asp-action="AuditLogs" class="sidebar-link @(ViewContext.RouteData.Values["action"]?.ToString() == "AuditLogs" ? "active" : "")">
-                    <span class="material-symbols-rounded sidebar-icon">admin_panel_settings</span> Audit Logs
+                    <span class="material-symbols-rounded sidebar-icon">history</span> Transaction Audit
                 </a>
                 <a asp-controller="Management" asp-action="Analytics" class="sidebar-link @(ViewContext.RouteData.Values["action"]?.ToString() == "Analytics" ? "active" : "")">
-                    <span class="material-symbols-rounded sidebar-icon">analytics</span> Export Data
+                    <span class="material-symbols-rounded sidebar-icon">policy</span> Regulatory Export
                 </a>
                 <a asp-controller="Fleet" asp-action="Index" class="sidebar-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "Fleet" ? "active" : "")">
                     <span class="material-symbols-rounded sidebar-icon">flight</span> Fleet
@@ -369,14 +385,23 @@
                     </div>
                 </div>
 
-                <!-- Virtual Clock -->
-                <div class="flex items-center bg-white/70 dark:bg-slate-800/60 px-3 py-1.5 rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm">
-                    <span class="material-symbols-rounded text-blue-500 mr-2 animate-[spin_4s_linear_infinite]" style="font-size:18px;">radar</span>
-                    <div class="flex flex-col leading-none">
-                        <span class="text-[9px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-0.5">
-                            SYS TIME <span id="clock-speed" class="text-blue-500 dark:text-blue-400">1x</span>
-                        </span>
-                        <span id="virtual-clock" class="text-xs font-bold font-mono text-slate-700 dark:text-slate-200" style="font-variant-numeric: tabular-nums;">Syncing...</span>
+                <!-- Virtual Clock & Global Speed Controls -->
+                <div class="flex items-center bg-white/70 dark:bg-slate-800/60 pl-3 pr-1 py-1.5 rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm gap-3">
+                    <div class="flex items-center">
+                        <span class="material-symbols-rounded text-blue-500 mr-2 animate-[spin_4s_linear_infinite]" style="font-size:18px;">radar</span>
+                        <div class="flex flex-col leading-none">
+                            <span class="text-[9px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-0.5">
+                                SYS TIME <span id="clock-speed" class="text-blue-500 dark:text-blue-400">1x</span>
+                            </span>
+                            <span id="virtual-clock" class="text-xs font-bold font-mono text-slate-700 dark:text-slate-200" style="font-variant-numeric: tabular-nums;">Syncing...</span>
+                        </div>
+                    </div>
+                    <div class="w-px h-6 bg-slate-200 dark:bg-slate-700 mx-1"></div>
+                    <div class="flex gap-1" id="global-speed-controls">
+                        <button class="global-speed-btn px-2 py-1 rounded-lg text-[10px] font-bold text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-700 transition" data-speed="1">1x</button>
+                        <button class="global-speed-btn px-2 py-1 rounded-lg text-[10px] font-bold text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-700 transition" data-speed="20">20x</button>
+                        <button class="global-speed-btn px-2 py-1 rounded-lg text-[10px] font-bold text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-700 transition" data-speed="50">50x</button>
+                        <button class="global-speed-btn px-2 py-1 rounded-lg text-[10px] font-bold text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-700 transition" data-speed="100">100x</button>
                     </div>
                 </div>
 
@@ -423,134 +448,195 @@
             "timeOut": "5000",
         };
 
-        // --- SignalR ---
-        window.globalConnection = new signalR.HubConnectionBuilder()
-            .withUrl("/flightHub")
-            .build();
+        // --- Notification State (Preserved across Turbo navigations) ---
+        window.notifCount = window.notifCount || 0;
+        window.notifs = window.notifs || JSON.parse(localStorage.getItem('sams_notifs') || '[]');
 
-        window.globalConnection.on("TimeUpdate", function (data) {
-            const clock = document.getElementById("virtual-clock");
-            const speed = document.getElementById("clock-speed");
-            if (clock) clock.innerText = data.virtualTime;
-            if (speed) speed.innerText = data.speed + "x";
-
-            if (data.weatherType) {
-                const lbl = document.getElementById("weather-label");
-                const ico = document.getElementById("weather-icon");
-                const widget = document.getElementById("weather-widget");
-                if (lbl) lbl.innerText = data.weatherType;
-                if (ico) {
-                    if (data.weatherType === "Storm") { ico.innerText = "thunderstorm"; if (widget) { widget.style.borderColor = "#ef4444"; widget.style.backgroundColor = "rgba(254,242,242,0.7)"; } }
-                    else if (data.weatherType === "Fog") { ico.innerText = "foggy"; if (widget) { widget.style.borderColor = "#f59e0b"; widget.style.backgroundColor = "rgba(255,251,235,0.7)"; } }
-                    else { ico.innerText = "wb_sunny"; if (widget) { widget.style.borderColor = ""; widget.style.backgroundColor = ""; } }
-                }
-            }
-        });
-
-        window.globalConnection.on("WeatherChanged", function (data) {
-            if (data.type === "Storm") {
-                toastr.error("⛈️ Weather Alert: " + data.description, "WEATHER SYSTEM");
-            } else {
-                toastr.warning("🌤️ Weather changed: " + data.description, "Weather Update");
-            }
-            const dot = document.getElementById('atctower-notif-dot');
-            if (dot) dot.classList.remove('hidden');
-            addNotificationItem("Weather Changed", data.description, "flight");
-        });
-
-        window.globalConnection.on("BoardingProgress", function (data) {
-            if (data.boarded === data.total) {
-                toastr.success("✅ " + data.flightNumber + ": Boarding complete! All " + data.total + " passengers boarded.", "Boarding");
-            }
-        });
-
-        let notifCount = 0;
-
-        function toggleNotifDropdown(e) {
+        window.toggleNotifDropdown = function(e) {
             e.stopPropagation();
             document.getElementById('notif-dropdown').classList.toggle('hidden');
         }
 
-        document.addEventListener('click', function (e) {
-            const wrapper = document.getElementById('notif-dropdown-wrapper');
-            if (wrapper && !wrapper.contains(e.target)) {
-                document.getElementById('notif-dropdown').classList.add('hidden');
-            }
-        });
-
-        function clearNotifs(e) {
-            e.stopPropagation();
-            notifCount = 0;
+        window.clearNotifs = function(e) {
+            if (e) e.stopPropagation();
+            window.notifCount = 0;
+            window.notifs = [];
+            localStorage.setItem('sams_notifs', JSON.stringify(window.notifs));
             const badge = document.getElementById('notif-badge');
             if (badge) { badge.classList.add('hidden'); badge.innerText = "0"; }
             document.getElementById('notif-list').innerHTML = '<div class="p-4 text-center text-slate-400 text-sm italic" id="empty-notifs">No notifications yet.</div>';
+            
             const alertDot = document.getElementById('alerts-notif-dot');
             if (alertDot) alertDot.classList.add('hidden');
             const secDot = document.getElementById('security-notif-dot');
             if (secDot) secDot.classList.add('hidden');
         }
 
-        function addNotificationItem(title, msg, type) {
+        window.renderNotifItem = function(title, msg, type) {
             const emptyMsg = document.getElementById('empty-notifs');
             if (emptyMsg) emptyMsg.remove();
             const list = document.getElementById('notif-list');
-            const iconColor = type === 'security' ? '#ef4444' : '#3b82f6';
-            const iconName = type === 'security' ? 'shield' : 'flight_takeoff';
+            if (!list) return; // Prevent errors if DOM element is missing
+            
             const item = document.createElement('div');
-            item.className = 'p-3 border-b border-slate-100 dark:border-slate-700/50 flex items-start hover:bg-slate-50 dark:hover:bg-slate-700/30 transition';
+            item.className = "p-3 border-b border-slate-100 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800 transition cursor-pointer";
+            
+            let icon = type === 'security' ? '<span class="material-symbols-rounded text-red-500 mr-2 text-lg">gpp_bad</span>' :
+                       type === 'flight' ? '<span class="material-symbols-rounded text-blue-500 mr-2 text-lg">flight_takeoff</span>' :
+                       '<span class="material-symbols-rounded text-slate-500 mr-2 text-lg">notifications</span>';
+            
             item.innerHTML = `
-                <span class="material-symbols-rounded mr-3 mt-0.5 flex-shrink-0" style="font-size:18px; color:${iconColor}; font-variation-settings:'FILL' 1,'wght' 400,'GRAD' 0,'opsz' 24;">${iconName}</span>
-                <div class="flex-1 min-w-0">
-                    <p class="text-sm font-bold text-slate-800 dark:text-slate-200">${title}</p>
-                    <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">${msg}</p>
-                </div>`;
+                <div class="flex items-start">
+                    ${icon}
+                    <div>
+                        <h4 class="text-xs font-bold text-slate-800 dark:text-white">${title}</h4>
+                        <p class="text-[10px] text-slate-500 mt-1 leading-tight">${msg}</p>
+                    </div>
+                </div>
+            `;
             list.prepend(item);
         }
 
-        window.globalConnection.on("FlightStateChanged", function (data) {
-            let msg = "Flight <b class='font-mono'>" + data.flightNumber + "</b> status: <span class='opacity-75'>" + data.oldStatus + "</span> &rarr; <b>" + data.newStatus + "</b>";
-            if (data.newStatus === "Airborne") {
-                toastr.info("✈️ Departed from " + data.origin + "!<br/>" + msg, "Takeoff Detected");
-            } else if (data.newStatus === "Landed") {
-                toastr.success("🛬 Arrived at " + data.destination + "!<br/>" + msg, "Landing Detected");
-            } else if (data.newStatus === "Boarding") {
-                toastr.warning("📢 Boarding started!<br/>" + msg, "Boarding");
-            } else if (data.newStatus && data.newStatus.includes("EMERGENCY")) {
-                toastr.error("🚨 ATC ALERT!<br/>" + msg, "EMERGENCY");
-            } else {
-                toastr.info(msg, "Flight Update");
-            }
-            notifCount++;
-            const badge = document.getElementById("notif-badge");
-            if (badge) { badge.innerText = notifCount; badge.classList.remove("hidden"); badge.classList.add("animate-bounce"); setTimeout(() => badge.classList.remove("animate-bounce"), 1000); }
-            addNotificationItem("Flight Update", "Flight " + data.flightNumber + " → " + data.newStatus, "flight");
-            const alertDot = document.getElementById('alerts-notif-dot');
-            if (alertDot) alertDot.classList.remove('hidden');
-        });
+        window.addNotificationItem = function(title, msg, type) {
+            window.renderNotifItem(title, msg, type);
+            window.notifs.push({ title, msg, type, time: new Date().getTime() });
+            if (window.notifs.length > 50) window.notifs.shift(); // keep last 50
+            localStorage.setItem('sams_notifs', JSON.stringify(window.notifs));
+        }
 
-        window.globalConnection.on("SecurityAlert", function (data) {
-            toastr.error("🚨 CHECKPOINT " + data.checkpointId + ":<br/>" + data.message, "SECURITY - " + data.level);
-            notifCount++;
-            const badge = document.getElementById("notif-badge");
-            if (badge) { badge.innerText = notifCount; badge.classList.remove("hidden"); }
-            addNotificationItem("Security Alert [" + data.level + "]", "CP: " + data.checkpointId + " - " + data.message, "security");
-            const secDot = document.getElementById('security-notif-dot');
-            if (secDot) secDot.classList.remove('hidden');
-        });
+        // Always render saved notifs on the current DOM immediately
+        window.notifs.forEach(n => window.renderNotifItem(n.title, n.msg, n.type));
+        if (window.notifCount > 0) {
+            const badge = document.getElementById('notif-badge');
+            if (badge) { badge.innerText = window.notifCount; badge.classList.remove('hidden'); }
+        }
 
-        window.globalConnection.start().catch(err => console.error(err.toString()));
-
-        // Keep sidebar scroll position across page navigations
-        document.addEventListener("DOMContentLoaded", function () {
+        function initSidebarScroll() {
             const sidebarScroll = document.getElementById('sidebar-scroll-area');
             if (sidebarScroll) {
                 const scrollPos = sessionStorage.getItem('sidebarScrollPos');
                 if (scrollPos) sidebarScroll.scrollTop = parseInt(scrollPos, 10);
-                window.addEventListener('beforeunload', function () {
+                
+                // On Turbo before-cache or beforeunload
+                document.addEventListener('turbo:before-cache', function () {
                     sessionStorage.setItem('sidebarScrollPos', sidebarScroll.scrollTop);
-                });
+                }, { once: true });
             }
-        });
+        }
+        
+        // Execute immediately for the current view
+        initSidebarScroll();
+
+
+        // --- Global Singleton Initialization (Run ONCE per tab) ---
+        if (!window._samsAppInitialized) {
+            window._samsAppInitialized = true;
+
+            document.addEventListener("turbo:load", initSidebarScroll);
+
+            // Handle speed control clicks globally
+            document.addEventListener('click', function(e) {
+                const btn = e.target.closest('.global-speed-btn');
+                if (btn) {
+                    const speed = parseInt(btn.getAttribute('data-speed'));
+                    if (window.globalConnection && window.globalConnection.state === signalR.HubConnectionState.Connected) {
+                        window.globalConnection.invoke("SetSpeedMultiplier", speed)
+                            .then(() => toastr.success(`Simulation speed set to ${speed}x`, "Time Sync"))
+                            .catch(err => console.error(err.toString()));
+                    } else {
+                        toastr.error("Cannot change speed, disconnected from server.", "Error");
+                    }
+                }
+            });
+
+            // Handle global clicks outside dropdown
+            document.addEventListener('click', function(e) {
+                const drop = document.getElementById('notif-dropdown');
+                if (drop && !drop.classList.contains('hidden') && !e.target.closest('#notif-dropdown') && !e.target.closest('#notif-bell-btn')) {
+                    drop.classList.add('hidden');
+                }
+            });
+
+            // --- SignalR ---
+            window.globalConnection = new signalR.HubConnectionBuilder()
+                .withUrl("/flightHub")
+                .build();
+
+            window.globalConnection.on("TimeUpdate", function (data) {
+                const clock = document.getElementById("virtual-clock");
+                const speed = document.getElementById("clock-speed");
+                if (clock) clock.innerText = data.virtualTime;
+                if (speed) speed.innerText = data.speed + "x";
+                
+                // Sync speed button states
+                document.querySelectorAll('.global-speed-btn').forEach(btn => {
+                    const s = parseInt(btn.getAttribute('data-speed'));
+                    if (s === data.speed) {
+                        btn.classList.add('bg-blue-500', 'text-white');
+                        btn.classList.remove('text-slate-500', 'hover:bg-slate-100', 'dark:hover:bg-slate-700');
+                    } else {
+                        btn.classList.remove('bg-blue-500', 'text-white');
+                        btn.classList.add('text-slate-500', 'hover:bg-slate-100', 'dark:hover:bg-slate-700');
+                    }
+                });
+
+                if (data.weatherType) {
+                    const lbl = document.getElementById("weather-label");
+                    const ico = document.getElementById("weather-icon");
+                    const widget = document.getElementById("weather-widget");
+                    if (lbl) lbl.innerText = data.weatherType;
+                    if (ico) {
+                        if (data.weatherType === "Storm") { ico.innerText = "thunderstorm"; if (widget) { widget.style.borderColor = "#ef4444"; widget.style.backgroundColor = "rgba(254,242,242,0.7)"; } }
+                        else if (data.weatherType === "Fog") { ico.innerText = "foggy"; if (widget) { widget.style.borderColor = "#f59e0b"; widget.style.backgroundColor = "rgba(255,251,235,0.7)"; } }
+                        else { ico.innerText = "wb_sunny"; if (widget) { widget.style.borderColor = ""; widget.style.backgroundColor = ""; } }
+                    }
+                }
+            });
+
+            window.globalConnection.on("WeatherChanged", function (data) {
+                if (data.type === "Storm") {
+                    toastr.error("⛈️ Weather Alert: " + data.description, "WEATHER SYSTEM");
+                }
+                const dot = document.getElementById('atctower-notif-dot');
+                if (dot) dot.classList.remove('hidden');
+                addNotificationItem("Weather Changed", data.description, "flight");
+            });
+
+            window.globalConnection.on("BoardingProgress", function (data) {
+                if (data.boarded === data.total) {
+                    // Quiet notification instead of toastr spam
+                    window.addNotificationItem("Boarding Complete", data.flightNumber + " boarding finished.", "flight");
+                }
+            });
+
+            window.globalConnection.on("FlightStateChanged", function (data) {
+                let msg = "Flight <b class='font-mono'>" + data.flightNumber + "</b> status: <span class='opacity-75'>" + data.oldStatus + "</span> &rarr; <b>" + data.newStatus + "</b>";
+                if (data.newStatus && data.newStatus.includes("EMERGENCY")) {
+                    toastr.error("🚨 ATC ALERT!<br/>" + msg, "EMERGENCY");
+                }
+                // Quietly add to the notification list without spamming toastr popups
+                window.notifCount++;
+                const badge = document.getElementById("notif-badge");
+                if (badge) { badge.innerText = window.notifCount; badge.classList.remove("hidden"); badge.classList.add("animate-bounce"); setTimeout(() => badge.classList.remove("animate-bounce"), 1000); }
+                window.addNotificationItem("Flight Update", "Flight " + data.flightNumber + " → " + data.newStatus, "flight");
+                const alertDot = document.getElementById('alerts-notif-dot');
+                if (alertDot) alertDot.classList.remove('hidden');
+            });
+
+            window.globalConnection.on("SecurityAlert", function (data) {
+                if (data.level === "Critical") {
+                    toastr.error("🚨 CHECKPOINT " + data.checkpointId + ":<br/>" + data.message, "SECURITY - " + data.level);
+                }
+                window.notifCount++;
+                const badge = document.getElementById("notif-badge");
+                if (badge) { badge.innerText = window.notifCount; badge.classList.remove("hidden"); }
+                window.addNotificationItem("Security Alert [" + data.level + "]", "CP: " + data.checkpointId + " - " + data.message, "security");
+                const secDot = document.getElementById('security-notif-dot');
+                if (secDot) secDot.classList.remove('hidden');
+            });
+
+            window.globalConnection.start().catch(err => console.error(err.toString()));
+        }
     </script>
 
     @await RenderSectionAsync("Scripts", required: false)

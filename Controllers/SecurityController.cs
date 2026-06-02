@@ -28,6 +28,18 @@ namespace TMPP_Aeroport.Controllers
             return View();
         }
 
+        [HttpGet]
+        [AllowAnonymous]
+        public IActionResult DebugBags()
+        {
+            var stats = _context.BaggageItems
+                .GroupBy(b => new { b.SecurityStatus, b.BaggageStage })
+                .Select(g => new { g.Key.SecurityStatus, g.Key.BaggageStage, Count = g.Count() })
+                .ToList();
+            var flights = _context.Flights.Select(f => new { f.FlightNumber, f.DepartureTime, f.Status }).ToList();
+            return Json(new { bags = stats, flights = flights, virtualTime = TMPP_Aeroport.Services.FlightSimulationService.VirtualTime });
+        }
+
         // AJAX API: Get Pending Baggages grouped by flight
         [HttpGet]
         public IActionResult GetPendingBaggages()

@@ -1,171 +1,4 @@
-@{
-    ViewData["Title"] = "Advanced Live Radar";
-}
-
-@section Styles {
-    <!-- Leaflet CSS for Map -->
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
-    <style>
-        #radar-map {
-            height: calc(100vh - 12rem);
-            min-height: 600px;
-            width: 100%;
-            border-radius: 1rem;
-            z-index: 1;
-        }
-        
-        .plane-icon {
-            transition: none; /* Removed transition for smoother JS control */
-            filter: drop-shadow(0px 4px 6px rgba(0,0,0,0.5));
-        }
-
-        .plane-svg {
-            width: 32px;
-            height: 32px;
-            transform-origin: center center;
-        }
-
-        .control-btn.active {
-            background-color: #3b82f6 !important;
-            color: white !important;
-            border-color: #2563eb !important;
-        }
-    </style>
-}
-
-<div class="mb-6 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-    <div>
-        <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-100 text-emerald-800 text-xs font-bold mb-3 border border-emerald-200">
-            <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
-            LIVE TRACKING SYSTEM
-        </div>
-        <h1 class="text-3xl font-bold text-slate-800 dark:text-slate-200">Advanced European Radar</h1>
-    </div>
-    
-    <div class="flex items-center gap-4">
-        <!-- Runway Lights Control -->
-        <button id="toggle-lights-btn" class="bg-slate-800 hover:bg-slate-700 active:bg-slate-900 text-white px-4 py-2.5 rounded-lg border border-slate-700 shadow-sm flex items-center gap-2 text-sm font-bold transition">
-            <span class="material-symbols-rounded text-[18px] text-amber-400">lightbulb</span>
-            <span>Toggle Runway Lights</span>
-        </button>
-
-        <!-- Speed Controls Moved to Header -->
-        <div class="bg-white dark:bg-slate-900 dark:text-slate-200 px-4 py-3 rounded-lg border border-slate-200 shadow-sm flex items-center gap-4">
-            <div class="text-center">
-                <p class="text-xs text-slate-400 font-semibold uppercase">Airborne</p>
-                <p class="text-xl font-bold text-blue-600" id="active-count">0</p>
-            </div>
-            <div class="w-px h-8 bg-slate-200"></div>
-            <div class="text-center">
-                <p class="text-xs text-slate-400 font-semibold uppercase">Server Sync</p>
-                <p class="text-sm font-bold text-emerald-500 mt-1 flex items-center justify-center gap-1">
-                    <span class="material-symbols-rounded text-[16px]">wifi</span> LIVE
-                </p>
-            </div>
-        </div>
-    </div>
-</div>
-
-<div class="flex flex-col lg:flex-row gap-4 h-[calc(100vh-12rem)] min-h-[600px]">
-    <div class="bg-white dark:bg-slate-900 dark:text-slate-200 rounded-2xl shadow-sm border border-slate-200 p-2 relative flex-grow h-full z-10">
-        <div id="radar-map" class="w-full h-full rounded-xl"></div>
-        
-        <!-- Legend -->
-        <div class="absolute bottom-6 right-6 z-[1000] bg-white dark:bg-slate-900 dark:text-slate-200/90 backdrop-blur-sm p-4 rounded-xl border border-slate-200 shadow-lg pointer-events-none">
-            <h4 class="text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-3">Map Legend</h4>
-            <div class="space-y-2">
-                <div class="flex items-center gap-2">
-                    <div class="w-6 h-6 flex items-center justify-center bg-blue-100 rounded-md">
-                        <span class="w-3 h-3 block bg-blue-500" style="clip-path: polygon(50% 0%, 100% 50%, 50% 100%, 0% 50%);"></span>
-                    </div>
-                    <span class="text-sm text-slate-600 font-medium">Commercial Flight</span>
-                </div>
-                <div class="flex items-center gap-2">
-                    <span class="w-3 h-3 rounded-full bg-red-500 border-2 border-white shadow-sm ml-1.5"></span>
-                    <span class="text-sm text-slate-600 font-medium ml-1.5">Major Airport (Hub)</span>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- ATC Side Panel (Hidden by default) -->
-    <div id="atc-side-panel" class="w-full lg:w-80 bg-white dark:bg-slate-900 dark:text-slate-200 rounded-2xl shadow-sm border border-slate-200 overflow-hidden hidden flex-col h-full shrink-0 transition-all duration-300 transform translate-x-4 opacity-0">
-        <div class="bg-slate-900 text-white p-4 border-b border-slate-800 flex justify-between items-center">
-            <div>
-                <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">SELECTED FLIGHT</p>
-                <h2 id="panel-flight-number" class="text-2xl font-black text-blue-400 tracking-tight">--</h2>
-            </div>
-            <button id="close-panel-btn" class="text-slate-400 hover:text-white transition">
-                <span class="material-symbols-rounded">close</span>
-            </button>
-        </div>
-        
-        <div class="p-5 flex-1 overflow-y-auto">
-            <div class="flex items-center justify-between mb-6 bg-slate-50 dark:bg-slate-800 dark:text-slate-200 p-3 rounded-xl border border-slate-100">
-                <div class="text-center w-5/12">
-                    <p class="text-[10px] text-slate-400 font-bold uppercase">ORIGIN</p>
-                    <p id="panel-origin" class="font-bold text-slate-700 dark:text-slate-300 mt-1 truncate">--</p>
-                </div>
-                <div class="w-2/12 flex justify-center text-blue-400">
-                    <span class="material-symbols-rounded">flight_takeoff</span>
-                </div>
-                <div class="text-center w-5/12">
-                    <p class="text-[10px] text-slate-400 font-bold uppercase">DEST</p>
-                    <p id="panel-dest" class="font-bold text-slate-700 dark:text-slate-300 mt-1 truncate">--</p>
-                </div>
-            </div>
-
-            <div class="space-y-4 mb-6">
-                <div>
-                    <p class="text-[10px] text-slate-500 font-bold uppercase mb-1">CURRENT STATUS</p>
-                    <div id="panel-status" class="bg-blue-100 text-blue-700 font-bold py-2 px-3 rounded-lg text-sm text-center uppercase tracking-wider border border-blue-200">
-                        --
-                    </div>
-                </div>
-                
-                <div class="grid grid-cols-2 gap-3">
-                    <div class="bg-slate-50 dark:bg-slate-800 dark:text-slate-200 p-3 rounded-xl border border-slate-100">
-                        <p class="text-[10px] text-slate-500 font-bold uppercase mb-1 flex items-center gap-1"><span class="material-symbols-rounded text-[14px]">speed</span> SPEED</p>
-                        <p class="font-bold text-slate-800 dark:text-slate-200"><span id="panel-speed">~900</span> <span class="text-xs text-slate-400">km/h</span></p>
-                    </div>
-                    <div class="bg-slate-50 dark:bg-slate-800 dark:text-slate-200 p-3 rounded-xl border border-slate-100">
-                        <p class="text-[10px] text-slate-500 font-bold uppercase mb-1 flex items-center gap-1"><span class="material-symbols-rounded text-[14px]">height</span> ALTITUDE</p>
-                        <p class="font-bold text-slate-800 dark:text-slate-200"><span id="panel-alt">35,000</span> <span class="text-xs text-slate-400">ft</span></p>
-                    </div>
-                </div>
-
-                <div>
-                    <p class="text-[10px] text-slate-500 font-bold uppercase mb-1 flex items-center gap-1"><span class="material-symbols-rounded text-[14px]">cloud</span> DESTINATION WEATHER</p>
-                    <div id="panel-weather" class="bg-slate-50 dark:bg-slate-800 dark:text-slate-200 p-3 rounded-xl border border-slate-100 font-bold text-slate-800 flex justify-between items-center">
-                        <span class="text-sm text-slate-500 italic">Fetching...</span>
-                    </div>
-                </div>
-            </div>
-
-            <hr class="border-slate-100 mb-4" />
-
-            <h3 class="text-xs font-bold text-slate-400 uppercase tracking-widest mb-3">ATC Quick Commands</h3>
-            <div class="grid grid-cols-4 gap-2">
-                <button onclick="sendATCCommand('ClearTakeoff')" class="bg-blue-50 hover:bg-blue-100 text-blue-700 border border-blue-200 py-2 px-1 rounded-lg text-[10px] font-bold flex flex-col items-center justify-center gap-1 transition" title="Clear Takeoff">
-                    <span class="material-symbols-rounded text-[18px]">flight_takeoff</span> TAKEOFF
-                </button>
-                <button onclick="sendATCCommand('HoldPosition')" class="bg-amber-50 hover:bg-amber-100 text-amber-700 border border-amber-200 py-2 px-1 rounded-lg text-[10px] font-bold flex flex-col items-center justify-center gap-1 transition" title="Hold Position">
-                    <span class="material-symbols-rounded text-[18px]">front_hand</span> HOLD
-                </button>
-                <button onclick="sendATCCommand('ReturnBase')" class="bg-red-50 hover:bg-red-100 text-red-700 border border-red-200 py-2 px-1 rounded-lg text-[10px] font-bold flex flex-col items-center justify-center gap-1 transition" title="Return to Base">
-                    <span class="material-symbols-rounded text-[18px]">u_turn_left</span> RETURN
-                </button>
-                <button onclick="sendATCCommand('ClearLanding')" class="bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-200 py-2 px-1 rounded-lg text-[10px] font-bold flex flex-col items-center justify-center gap-1 transition" title="Clear Landing">
-                    <span class="material-symbols-rounded text-[18px]">flight_land</span> LAND
-                </button>
-            </div>
-        </div>
-    </div>
-</div>
-
-@section Scripts {
-    <script>
-        function initRadar() {
+function initRadar() {
             if (!document.getElementById('radar-map')) return;
             if (window._radarMap) {
                 window._radarMap.remove();
@@ -200,11 +33,6 @@
                 FCO: { lat: 41.7999, lng: 12.2462, name: 'Rome (FCO)' },
                 MAD: { lat: 40.4983, lng: -3.5676, name: 'Madrid (MAD)' },
                 BER: { lat: 52.3667, lng: 13.5033, name: 'Berlin (BER)' },
-                VIE: { lat: 48.1103, lng: 16.5697, name: 'Vienna (VIE)' },
-                MUC: { lat: 48.3538, lng: 11.7861, name: 'Munich (MUC)' },
-                LIS: { lat: 38.7742, lng: -9.1342, name: 'Lisbon (LIS)' },
-                WAW: { lat: 52.1657, lng: 20.9671, name: 'Warsaw (WAW)' },
-                ATH: { lat: 37.9364, lng: 23.9445, name: 'Athens (ATH)' },
                 KIV: { lat: 46.9275, lng: 28.9308, name: 'Chisinau (KIV)' }
             };
 
@@ -401,9 +229,7 @@
                 try {
                     const res = await fetch('/ATC/RadarData');
                     const data = await res.json();
-                    
-                    // Prevent race condition: if map was destroyed and recreated while awaiting fetch, abort.
-                    if (window._radarMap !== map) return;
+                    // Cache initialized
                     
                     document.getElementById('active-count').innerText = data.blips.length;
                     
@@ -566,15 +392,13 @@
             }
 
             // UI Controls (Speed Multiplier) moved to _LayoutCorporate.cshtml
-
-            // Toggle Runway Lights click handler
             const toggleLightsBtn = document.getElementById('toggle-lights-btn');
             if (toggleLightsBtn) {
                 toggleLightsBtn.onclick = async () => {
                     toggleLightsBtn.disabled = true;
                     try {
                         await fetch('/ATC/RunwayLights?commandName=ToggleLights');
-                        toastr.success("Runway Lights Command Sent!", "System Success");
+                        toastr.success("Runway Lights Command Sent!", "Command Pattern");
                     } catch (e) {
                         toastr.error("Failed to send command.", "Error");
                     } finally {
@@ -589,5 +413,3 @@
         
         // Execute on Turbo navigation
         document.addEventListener('turbo:load', initRadar);
-    </script>
-}

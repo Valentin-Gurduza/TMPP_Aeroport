@@ -8,7 +8,7 @@
         LIVE STATUS BROADCASTER
     </div>
     <h1 class="text-3xl font-bold text-slate-800 dark:text-white/90">Global Flight Alerts</h1>
-    <p class="text-slate-500 dark:text-gray-400 mt-1">Observer Pattern — Flight status changes automatically notify all subscribed observers.</p>
+    <p class="text-slate-500 dark:text-gray-400 mt-1">Real-time automated flight status notifications.</p>
 </div>
 
 <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 items-start">
@@ -60,7 +60,7 @@
         <div class="p-6 flex-1 font-mono text-sm space-y-4 overflow-y-auto max-h-[400px]">
             @if (ViewBag.Logs != null && ViewBag.Logs.Count > 0)
             {
-                <div class="inline-block px-3 py-1 bg-white/10 rounded text-slate-300 text-xs mb-2">
+                <div class="inline-block px-3 py-1 bg-white dark:bg-slate-900 dark:text-slate-200/10 rounded text-slate-300 text-xs mb-2">
                     Subject updated state to: <span class="font-bold text-white">@ViewBag.NewStatus</span>
                 </div>
                 @foreach(var log in ViewBag.Logs)

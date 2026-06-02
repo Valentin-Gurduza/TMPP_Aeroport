@@ -41,7 +41,10 @@ namespace TMPP_Aeroport.Domain.Singleton
         public void Log(string message, string category = "System")
         {
             var formattedMessage = $"[{DateTime.Now:HH:mm:ss}] {message}";
-            _logs.Add(formattedMessage);
+            lock (_logs)
+            {
+                _logs.Add(formattedMessage);
+            }
 
             // Unified logging: also persist to DB if scope factory is configured
             if (_scopeFactory != null)
@@ -67,7 +70,10 @@ namespace TMPP_Aeroport.Domain.Singleton
 
         public IReadOnlyList<string> GetLogs()
         {
-            return _logs.AsReadOnly();
+            lock (_logs)
+            {
+                return _logs.ToList().AsReadOnly();
+            }
         }
     }
 }

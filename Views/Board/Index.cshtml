@@ -6,25 +6,20 @@
 <div class="mb-6 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
     <div>
         <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-100 text-blue-800 text-xs font-bold mb-3 border border-blue-200">
-            <span class="material-symbols-outlined text-[14px]">flight_takeoff</span>
+            <span class="material-symbols-rounded text-[14px]">flight_takeoff</span>
             FIDS BOARD
         </div>
-        <h1 class="text-3xl font-bold text-slate-800">Flight Departures</h1>
-        <p class="text-slate-500 mt-1">Bridge & Iterator Patterns — Real-time display.</p>
+        <h1 class="text-3xl font-bold text-slate-800 dark:text-slate-200">Flight Departures</h1>
+        <p class="text-slate-500 mt-1">Real-time display of flight status across all terminals.</p>
     </div>
     
     <div class="flex items-center gap-4">
         <!-- Controls -->
         <form method="get" class="flex gap-4">
-            <select name="terminal" class="bg-white border border-slate-300 text-slate-700 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block p-2.5 shadow-sm font-bold" onchange="this.form.submit()">
+            <select name="terminal" class="bg-white dark:bg-slate-900 dark:text-slate-200 border border-slate-300 text-slate-700 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block p-2.5 shadow-sm font-bold" onchange="this.form.submit()">
                 <option value="All" selected="@(ViewBag.Terminal == "All")">All Terminals</option>
                 <option value="Terminal A" selected="@(ViewBag.Terminal == "Terminal A")">Terminal A</option>
                 <option value="Terminal B" selected="@(ViewBag.Terminal == "Terminal B")">Terminal B</option>
-            </select>
-
-            <select name="renderer" class="bg-white border border-slate-300 text-slate-700 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block p-2.5 shadow-sm font-bold" onchange="this.form.submit()">
-                <option value="Web" selected="@(ViewBag.Renderer == "Web")">Smart Web Renderer</option>
-                <option value="LED" selected="@(ViewBag.Renderer == "LED")">LED Matrix Renderer</option>
             </select>
         </form>
     </div>
@@ -36,9 +31,6 @@
 
 @section Scripts {
     <script>
-        // Auto-refresh the board every 10 seconds to get the latest status
-        setTimeout(() => {
-            window.location.reload();
-        }, 10000);
+        // FIDS board updates real-time content automatically if implemented, removed hard refresh to prevent visual bugs
     </script>
 }

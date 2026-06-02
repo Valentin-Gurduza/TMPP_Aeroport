@@ -4,17 +4,17 @@
 }
 
 <div class="mb-8">
-    <h1 class="text-2xl font-bold text-slate-800">My Tickets</h1>
+    <h1 class="text-2xl font-bold text-slate-800 dark:text-slate-200">My Tickets</h1>
     <p class="text-sm text-slate-500">History of your bookings and current tickets.</p>
 </div>
 
 @if (!Model.Any())
 {
-    <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-12 text-center">
+    <div class="bg-white dark:bg-slate-900 dark:text-slate-200 rounded-xl shadow-sm border border-slate-200 p-12 text-center">
         <div class="w-16 h-16 bg-slate-100 text-slate-400 rounded-full flex items-center justify-center mx-auto mb-4">
-            <span class="material-symbols-outlined text-3xl">confirmation_number</span>
+            <span class="material-symbols-rounded text-3xl">confirmation_number</span>
         </div>
-        <h3 class="text-lg font-bold text-slate-800 mb-2">No tickets found</h3>
+        <h3 class="text-lg font-bold text-slate-800 dark:text-slate-200 mb-2">No tickets found</h3>
         <p class="text-slate-500 mb-6">You haven't booked any flights yet.</p>
         <a asp-controller="Flights" asp-action="Index" class="inline-flex items-center justify-center px-6 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-semibold transition">
             Browse Flights
@@ -26,10 +26,10 @@ else
     <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
         @foreach (var ticket in Model)
         {
-            <div id="ticket-@ticket.Id" class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden flex flex-col transition hover:shadow-md">
+            <div id="ticket-@ticket.Id" class="bg-white dark:bg-slate-900 dark:text-slate-200 rounded-xl shadow-sm border border-slate-200 overflow-hidden flex flex-col transition hover:shadow-md">
                 <div class="bg-gradient-to-r from-blue-600 to-blue-800 p-5 text-white flex justify-between items-center relative overflow-hidden">
                     <!-- Decor pattern -->
-                    <span class="material-symbols-outlined absolute -right-4 -bottom-4 text-[100px] opacity-10">flight</span>
+                    <span class="material-symbols-rounded absolute -right-4 -bottom-4 text-[100px] opacity-10">flight</span>
                     
                     <div class="relative z-10">
                         <span class="text-blue-200 text-xs font-semibold uppercase tracking-wider block mb-1">Flight</span>
@@ -45,19 +45,19 @@ else
                     <div class="grid grid-cols-2 gap-4 mb-6">
                         <div>
                             <span class="text-slate-400 text-xs uppercase font-semibold block mb-1">Departure</span>
-                            <span class="text-slate-800 font-bold">@ticket.Flight?.DepartureTime.ToString("dd MMM HH:mm")</span>
+                            <span class="text-slate-800 dark:text-slate-200 font-bold">@ticket.Flight?.DepartureTime.ToString("dd MMM HH:mm")</span>
                         </div>
                         <div>
                             <span class="text-slate-400 text-xs uppercase font-semibold block mb-1">Seat</span>
-                            <span class="text-slate-800 font-bold">@ticket.SeatNumber</span>
+                            <span class="text-slate-800 dark:text-slate-200 font-bold">@ticket.SeatNumber</span>
                         </div>
                         <div>
                             <span class="text-slate-400 text-xs uppercase font-semibold block mb-1">Aircraft</span>
-                            <span class="text-slate-800 font-medium">@ticket.Flight?.Aircraft?.Model</span>
+                            <span class="text-slate-800 dark:text-slate-200 font-medium">@ticket.Flight?.Aircraft?.Model</span>
                         </div>
                         <div>
                             <span class="text-slate-400 text-xs uppercase font-semibold block mb-1">Price</span>
-                            <span class="text-slate-800 font-bold">€@ticket.Price.ToString("0.00")</span>
+                            <span class="text-slate-800 dark:text-slate-200 font-bold">€@ticket.Price.ToString("0.00")</span>
                         </div>
                     </div>
                     
@@ -73,7 +73,7 @@ else
                             else if (ticket.TicketState == "Issued")
                             {
                                 <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-700 text-xs font-bold border border-emerald-200">
-                                    <span class="material-symbols-outlined text-[14px]">check_circle</span>
+                                    <span class="material-symbols-rounded text-[14px]">check_circle</span>
                                     Issued
                                 </span>
                             }
@@ -86,7 +86,7 @@ else
                             }
                             else
                             {
-                                <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-slate-50 text-slate-700 text-xs font-bold border border-slate-200">
+                                <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-slate-50 dark:bg-slate-800 dark:text-slate-200 text-slate-700 text-xs font-bold border border-slate-200">
                                     @ticket.TicketState
                                 </span>
                             }
@@ -105,7 +105,7 @@ else
                                     Check-in
                                 </button>
                                 <button onclick="downloadTicketAsPdf('ticket-@ticket.Id', '@ticket.Flight?.FlightNumber')" class="text-slate-400 hover:text-blue-600 transition-colors" title="Download PDF">
-                                    <span class="material-symbols-outlined">download</span>
+                                    <span class="material-symbols-rounded">download</span>
                                 </button>
                             }
                             else if (ticket.TicketState == "CheckedIn")
@@ -123,8 +123,8 @@ else
                             }
                             else if (ticket.TicketState == "Cancelled")
                             {
-                                <button type="button" onclick="executeAction('Refund', @ticket.Id, true)" class="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold rounded-lg border border-slate-300 transition flex items-center justify-center gap-1.5">
-                                    <span class="material-symbols-outlined text-[16px]">account_balance_wallet</span> Refund Ticket
+                                <button type="button" onclick="executeAction('Refund', @ticket.Id, true)" class="px-4 py-2 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 text-xs font-bold rounded-lg border border-slate-300 dark:border-slate-600 transition flex items-center justify-center gap-1.5">
+                                    <span class="material-symbols-rounded text-[16px]">account_balance_wallet</span> Refund Ticket
                                 </button>
                             }
                         </div>
@@ -146,12 +146,12 @@ else
             <div class="flex gap-2">
                 <a asp-action="MyTickets"
                    asp-route-pageNumber="@(Model.PageIndex - 1)"
-                   class="px-4 py-2 bg-white border border-slate-300 text-slate-700 rounded-lg hover:bg-slate-50 transition shadow-sm font-semibold @prevDisabled">
+                   class="px-4 py-2 bg-white dark:bg-slate-900 dark:text-slate-200 border border-slate-300 text-slate-700 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-800 transition shadow-sm font-semibold @prevDisabled">
                     Previous
                 </a>
                 <a asp-action="MyTickets"
                    asp-route-pageNumber="@(Model.PageIndex + 1)"
-                   class="px-4 py-2 bg-white border border-slate-300 text-slate-700 rounded-lg hover:bg-slate-50 transition shadow-sm font-semibold @nextDisabled">
+                   class="px-4 py-2 bg-white dark:bg-slate-900 dark:text-slate-200 border border-slate-300 text-slate-700 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-800 transition shadow-sm font-semibold @nextDisabled">
                     Next
                 </a>
             </div>
@@ -213,7 +213,7 @@ else
                     const pageText = document.body.innerText;
                     if (pageText.includes(data.flightNumber)) {
                         toastr.info(`Status updated for flight ${data.flightNumber}. Refreshing tickets...`);
-                        setTimeout(() => window.location.reload(), 1500);
+                        // Refresh page visually without hard reload if possible, or just let user refresh
                     }
                 });
             }

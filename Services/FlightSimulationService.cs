@@ -32,6 +32,7 @@ namespace TMPP_Aeroport.Services
         public static DateTime VirtualTime { get; private set; }
 
         private List<SimulatedFlight> _activeFlights = new List<SimulatedFlight>();
+        private readonly object _flightLock = new object();
 
         // Feature 3: Weather
         public static IWeatherStrategy CurrentWeather { get; private set; } = new ClearWeatherStrategy();
@@ -73,6 +74,7 @@ namespace TMPP_Aeroport.Services
 
         public static readonly Dictionary<string, (double Lat, double Lng)> Airports = new Dictionary<string, (double Lat, double Lng)>
         {
+            { "Chisinau", (46.9277, 28.9306) },
             { "Bucharest", (44.5722, 26.1022) },
             { "Paris", (49.0097, 2.5479) },
             { "Frankfurt", (50.0379, 8.5622) },
@@ -93,29 +95,40 @@ namespace TMPP_Aeroport.Services
         // --- ATC COMMANDS ---
         public void ApproveTakeoff(string flightNumber)
         {
-            var f = _activeFlights.FirstOrDefault(x => x.FlightNumber == flightNumber);
-            if (f != null) 
+            SimulatedFlight? f;
+            lock (_flightLock)
             {
-                f.TakeoffCleared = true;
-                f.Status = "Cleared for Takeoff";
+                f = _activeFlights.FirstOrDefault(x => x.FlightNumber == flightNumber);
+                if (f != null) 
+                {
+                    f.TakeoffCleared = true;
+                    f.Status = "Cleared for Takeoff";
+                }
             }
         }
 
         public void ApproveLanding(string flightNumber)
         {
-            var f = _activeFlights.FirstOrDefault(x => x.FlightNumber == flightNumber);
-            if (f != null)
+            SimulatedFlight? f;
+            lock (_flightLock)
             {
-                f.LandingCleared = true;
-                f.Status = "Cleared for Landing";
+                f = _activeFlights.FirstOrDefault(x => x.FlightNumber == flightNumber);
+                if (f != null)
+                {
+                    f.LandingCleared = true;
+                    f.Status = "Cleared for Landing";
+                }
             }
         }
 
         public void ReturnToOrigin(string flightNumber)
         {
-            var f = _activeFlights.FirstOrDefault(x => x.FlightNumber == flightNumber);
-            if (f != null && (f.Status == "Airborne" || f.Status.Contains("Holding")))
+            SimulatedFlight? f;
+            lock (_flightLock)
             {
+                f = _activeFlights.FirstOrDefault(x => x.FlightNumber == flightNumber);
+                if (f != null && (f.Status == "Airborne" || f.Status.Contains("Holding")))
+                {
                 // The new Dest is the old Origin name
                 var oldOriginName = f.OriginName;
                 f.OriginName = f.DestName;
@@ -126,9 +139,20 @@ namespace TMPP_Aeroport.Services
                 f.OriginLng = f.CurrentLng;
                 
                 // The new Dest coordinates
-                var originalApt = Airports[f.DestName];
-                f.DestLat = originalApt.Lat;
-                f.DestLng = originalApt.Lng;
+                if (Airports.ContainsKey(f.DestName))
+                {
+                    var originalApt = Airports[f.DestName];
+                    f.DestLat = originalApt.Lat;
+                    f.DestLng = originalApt.Lng;
+                }
+                else
+                {
+                    // Fallback to Bucharest if the old origin was Divert Origin or unknown
+                    var fallbackApt = Airports["Bucharest"];
+                    f.DestName = "Bucharest";
+                    f.DestLat = fallbackApt.Lat;
+                    f.DestLng = fallbackApt.Lng;
+                }
 
                 double distanceKm = CalculateDistance(f.OriginLat, f.OriginLng, f.DestLat, f.DestLng);
                 f.TotalTimeHours = distanceKm / 900.0;
@@ -139,13 +163,17 @@ namespace TMPP_Aeroport.Services
                 f.TakeoffCleared = true;
                 f.LandingCleared = false;
             }
+            }
         }
 
         public void DivertToNearest(string flightNumber)
         {
-            var f = _activeFlights.FirstOrDefault(x => x.FlightNumber == flightNumber);
-            if (f != null && (f.Status == "Airborne" || f.Status.Contains("Holding")))
+            SimulatedFlight? f;
+            lock (_flightLock)
             {
+                f = _activeFlights.FirstOrDefault(x => x.FlightNumber == flightNumber);
+                if (f != null && (f.Status == "Airborne" || f.Status.Contains("Holding")))
+                {
                 string nearestName = f.DestName;
                 double minDistance = double.MaxValue;
 
@@ -178,16 +206,23 @@ namespace TMPP_Aeroport.Services
                 f.TakeoffCleared = true;
                 f.LandingCleared = false;
             }
+            }
         }
 
         public IEnumerable<SimulatedFlight> GetPendingRequests()
         {
-            return _activeFlights.Where(f => f.Status.Contains("Awaiting Takeoff") || f.Status.Contains("Holding Pattern")).ToList();
+            lock (_flightLock)
+            {
+                return _activeFlights.Where(f => f.Status.Contains("Awaiting Takeoff") || f.Status.Contains("Holding Pattern")).ToList();
+            }
         }
         
         public IEnumerable<SimulatedFlight> GetActiveFlights()
         {
-            return _activeFlights.ToList();
+            lock (_flightLock)
+            {
+                return _activeFlights.ToList();
+            }
         }
         // --------------------
 
@@ -213,7 +248,10 @@ namespace TMPP_Aeroport.Services
                     {
                         VirtualTime = saveData.VirtualTime;
                         GlobalSpeedMultiplier = saveData.GlobalSpeedMultiplier;
-                        _activeFlights = saveData.ActiveFlights ?? new List<SimulatedFlight>();
+                        lock (_flightLock)
+                        {
+                            _activeFlights = saveData.ActiveFlights ?? new List<SimulatedFlight>();
+                        }
                         loadedSave = true;
                         _logger.LogInformation($"Successfully loaded simulation state. VirtualTime: {VirtualTime}");
                     }
@@ -227,50 +265,142 @@ namespace TMPP_Aeroport.Services
             foreach (var f in dbFlights)
             {
                 // If we loaded a save and this flight is already tracked, skip adding it
-                if (loadedSave && _activeFlights.Any(sf => sf.FlightNumber == f.FlightNumber))
+                bool alreadyExists = false;
+                lock (_flightLock)
+                {
+                    alreadyExists = _activeFlights.Any(sf => sf.FlightNumber == f.FlightNumber);
+                }
+                if (loadedSave && alreadyExists)
                     continue;
 
-                // Assign a dummy origin just for simulation (OTP if destination is not OTP)
-                var originName = f.Destination.Contains("Bucharest") ? "Paris" : "Bucharest";
-                var destName = "Paris"; // Default fallback
+                await LoadFlightIntoSimulationAsync(f, dbContext);
+            }
+        }
+
+        private async Task LoadFlightIntoSimulationAsync(TMPP_Aeroport.Models.Flight f, ApplicationDbContext dbContext)
+        {
+            var originName = string.IsNullOrEmpty(f.Origin) ? "Bucharest" : f.Origin;
+            var destName = string.IsNullOrEmpty(f.Destination) ? "Paris" : f.Destination;
+            
+            string matchedOrigin = originName;
+            string matchedDest = destName;
+
+            foreach (var apt in Airports.Keys)
+            {
+                if (originName.Contains(apt)) matchedOrigin = apt;
+                if (destName.Contains(apt)) matchedDest = apt;
+            }
+
+            originName = matchedOrigin;
+            destName = matchedDest;
+
+            if (!Airports.ContainsKey(originName)) originName = "Bucharest";
+            if (!Airports.ContainsKey(destName)) destName = "Paris";
+            
+            if (originName == destName) 
+            {
+                if (originName == "Bucharest") destName = "Paris";
+                else originName = "Bucharest";
+            }
+
+            var origin = Airports[originName];
+            var dest = Airports[destName];
+
+            double distanceKm = CalculateDistance(origin.Lat, origin.Lng, dest.Lat, dest.Lng);
+            double defaultSpeedKmh = 900.0;
+            double totalTimeHours = distanceKm / defaultSpeedKmh;
+
+            int totalPax = f.MaxCapacity > 0 ? f.MaxCapacity : (_rng.Next(60, 200));
+            
+            // --- Passenger Automation ---
+            var ticketCount = await dbContext.Tickets.CountAsync(t => t.FlightId == f.Id);
+            if (ticketCount == 0)
+            {
+                int numTicketsToGenerate = _rng.Next((int)(totalPax * 0.7), totalPax + 1);
+                var ticketsToInsert = new List<Ticket>();
+                var bagsToInsert = new List<BaggageItem>();
                 
-                foreach (var apt in Airports.Keys)
-                {
-                    if (f.Destination.Contains(apt)) destName = apt;
+                var seats = new List<string>();
+                for(int r=1; r<=40; r++) {
+                    for(char c='A'; c<='F'; c++) { seats.Add($"{r}{c}"); }
                 }
+                seats = seats.OrderBy(x => _rng.Next()).ToList();
 
-                if (!Airports.ContainsKey(originName)) originName = "Bucharest";
-                if (!Airports.ContainsKey(destName)) destName = "Paris";
+                string[] firstNames = { "Alex", "Maria", "John", "Elena", "Andrew", "Anna", "Michael", "Joanna", "Stephen", "Diana", "Gabriel", "Christina" };
+                string[] lastNames = { "Smith", "Johnson", "Williams", "Brown", "Jones", "Garcia", "Miller", "Davis", "Rodriguez", "Martinez" };
 
-                var origin = Airports[originName];
-                var dest = Airports[destName];
-
-                double distanceKm = CalculateDistance(origin.Lat, origin.Lng, dest.Lat, dest.Lng);
-                double defaultSpeedKmh = 900.0;
-                double totalTimeHours = distanceKm / defaultSpeedKmh;
-
-                int totalPax = f.MaxCapacity > 0 ? f.MaxCapacity : (_rng.Next(60, 200));
-                var simFlight = new SimulatedFlight
+                for (int i = 0; i < numTicketsToGenerate && i < seats.Count; i++)
                 {
-                    Id = f.Id,
-                    FlightNumber = f.FlightNumber,
-                    OriginName = originName,
-                    DestName = destName,
-                    OriginLat = origin.Lat,
-                    OriginLng = origin.Lng,
-                    DestLat = dest.Lat,
-                    DestLng = dest.Lng,
-                    CurrentLat = origin.Lat,
-                    CurrentLng = origin.Lng,
-                    Status = f.Status,
-                    TotalTimeHours = totalTimeHours,
-                    DepartureTime = f.DepartureTime,
-                    Progress = 0,
-                    AircraftModel = f.Aircraft?.Model ?? "A320",
-                    TotalPassengers = totalPax,
-                    FuelPercent = 100.0
-                };
+                    string randomName = $"{firstNames[_rng.Next(firstNames.Length)]} {lastNames[_rng.Next(lastNames.Length)]}";
+                    var ticket = new Ticket
+                    {
+                        FlightId = f.Id,
+                        PassengerName = randomName,
+                        Price = _rng.Next(50, 500),
+                        SeatNumber = seats[i],
+                        TicketState = "Issued",
+                        FareClass = _rng.Next(0, 10) > 8 ? "Business" : "Economy",
+                        BaggageWeight = 0,
+                        UserId = null
+                    };
+                    ticketsToInsert.Add(ticket);
+                }
+                await dbContext.Tickets.AddRangeAsync(ticketsToInsert);
+                await dbContext.SaveChangesAsync();
 
+                foreach (var t in ticketsToInsert)
+                {
+                    int numBags = _rng.Next(0, 3);
+                    for (int b = 0; b < numBags; b++)
+                    {
+                        bagsToInsert.Add(new BaggageItem
+                        {
+                            FlightId = f.Id,
+                            Weight = _rng.Next(5, 25),
+                            Type = "Suitcase",
+                            TagCode = $"BG-{f.FlightNumber}-{_rng.Next(10000, 99999)}",
+                            BaggageStage = "PendingCheckIn",
+                            SecurityStatus = "Pending"
+                        });
+                    }
+                }
+                if (bagsToInsert.Any())
+                {
+                    await dbContext.BaggageItems.AddRangeAsync(bagsToInsert);
+                    await dbContext.SaveChangesAsync();
+                }
+            }
+
+            var simFlight = new SimulatedFlight
+            {
+                Id = f.Id,
+                FlightNumber = f.FlightNumber,
+                OriginName = originName,
+                DestName = destName,
+                OriginLat = origin.Lat,
+                OriginLng = origin.Lng,
+                DestLat = dest.Lat,
+                DestLng = dest.Lng,
+                CurrentLat = origin.Lat,
+                CurrentLng = origin.Lng,
+                Status = f.Status,
+                TotalTimeHours = totalTimeHours,
+                DepartureTime = f.DepartureTime,
+                Progress = 0,
+                AircraftModel = f.Aircraft?.Model ?? "A320",
+                TotalPassengers = totalPax,
+                FuelPercent = 100.0,
+                
+                PassengersGenerated = true,
+                TotalTickets = await dbContext.Tickets.CountAsync(t => t.FlightId == f.Id),
+                CheckedInCount = await dbContext.Tickets.CountAsync(t => t.FlightId == f.Id && t.TicketState != "Issued" && t.TicketState != "Cancelled"),
+                BoardedCount = await dbContext.Tickets.CountAsync(t => t.FlightId == f.Id && t.TicketState == "Boarded"),
+                TotalBags = await dbContext.BaggageItems.CountAsync(b => b.FlightId == f.Id),
+                BagsLoadedCount = await dbContext.BaggageItems.CountAsync(b => b.FlightId == f.Id && b.BaggageStage == "LoadedOnAircraft")
+            };
+
+            lock (_flightLock)
+            {
                 _activeFlights.Add(simFlight);
             }
         }
@@ -316,11 +446,31 @@ namespace TMPP_Aeroport.Services
                 }
             }
 
-            bool anyStateChanged = false;
-            var changedFlights = new List<(int FlightId, string NewStatus)>();
-
-            foreach (var f in _activeFlights)
+            _passengerSyncTickCount++;
+            if (_passengerSyncTickCount >= 5)
             {
+                _passengerSyncTickCount = 0;
+                await SyncPassengerFlowAsync();
+                await AdvanceBaggageStagesAsync();
+            }
+
+            _lifecycleSyncTickCount++;
+            if (_lifecycleSyncTickCount >= 60)
+            {
+                _lifecycleSyncTickCount = 0;
+                await ManageAirportLifecycleAsync();
+            }
+
+            bool anyStateChanged = false;
+            var changedFlights = new List<(int FlightId, string NewStatus, string AssignedGate, DateTime? ActualArrivalTime)>();
+
+            var stateChangesToSend = new List<object>();
+            var boardingProgressToSend = new List<object>();
+
+            lock (_flightLock)
+            {
+                foreach (var f in _activeFlights)
+                {
                 string oldStatus = f.Status;
                 
                 DateTime arrivalTime = f.DepartureTime.AddHours(f.TotalTimeHours);
@@ -340,19 +490,16 @@ namespace TMPP_Aeroport.Services
                 }
                 else if (VirtualTime >= boardingTime && VirtualTime < f.DepartureTime)
                 {
-                    // Feature 4: Interactive Boarding via Iterator pattern
+                    // Feature 4: Interactive Boarding synced with DB Tickets
                     if (!f.BoardingStarted)
                     {
                         f.BoardingStarted = true;
-                        f.BoardedCount = 0;
                         f.Status = "Boarding";
+                        f.TotalPassengers = f.TotalTickets > 0 ? f.TotalTickets : f.TotalPassengers;
                     }
                     else
                     {
-                        // Board ~5 passengers per tick (at 1x speed)
-                        int boardRate = Math.Max(1, 5 * GlobalSpeedMultiplier);
-                        f.BoardedCount = Math.Min(f.TotalPassengers, f.BoardedCount + boardRate);
-                        if (f.BoardedCount >= f.TotalPassengers)
+                        if (f.BoardedCount >= f.TotalPassengers && f.TotalPassengers > 0)
                             f.Status = "Boarding Complete";
                         else
                             f.Status = "Boarding";
@@ -361,19 +508,26 @@ namespace TMPP_Aeroport.Services
                     f.CurrentLat = f.OriginLat;
                     f.CurrentLng = f.OriginLng;
                 }
-                else if (VirtualTime >= f.DepartureTime && f.Progress < 1.0 && VirtualTime < arrivalTime)
+                else if (VirtualTime >= f.DepartureTime && f.Progress < 1.0)
                 {
                     if (!f.TakeoffCleared)
                     {
-                        // Feature 3: Check weather for takeoff
-                        if (!CurrentWeather.CanTakeoff)
-                            f.Status = "Awaiting Takeoff - Weather Hold";
-                        else
-                            f.Status = "Awaiting Takeoff Clearance";
-                        f.Progress = 0;
-                        f.CurrentLat = f.OriginLat;
-                        f.CurrentLng = f.OriginLng;
-                        f.DepartureTime = VirtualTime;
+                        // Auto-clear takeoff after 2 virtual minutes if weather allows, so planes don't get stuck forever
+                        if (CurrentWeather.CanTakeoff && (VirtualTime - f.DepartureTime).TotalMinutes > 2)
+                        {
+                            f.TakeoffCleared = true;
+                        }
+                        else 
+                        {
+                            // Feature 3: Check weather for takeoff
+                            if (!CurrentWeather.CanTakeoff)
+                                f.Status = "Awaiting Takeoff - Weather Hold";
+                            else
+                                f.Status = "Awaiting Takeoff Clearance";
+                            f.Progress = 0;
+                            f.CurrentLat = f.OriginLat;
+                            f.CurrentLng = f.OriginLng;
+                        }
                     }
                     else
                     {
@@ -413,26 +567,29 @@ namespace TMPP_Aeroport.Services
                         if (f.FuelPercent <= 10.0 && !f.EmergencyDeclared)
                         {
                             f.EmergencyDeclared = true;
-                            await _hubContext.Clients.All.SendAsync("SecurityAlert", new {
-                                CheckpointId = "ATC-EMERGENCY",
+                            stateChangesToSend.Add(new {
+                                SpecialEvent = "Emergency",
                                 Message = $"🚨 EMERGENCY: {f.FlightNumber} FUEL CRITICAL ({f.FuelPercent:F0}%) - AUTO DIVERT ACTIVATED",
                                 Level = "EMERGENCY"
                             });
                             DivertToNearest(f.FlightNumber);
                         }
 
-                        f.CurrentLat = f.DestLat + Math.Sin(holdingElapsed.TotalSeconds * 0.1) * 0.05;
-                        f.CurrentLng = f.DestLng + Math.Cos(holdingElapsed.TotalSeconds * 0.1) * 0.05;
+                        f.CurrentLat = f.DestLat + Math.Sin(holdingElapsed.TotalSeconds * 0.1) * 0.5;
+                        f.CurrentLng = f.DestLng + Math.Cos(holdingElapsed.TotalSeconds * 0.1) * 0.5;
                     }
                     else
                     {
                         if (!f.ActualArrivalTime.HasValue)
                         {
                             f.ActualArrivalTime = VirtualTime;
-                            // Feature 5: Smart Gate Allocation on landing
-                            var allocator = new SmartGateAllocator();
-                            var occupiedGates = _activeFlights.Where(x => !string.IsNullOrEmpty(x.AssignedGate)).Select(x => x.AssignedGate).ToList();
-                            f.AssignedGate = allocator.AllocateGate(f.AircraftModel, occupiedGates);
+                            // Feature 5: Smart Gate Allocation on landing (Only if not assigned manually)
+                            if (string.IsNullOrEmpty(f.AssignedGate))
+                            {
+                                var allocator = new SmartGateAllocator();
+                                var occupiedGates = _activeFlights.Where(x => !string.IsNullOrEmpty(x.AssignedGate)).Select(x => x.AssignedGate).ToList();
+                                f.AssignedGate = allocator.AllocateGate(f.AircraftModel, occupiedGates);
+                            }
 
                             // Feature 2: Dispatch GSE vehicles
                             _vehiclePool.AcquireVehicle(VehicleType.FuelTruck, f.FlightNumber, VirtualTime);
@@ -440,7 +597,7 @@ namespace TMPP_Aeroport.Services
                             _vehiclePool.AcquireVehicle(VehicleType.Tug, f.FlightNumber, VirtualTime);
                             f.ServicingStarted = true;
 
-                            await _hubContext.Clients.All.SendAsync("FlightStateChanged", new {
+                            stateChangesToSend.Add(new {
                                 FlightNumber = f.FlightNumber,
                                 OldStatus = "Cleared for Landing",
                                 NewStatus = $"Gate {f.AssignedGate} - Servicing",
@@ -458,8 +615,15 @@ namespace TMPP_Aeroport.Services
                             f.CurrentLat = f.DestLat;
                             f.CurrentLng = f.DestLng;
 
-                            // Feature 2: Complete servicing when 30 minutes pass
-                            if (!f.ServicingComplete && VirtualTime >= f.ActualArrivalTime.Value.AddMinutes(30))
+                            // Feature 2: Complete servicing when vehicles finish
+                            var assignedVehicles = _vehiclePool.GetVehiclesForFlight(f.FlightNumber);
+                            double maxDuration = 30.0;
+                            if (assignedVehicles.Any())
+                            {
+                                maxDuration = assignedVehicles.Max(v => v.ServiceDurationMinutes);
+                            }
+
+                            if (!f.ServicingComplete && VirtualTime >= f.ActualArrivalTime.Value.AddMinutes(maxDuration))
                             {
                                 f.ServicingComplete = true;
                                 _vehiclePool.ReleaseVehiclesForFlight(f.FlightNumber);
@@ -468,29 +632,8 @@ namespace TMPP_Aeroport.Services
                         }
                         else
                         {
-                            // Reset for return flight
-                            f.DepartureTime = deplaningEndTimeReal.AddHours(1.25);
-                            f.ActualDepartureTime = null;
-                            f.ActualArrivalTime = null;
-                            f.HoldingStartTime = null;
-                            f.TakeoffCleared = false;
-                            f.LandingCleared = false;
-                            f.ServicingStarted = false;
-                            f.ServicingComplete = false;
-                            f.AssignedGate = string.Empty;
-                            f.EmergencyDeclared = false;
-                            f.BoardedCount = 0;
-                            f.BoardingStarted = false;
-                            f.FuelPercent = 100.0;
-
-                            var tempLat = f.OriginLat; var tempLng = f.OriginLng; var tempName = f.OriginName;
-                            f.OriginLat = f.DestLat; f.OriginLng = f.DestLng; f.OriginName = f.DestName;
-                            f.DestLat = tempLat; f.DestLng = tempLng; f.DestName = tempName;
-
-                            f.Status = "Scheduled";
-                            f.Progress = 0;
-                            f.CurrentLat = f.OriginLat;
-                            f.CurrentLng = f.OriginLng;
+                            // Feature: Garbage Collection target
+                            f.Status = "Completed";
                         }
                     }
                 }
@@ -498,26 +641,44 @@ namespace TMPP_Aeroport.Services
                 if (oldStatus != f.Status)
                 {
                     anyStateChanged = true;
-                    await _hubContext.Clients.All.SendAsync("FlightStateChanged", new {
+                    stateChangesToSend.Add(new {
                         FlightNumber = f.FlightNumber,
                         OldStatus = oldStatus,
                         NewStatus = f.Status,
                         Origin = f.OriginName,
                         Destination = f.DestName
                     });
-                    changedFlights.Add((f.Id, f.Status));
+                    changedFlights.Add((f.Id, f.Status, f.AssignedGate, f.ActualArrivalTime));
                 }
 
                 // Feature 4: Push boarding progress every tick during boarding
                 if (f.Status == "Boarding" && f.BoardingStarted)
                 {
-                    await _hubContext.Clients.All.SendAsync("BoardingProgress", new {
+                    boardingProgressToSend.Add(new {
                         FlightNumber = f.FlightNumber,
                         Boarded = f.BoardedCount,
                         Total = f.TotalPassengers,
                         Gate = f.AssignedGate
                     });
                 }
+                }
+            } // end of lock
+
+            foreach (var msg in stateChangesToSend)
+            {
+                // Dynamic check since we mixed emergency payload in here for brevity
+                var dmsg = msg as dynamic;
+                try {
+                    if (dmsg?.SpecialEvent == "Emergency")
+                        await _hubContext.Clients.All.SendAsync("SecurityAlert", new { CheckpointId = "ATC-EMERGENCY", Message = dmsg.Message, Level = dmsg.Level });
+                    else
+                        await _hubContext.Clients.All.SendAsync("FlightStateChanged", msg);
+                } catch { }
+            }
+
+            foreach (var bp in boardingProgressToSend)
+            {
+                await _hubContext.Clients.All.SendAsync("BoardingProgress", bp);
             }
 
             if (changedFlights.Any())
@@ -526,28 +687,37 @@ namespace TMPP_Aeroport.Services
             }
 
             // Always broadcast radar positions every tick (for smooth animation)
-            var radarData = _activeFlights.Where(f => f.Status == "Airborne").Select(f => new {
-                f.FlightNumber,
-                f.CurrentLat,
-                f.CurrentLng,
-                f.OriginName,
-                f.DestName,
-                f.OriginLat,
-                f.OriginLng,
-                f.DestLat,
-                f.DestLng,
-                f.Status
-            });
+            IEnumerable<dynamic> radarData;
+            lock (_flightLock)
+            {
+                radarData = _activeFlights.Where(f => f.Status == "Airborne" || f.Status.Contains("Holding")).Select(f => new {
+                    f.FlightNumber,
+                    f.CurrentLat,
+                    f.CurrentLng,
+                    f.OriginName,
+                    f.DestName,
+                    f.OriginLat,
+                    f.OriginLng,
+                    f.DestLat,
+                    f.DestLng,
+                    f.Status
+                }).ToList();
+            }
             await _hubContext.Clients.All.SendAsync("RadarUpdate", radarData);
             
             // Also broadcast full board update if state changed
             if (anyStateChanged)
             {
-                await _hubContext.Clients.All.SendAsync("BoardUpdate", _activeFlights);
+                List<SimulatedFlight> snapshot;
+                lock (_flightLock)
+                {
+                    snapshot = _activeFlights.ToList();
+                }
+                await _hubContext.Clients.All.SendAsync("BoardUpdate", snapshot);
             }
         }
 
-        private async Task UpdateDatabaseStatusesAsync(List<(int FlightId, string NewStatus)> changedFlights)
+        private async Task UpdateDatabaseStatusesAsync(List<(int FlightId, string NewStatus, string AssignedGate, DateTime? ActualArrivalTime)> changedFlights)
         {
             using var scope = _scopeFactory.CreateScope();
             var dbContext = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
@@ -557,15 +727,20 @@ namespace TMPP_Aeroport.Services
 
             foreach (var flight in flightsInDb)
             {
-                var newStatus = changedFlights.First(x => x.FlightId == flight.Id).NewStatus;
-                flight.Status = newStatus;
+                var update = changedFlights.First(x => x.FlightId == flight.Id);
+                flight.Status = update.NewStatus;
+                
+                if (!string.IsNullOrEmpty(update.AssignedGate))
+                    flight.Gate = update.AssignedGate;
+                if (update.ActualArrivalTime.HasValue)
+                    flight.ArrivalTime = update.ActualArrivalTime;
 
                 // Observer Pattern Trigger
                 var subject = new TMPP_Aeroport.Domain.Observer.FlightStatusSubject(flight.FlightNumber);
                 subject.Attach(new TMPP_Aeroport.Domain.Observer.PassengerNotifier(dbContext));
                 subject.Attach(new TMPP_Aeroport.Domain.Observer.DisplayBoardUpdater(dbContext));
                 
-                subject.Status = newStatus; // This will call Notify() and write AuditLogs
+                subject.Status = update.NewStatus; // This will call Notify() and write AuditLogs
             }
             
             if (flightsInDb.Any())
@@ -584,15 +759,229 @@ namespace TMPP_Aeroport.Services
             return 2 * r * Math.Asin(Math.Sqrt(a));
         }
 
+        private int _passengerSyncTickCount = 0;
+
+        private async Task SyncPassengerFlowAsync()
+        {
+            using var scope = _scopeFactory.CreateScope();
+            var dbContext = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+
+            List<SimulatedFlight> flightsToSync;
+            lock (_flightLock)
+            {
+                // Sync flights that haven't departed yet
+                flightsToSync = _activeFlights.Where(f => VirtualTime < f.DepartureTime).ToList();
+            }
+
+            foreach (var f in flightsToSync)
+            {
+                var timeToDeparture = (f.DepartureTime - VirtualTime).TotalMinutes;
+
+                var tickets = await dbContext.Tickets.Where(t => t.FlightId == f.Id).ToListAsync();
+                var bags = await dbContext.BaggageItems.Where(b => b.FlightId == f.Id).ToListAsync();
+
+                bool dbChanged = false;
+
+                if (timeToDeparture <= 90 && timeToDeparture > 30) // Check-in phase
+                {
+                    var issued = tickets.Where(t => t.TicketState == "Issued" && t.UserId == null).ToList();
+                    int numToCheckIn = Math.Max(1, issued.Count / 10);
+                    foreach (var t in issued.OrderBy(x => _rng.Next()).Take(numToCheckIn))
+                    {
+                        t.TicketState = "CheckedIn";
+                        t.CheckInAt = VirtualTime;
+                        dbChanged = true;
+                    }
+                    
+                    var pendingBags = bags.Where(b => b.BaggageStage == "PendingCheckIn").ToList();
+                    int bagsToCheckIn = Math.Max(1, pendingBags.Count / 10);
+                    foreach (var b in pendingBags.OrderBy(x => _rng.Next()).Take(bagsToCheckIn))
+                    {
+                        b.BaggageStage = "CheckedIn"; // Properly move to CheckedIn instead of OnConveyor
+                        b.StageUpdatedAt = VirtualTime;
+                        dbChanged = true;
+                    }
+                }
+                
+                // Baggage sorting logic has been delegated entirely to AdvanceBaggageStagesAsync
+                // to prevent skipping the XRayScreening stage.
+
+                if (timeToDeparture <= 30 && timeToDeparture > 0) // Boarding phase
+                {
+                    var checkedIn = tickets.Where(t => t.TicketState == "CheckedIn" && t.UserId == null).ToList();
+                    int numToBoard = Math.Max(1, checkedIn.Count / 5);
+                    foreach (var t in checkedIn.OrderBy(x => _rng.Next()).Take(numToBoard))
+                    {
+                        t.TicketState = "Boarded";
+                        t.BoardedAt = VirtualTime;
+                        dbChanged = true;
+                    }
+                }
+
+                if (dbChanged)
+                {
+                    await dbContext.SaveChangesAsync();
+                    
+                    lock (_flightLock)
+                    {
+                        var flight = _activeFlights.FirstOrDefault(x => x.FlightNumber == f.FlightNumber);
+                        if (flight != null)
+                        {
+                            flight.CheckedInCount = tickets.Count(t => t.TicketState != "Issued" && t.TicketState != "Cancelled");
+                            flight.BoardedCount = tickets.Count(t => t.TicketState == "Boarded");
+                            flight.BagsLoadedCount = bags.Count(b => b.BaggageStage == "LoadedOnAircraft");
+                            flight.TotalPassengers = tickets.Count;
+                        }
+                    }
+                }
+            }
+        }
+
+        private async Task AdvanceBaggageStagesAsync()
+        {
+            using var scope = _scopeFactory.CreateScope();
+            var dbContext = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+
+            var stages = new[] { "CheckedIn", "OnConveyor", "XRayScreening", "Sorted", "LoadedOnAircraft" };
+            var bags = await dbContext.BaggageItems.Where(b => b.BaggageStage != "LoadedOnAircraft" && b.SecurityStatus != "Rejected").ToListAsync();
+            var now = VirtualTime; // Use simulation's VirtualTime instead of real-world DateTime.Now!
+            bool changed = false;
+
+            foreach (var bag in bags)
+            {
+                if (!bag.StageUpdatedAt.HasValue || (now - bag.StageUpdatedAt.Value).TotalSeconds >= 5)
+                {
+                    var idx = Array.IndexOf(stages, bag.BaggageStage);
+                    if (idx >= 0 && idx < stages.Length - 1)
+                    {
+                        bag.BaggageStage = stages[idx + 1];
+                        bag.StageUpdatedAt = now;
+                        // Hold it here until Security Clears it
+                        if (bag.BaggageStage == "XRayScreening" && (bag.SecurityStatus == "Flagged" || bag.SecurityStatus == "Pending"))
+                            bag.BaggageStage = "XRayScreening"; 
+                        changed = true;
+                    }
+                }
+            }
+            if (changed) await dbContext.SaveChangesAsync();
+        }
+
+        private int _lifecycleSyncTickCount = 0;
+
+        private async Task ManageAirportLifecycleAsync()
+        {
+            using var scope = _scopeFactory.CreateScope();
+            var dbContext = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+
+            // 1. Garbage Collection
+            List<SimulatedFlight> completedFlights;
+            lock (_flightLock)
+            {
+                completedFlights = _activeFlights.Where(f => f.Status == "Completed").ToList();
+                foreach (var f in completedFlights)
+                {
+                    _activeFlights.Remove(f);
+                }
+            }
+
+            foreach (var f in completedFlights)
+            {
+                var dbFlight = await dbContext.Flights.FindAsync(f.Id);
+                if (dbFlight != null)
+                {
+                    dbFlight.Status = "Completed";
+                }
+            }
+
+            if (completedFlights.Any())
+            {
+                await dbContext.SaveChangesAsync();
+            }
+
+            // 2. Continuous Generator (Strictly Fleet-Aware)
+            var aircraftList = await dbContext.Aircrafts.ToListAsync();
+            if (!aircraftList.Any()) return;
+
+            var newFlights = new List<TMPP_Aeroport.Models.Flight>();
+
+            foreach (var ac in aircraftList)
+            {
+                // Find the latest flight for this aircraft that is not completed
+                var latestFlight = await dbContext.Flights
+                    .Where(f => f.AircraftId == ac.Id && f.Status != "Completed")
+                    .OrderByDescending(f => f.DepartureTime)
+                    .FirstOrDefaultAsync();
+
+                DateTime nextAvailableTime = VirtualTime;
+
+                if (latestFlight != null)
+                {
+                    if (latestFlight.ArrivalTime.HasValue)
+                        nextAvailableTime = latestFlight.ArrivalTime.Value.AddHours(2); // 2 hours turnaround
+                    else
+                        nextAvailableTime = latestFlight.DepartureTime.AddHours(4); // approx 3h flight + 1h turnaround
+                }
+
+                // If this aircraft has no upcoming flights in the next 12 hours, schedule one
+                if (nextAvailableTime < VirtualTime.AddHours(12))
+                {
+                    var depTime = nextAvailableTime < VirtualTime 
+                        ? VirtualTime.AddHours(_rng.Next(1, 3))
+                        : nextAvailableTime.AddHours(_rng.Next(1, 3));
+
+                    var origin = Airports.Keys.ElementAt(_rng.Next(Airports.Count));
+                    var dest = Airports.Keys.ElementAt(_rng.Next(Airports.Count));
+                    
+                    // Logic: the new origin should ideally be the old destination
+                    if (latestFlight != null && !string.IsNullOrEmpty(latestFlight.Destination))
+                    {
+                        origin = latestFlight.Destination;
+                        if (!Airports.ContainsKey(origin)) origin = Airports.Keys.ElementAt(_rng.Next(Airports.Count));
+                    }
+                    
+                    while (origin == dest) dest = Airports.Keys.ElementAt(_rng.Next(Airports.Count));
+
+                    var flt = new TMPP_Aeroport.Models.Flight
+                    {
+                        FlightNumber = $"RO{_rng.Next(100, 9999)}",
+                        Origin = origin,
+                        Destination = dest,
+                        DepartureTime = depTime,
+                        Status = "Scheduled",
+                        MaxCapacity = ac.Capacity,
+                        AircraftId = ac.Id
+                    };
+                    newFlights.Add(flt);
+                }
+            }
+
+            if (newFlights.Any())
+            {
+                await dbContext.Flights.AddRangeAsync(newFlights);
+                await dbContext.SaveChangesAsync();
+
+                // Load newly generated flights into simulation (which also generates tickets)
+                foreach(var f in newFlights)
+                {
+                    await LoadFlightIntoSimulationAsync(f, dbContext);
+                }
+            }
+        }
+
         private void SaveState()
         {
             try
             {
+                List<SimulatedFlight> activeFlightsSnapshot;
+                lock (_flightLock)
+                {
+                    activeFlightsSnapshot = _activeFlights.ToList();
+                }
                 var saveData = new SimulationSaveData
                 {
                     VirtualTime = VirtualTime,
                     GlobalSpeedMultiplier = GlobalSpeedMultiplier,
-                    ActiveFlights = _activeFlights
+                    ActiveFlights = activeFlightsSnapshot
                 };
 
                 string json = System.Text.Json.JsonSerializer.Serialize(saveData, new System.Text.Json.JsonSerializerOptions { WriteIndented = true });
@@ -647,9 +1036,16 @@ namespace TMPP_Aeroport.Services
         public bool ServicingComplete { get; set; } = false;
         public string AssignedGate { get; set; } = string.Empty;
 
-        // Feature 4: Interactive Boarding
-        public int TotalPassengers { get; set; } = 0;
+        // Feature 4: Interactive Boarding & Passenger Flow
+        public int TotalPassengers { get; set; } = 0; // Legacy / Fallback
         public int BoardedCount { get; set; } = 0;
         public bool BoardingStarted { get; set; } = false;
+        
+        // Automated Passenger Flow Tracking
+        public bool PassengersGenerated { get; set; } = false;
+        public int TotalTickets { get; set; } = 0;
+        public int CheckedInCount { get; set; } = 0;
+        public int TotalBags { get; set; } = 0;
+        public int BagsLoadedCount { get; set; } = 0;
     }
 }
