@@ -37,10 +37,9 @@
                             {
                                 foreach (var f in flights)
                                 {
-                                    <option value="@f.FlightNumber">@f.FlightNumber (@f.Status)</option>
+                                    <option value="@f.FlightNumber">@f.FlightNumber – @f.Destination (@f.Status)</option>
                                 }
                             }
-                            <option value="RO-102">RO-102 (Manual Override)</option>
                         </select>
                     </div>
 

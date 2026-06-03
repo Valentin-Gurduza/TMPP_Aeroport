@@ -1,5 +1,6 @@
 @{
     ViewData["Title"] = "ATC Commands";
+    bool lightsCurrentlyOn = ViewBag.LightsOn is bool b && b;
 }
 
 <div class="mb-8">
@@ -7,7 +8,13 @@
         <span class="material-symbols-rounded text-[14px]">terminal</span>
         ATC COMMAND INVOKER
     </div>
-    <h1 class="text-3xl font-bold text-slate-800 dark:text-slate-200">Runway Operations Control</h1>
+    <div class="flex items-center gap-4">
+        <h1 class="text-3xl font-bold text-slate-800 dark:text-slate-200">Runway Operations Control</h1>
+        <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-sm font-bold border @(lightsCurrentlyOn ? "bg-green-100 text-green-700 border-green-300" : "bg-slate-100 text-slate-500 border-slate-300")">
+            <span class="w-2 h-2 rounded-full @(lightsCurrentlyOn ? "bg-green-500 animate-pulse" : "bg-slate-400")"></span>
+            LIGHTS @(lightsCurrentlyOn ? "ON" : "OFF")
+        </span>
+    </div>
     <p class="text-slate-500 mt-1">Control and sequence operations for runway lighting systems.</p>
 </div>
 

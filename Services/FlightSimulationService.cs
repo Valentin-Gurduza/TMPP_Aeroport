@@ -49,8 +49,6 @@ namespace TMPP_Aeroport.Services
             _appLifetime = appLifetime;
             _vehiclePool = vehiclePool;
             VirtualTime = DateTime.Now;
-            
-            _appLifetime.ApplicationStopping.Register(SaveState);
         }
 
         public GroundVehiclePool GetVehiclePool() => _vehiclePool;
@@ -231,50 +229,28 @@ namespace TMPP_Aeroport.Services
             using var scope = _scopeFactory.CreateScope();
             var dbContext = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
 
-            var dbFlights = await dbContext.Flights.Include(f => f.Aircraft).ToListAsync();
+            // Always start from a clean RAM state - ONLY load from DB, never from savegame file
+            lock (_flightLock) { _activeFlights.Clear(); }
 
-            // Load Game State if exists
-            bool loadedSave = false;
-            string saveFilePath = "simulation_savegame.json";
-            
-            if (System.IO.File.Exists(saveFilePath))
-            {
-                try
-                {
-                    string json = System.IO.File.ReadAllText(saveFilePath);
-                    var saveData = System.Text.Json.JsonSerializer.Deserialize<SimulationSaveData>(json);
-                    
-                    if (saveData != null)
-                    {
-                        VirtualTime = saveData.VirtualTime;
-                        GlobalSpeedMultiplier = saveData.GlobalSpeedMultiplier;
-                        lock (_flightLock)
-                        {
-                            _activeFlights = saveData.ActiveFlights ?? new List<SimulatedFlight>();
-                        }
-                        loadedSave = true;
-                        _logger.LogInformation($"Successfully loaded simulation state. VirtualTime: {VirtualTime}");
-                    }
-                }
-                catch (Exception ex)
-                {
-                    _logger.LogError(ex, "Failed to load simulation_savegame.json. Starting fresh.");
-                }
-            }
+            // Delete any leftover savegame file to prevent corrupted state on next restart
+            if (System.IO.File.Exists("simulation_savegame.json"))
+                System.IO.File.Delete("simulation_savegame.json");
+
+            // Load only active (non-completed) flights from DB
+            var dbFlights = await dbContext.Flights
+                .Include(f => f.Aircraft)
+                .Where(f => f.Status != "Completed")
+                .OrderBy(f => f.DepartureTime)
+                .ToListAsync();
+
+            _logger.LogInformation($"Initializing simulation with {dbFlights.Count} flights from database.");
 
             foreach (var f in dbFlights)
             {
-                // If we loaded a save and this flight is already tracked, skip adding it
-                bool alreadyExists = false;
-                lock (_flightLock)
-                {
-                    alreadyExists = _activeFlights.Any(sf => sf.FlightNumber == f.FlightNumber);
-                }
-                if (loadedSave && alreadyExists)
-                    continue;
-
                 await LoadFlightIntoSimulationAsync(f, dbContext);
             }
+
+            _logger.LogInformation($"Simulation initialized. {_activeFlights.Count} flights loaded into RAM.");
         }
 
         private async Task LoadFlightIntoSimulationAsync(TMPP_Aeroport.Models.Flight f, ApplicationDbContext dbContext)
@@ -473,8 +449,15 @@ namespace TMPP_Aeroport.Services
                 {
                 string oldStatus = f.Status;
                 
+                // --- Dynamic thresholds proportional to flight duration ---
+                double flightMinutes = f.TotalTimeHours * 60.0;
+                // Boarding window: at least 20 min, up to 25% of flight duration (max 90 min)
+                double boardingWindowMinutes = Math.Clamp(flightMinutes * 0.25, 20.0, 90.0);
+                // FIDS visibility: flight appears on board with min(180, 2x flight duration) min before departure
+                double fidsWindowMinutes = Math.Min(180.0, flightMinutes * 2.0);
+
                 DateTime arrivalTime = f.DepartureTime.AddHours(f.TotalTimeHours);
-                DateTime boardingTime = f.DepartureTime.AddMinutes(-30);
+                DateTime boardingTime = f.DepartureTime.AddMinutes(-boardingWindowMinutes);
 
                 if (VirtualTime < boardingTime)
                 {
@@ -606,7 +589,9 @@ namespace TMPP_Aeroport.Services
                             });
                         }
 
-                        DateTime deplaningEndTimeReal = f.ActualArrivalTime.Value.AddMinutes(45);
+                        // Deplaning/servicing window: at least 15 min, up to 20% of flight duration (max 60 min)
+                        double deplaningMinutes = Math.Clamp(flightMinutes * 0.20, 15.0, 60.0);
+                        DateTime deplaningEndTimeReal = f.ActualArrivalTime.Value.AddMinutes(deplaningMinutes);
 
                         if (VirtualTime < deplaningEndTimeReal)
                         {
@@ -617,10 +602,11 @@ namespace TMPP_Aeroport.Services
 
                             // Feature 2: Complete servicing when vehicles finish
                             var assignedVehicles = _vehiclePool.GetVehiclesForFlight(f.FlightNumber);
-                            double maxDuration = 30.0;
+                            // Cap servicing duration so it fits within the deplaning window
+                            double maxDuration = Math.Min(deplaningMinutes * 0.8, 30.0);
                             if (assignedVehicles.Any())
                             {
-                                maxDuration = assignedVehicles.Max(v => v.ServiceDurationMinutes);
+                                maxDuration = Math.Min(assignedVehicles.Max(v => v.ServiceDurationMinutes), deplaningMinutes * 0.8);
                             }
 
                             if (!f.ServicingComplete && VirtualTime >= f.ActualArrivalTime.Value.AddMinutes(maxDuration))
@@ -642,6 +628,7 @@ namespace TMPP_Aeroport.Services
                 {
                     anyStateChanged = true;
                     stateChangesToSend.Add(new {
+                        FlightId = f.Id,
                         FlightNumber = f.FlightNumber,
                         OldStatus = oldStatus,
                         NewStatus = f.Status,
@@ -777,12 +764,17 @@ namespace TMPP_Aeroport.Services
             {
                 var timeToDeparture = (f.DepartureTime - VirtualTime).TotalMinutes;
 
+                // --- Dynamic windows matching TickAsync proportional thresholds ---
+                double fMin = f.TotalTimeHours * 60.0;
+                double checkInOpenMin  = Math.Min(120.0, fMin * 2.0);   // check-in opens min(2h, 2× flight dur)
+                double boardingStartMin = Math.Clamp(fMin * 0.25, 20.0, 90.0); // boarding min(20 min, 25% dur)
+
                 var tickets = await dbContext.Tickets.Where(t => t.FlightId == f.Id).ToListAsync();
                 var bags = await dbContext.BaggageItems.Where(b => b.FlightId == f.Id).ToListAsync();
 
                 bool dbChanged = false;
 
-                if (timeToDeparture <= 90 && timeToDeparture > 30) // Check-in phase
+                if (timeToDeparture <= checkInOpenMin && timeToDeparture > boardingStartMin) // Check-in phase
                 {
                     var issued = tickets.Where(t => t.TicketState == "Issued" && t.UserId == null).ToList();
                     int numToCheckIn = Math.Max(1, issued.Count / 10);
@@ -806,7 +798,7 @@ namespace TMPP_Aeroport.Services
                 // Baggage sorting logic has been delegated entirely to AdvanceBaggageStagesAsync
                 // to prevent skipping the XRayScreening stage.
 
-                if (timeToDeparture <= 30 && timeToDeparture > 0) // Boarding phase
+                if (timeToDeparture <= boardingStartMin && timeToDeparture > 0) // Boarding phase
                 {
                     var checkedIn = tickets.Where(t => t.TicketState == "CheckedIn" && t.UserId == null).ToList();
                     int numToBoard = Math.Max(1, checkedIn.Count / 5);
@@ -873,6 +865,8 @@ namespace TMPP_Aeroport.Services
             using var scope = _scopeFactory.CreateScope();
             var dbContext = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
 
+            int fleetSize = await dbContext.Aircrafts.CountAsync();
+
             // 1. Garbage Collection
             List<SimulatedFlight> completedFlights;
             lock (_flightLock)
@@ -881,6 +875,23 @@ namespace TMPP_Aeroport.Services
                 foreach (var f in completedFlights)
                 {
                     _activeFlights.Remove(f);
+                }
+
+                // HARD CAP: each aircraft can have at most 2 active flights at once
+                // (current flight + 1 upcoming scheduled). So max = fleetSize * 2
+                int hardCap = fleetSize * 2;
+                var toRemoveList = _activeFlights
+                    .Where(f => f.Status == "Landed")
+                    .OrderBy(f => f.DepartureTime)
+                    .ToList();
+
+                int idx = 0;
+                while (_activeFlights.Count > hardCap && idx < toRemoveList.Count)
+                {
+                    var f = toRemoveList[idx++];
+                    _activeFlights.Remove(f);
+                    completedFlights.Add(f); // Mark it as completed in DB!
+                    _logger.LogWarning($"Hard cap enforced: removed excess landed flight {f.FlightNumber} from RAM and marked as Completed.");
                 }
             }
 
@@ -968,31 +979,8 @@ namespace TMPP_Aeroport.Services
             }
         }
 
-        private void SaveState()
-        {
-            try
-            {
-                List<SimulatedFlight> activeFlightsSnapshot;
-                lock (_flightLock)
-                {
-                    activeFlightsSnapshot = _activeFlights.ToList();
-                }
-                var saveData = new SimulationSaveData
-                {
-                    VirtualTime = VirtualTime,
-                    GlobalSpeedMultiplier = GlobalSpeedMultiplier,
-                    ActiveFlights = activeFlightsSnapshot
-                };
-
-                string json = System.Text.Json.JsonSerializer.Serialize(saveData, new System.Text.Json.JsonSerializerOptions { WriteIndented = true });
-                System.IO.File.WriteAllText("simulation_savegame.json", json);
-                _logger.LogInformation("Simulation state saved successfully to simulation_savegame.json.");
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Failed to save simulation state.");
-            }
-        }
+        // SaveState removed: simulation state is now derived purely from the database on startup.
+        // This prevents ghost flight accumulation across restarts.
     }
 
     public class SimulationSaveData

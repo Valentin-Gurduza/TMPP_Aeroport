@@ -205,7 +205,9 @@
                 LIS: { lat: 38.7742, lng: -9.1342, name: 'Lisbon (LIS)' },
                 WAW: { lat: 52.1657, lng: 20.9671, name: 'Warsaw (WAW)' },
                 ATH: { lat: 37.9364, lng: 23.9445, name: 'Athens (ATH)' },
-                KIV: { lat: 46.9275, lng: 28.9308, name: 'Chisinau (KIV)' }
+                KIV: { lat: 46.9275, lng: 28.9308, name: 'Chisinau (KIV)' },
+                CPH: { lat: 55.6180, lng: 12.6560, name: 'Copenhagen (CPH)' },
+                ZRH: { lat: 47.4647, lng: 8.5492, name: 'Zurich (ZRH)' }
             };
 
             for (const key in airports) {
@@ -584,10 +586,37 @@
             }
         }
         
-        // Execute immediately for initial load / full reload
-        initRadar();
+        // ─── Turbo Drive lifecycle ───────────────────────────────────────────
+        // IMPORTANT: Leaflet attaches to the DOM element directly.
+        // If Turbo Drive caches the page while Leaflet is running, the cached
+        // snapshot contains a Leaflet-initialized div. When restored, Leaflet
+        // throws "Map container is already initialized."
+        // Fix: destroy the map BEFORE Turbo caches the page snapshot.
+        document.addEventListener('turbo:before-cache', function() {
+            if (window._radarMap) {
+                window._radarMap.remove();
+                window._radarMap = null;
+            }
+            // Remove SignalR listeners so they don't pile up
+            if (window.globalConnection) {
+                window.globalConnection.off("RadarUpdate");
+                window.globalConnection.off("RunwayLights");
+            }
+        });
+
+        // Execute on full page load
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', initRadar);
+        } else {
+            initRadar();
+        }
         
-        // Execute on Turbo navigation
-        document.addEventListener('turbo:load', initRadar);
+        // Execute on Turbo navigation (back to radar from another page)
+        document.addEventListener('turbo:load', function() {
+            // Only run if the radar-map element exists on the current page
+            if (document.getElementById('radar-map')) {
+                initRadar();
+            }
+        });
     </script>
 }

@@ -6,6 +6,7 @@ using Microsoft.EntityFrameworkCore;
 using TMPP_Aeroport.Data;
 using TMPP_Aeroport.Hubs;
 using TMPP_Aeroport.Models;
+using TMPP_Aeroport.Services;
 
 namespace TMPP_Aeroport.Controllers
 {
@@ -25,7 +26,30 @@ namespace TMPP_Aeroport.Controllers
         // Accessible by all authenticated users (passengers see the board, admins manage it)
         public async Task<IActionResult> Index(int? pageNumber)
         {
-            var flights = _context.Flights.Include(f => f.Aircraft).OrderByDescending(f => f.DepartureTime);
+            // Use the simulation's VirtualTime for FIDS visibility window.
+            // Flights appear on FIDS 3 simulated hours before departure and
+            // remain visible until they reach "Completed" status.
+            var now = FlightSimulationService.VirtualTime;
+            var fidsWindowStart = now.AddHours(-1);   // keep recently-landed flights visible up to 1h after landing
+            var fidsWindowEnd   = now.AddHours(3);    // show flights departing within 3 virtual hours
+
+            // Always show active flights regardless of time (Boarding, Airborne, Landed, Holding…)
+            var activeStatuses = new[] { "Boarding", "Boarding Complete", "Airborne",
+                                         "Cleared for Takeoff", "Awaiting Takeoff Clearance",
+                                         "Awaiting Takeoff - Weather Hold",
+                                         "Holding Pattern (Awaiting Landing)",
+                                         "Holding Pattern (Weather - Storm)",
+                                         "Cleared for Landing", "Landed" };
+
+            var flights = _context.Flights
+                .Include(f => f.Aircraft)
+                .Where(f => f.Status != "Completed" &&
+                    (
+                        activeStatuses.Contains(f.Status) ||
+                        (f.DepartureTime >= fidsWindowStart && f.DepartureTime <= fidsWindowEnd)
+                    ))
+                .OrderBy(f => f.DepartureTime);
+
             int pageSize = 10;
             return View(await PaginatedList<Flight>.CreateAsync(flights.AsNoTracking(), pageNumber ?? 1, pageSize));
         }
