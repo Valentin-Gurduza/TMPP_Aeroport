@@ -5,7 +5,6 @@
     
     var flights = ViewBag.Flights as List<TMPP_Aeroport.Models.Flight>;
     var towerLogs = ViewBag.TowerLogs as List<string>;
-    var aircraftsDict = ViewBag.AircraftsDict as Dictionary<string, TMPP_Aeroport.Domain.Mediator.Aircraft>;
     var pendingRequests = ViewBag.PendingRequests as List<TMPP_Aeroport.Services.SimulatedFlight>;
 }
 
@@ -174,100 +173,94 @@
 
 @section Scripts {
     <script>
-        let currentFlight = null;
+        (function initATCTower() {
+            // Guard: if already initialized on this page instance, skip
+            if (window._atcTowerInitialized) return;
+            window._atcTowerInitialized = true;
 
-        function selectFlightForChat(flightNum) {
-            currentFlight = flightNum;
-            document.getElementById('active-flight').value = flightNum;
-            document.getElementById('chat-title').innerText = "Comm: " + flightNum;
-            document.getElementById('chat-subtitle').innerText = "Encrypted Channel";
-            
-            // Enable inputs
-            document.getElementById('chat-input').disabled = false;
-            document.getElementById('chat-input').placeholder = `Message to ${flightNum}...`;
-            document.getElementById('chat-submit').disabled = false;
+            window._atcCurrentFlight = null;
 
-            // Highlight selected
-            document.querySelectorAll('.flight-selector').forEach(el => {
-                el.classList.remove('bg-blue-50', 'border-blue-200');
-            });
-            document.getElementById('sel-' + flightNum).classList.add('bg-blue-50', 'border-blue-200');
-        }
-
-        async function sendChat(e) {
-            e.preventDefault();
-            const msg = document.getElementById('chat-input').value;
-            if(!msg || !currentFlight) return;
-
-            document.getElementById('chat-input').value = '';
-
-            try {
-                const formData = new URLSearchParams();
-                formData.append('senderFlightNumber', currentFlight);
-                formData.append('message', msg);
-
-                await fetch('/ATC/SendChatMessage', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-                    body: formData
-                });
-            } catch(err) {
-                console.error(err);
-                toastr.error("Failed to send message");
-            }
-        }
-
-        async function sendQuickCommand(actionType) {
-            if(!currentFlight) {
-                toastr.warning("Select a flight first.");
-                return;
-            }
-            try {
-                const formData = new URLSearchParams();
-                formData.append('senderFlightNumber', currentFlight);
-                formData.append('actionType', actionType);
-
-                await fetch('/ATC/SendChatMessage', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-                    body: formData
-                });
-            } catch(err) {
-                console.error(err);
-            }
-        }
-
-        // Listen for incoming SignalR Chat
-        if (window.globalConnection) {
-            window.globalConnection.on("ReceiveATCChat", function (flight, msg, role) {
-                const chatArea = document.getElementById('chat-messages');
-                const emptyMsg = document.getElementById('empty-chat-msg');
-                if(emptyMsg) emptyMsg.remove();
-
-                const div = document.createElement('div');
+            window.selectFlightForChat = function(flightNum) {
+                window._atcCurrentFlight = flightNum;
+                document.getElementById('active-flight').value = flightNum;
+                document.getElementById('chat-title').innerText = "Comm: " + flightNum;
+                document.getElementById('chat-subtitle').innerText = "Encrypted Channel";
                 
-                if (role === 'System' || flight === 'TOWER') {
-                    // Tower message (Right aligned)
-                    div.className = "flex justify-end animate-fade-in-up";
-                    div.innerHTML = `
-                        <div class="bg-blue-600 text-white rounded-2xl rounded-tr-sm px-4 py-2 max-w-[80%] shadow-sm">
-                            <p class="text-sm">${msg}</p>
-                        </div>
-                    `;
-                } else {
-                    // Aircraft message (Left aligned)
-                    div.className = "flex justify-start animate-fade-in-up";
-                    div.innerHTML = `
-                        <div class="bg-white dark:bg-slate-900 dark:text-slate-200 border border-slate-200 text-slate-700 rounded-2xl rounded-tl-sm px-4 py-2 max-w-[80%] shadow-sm">
-                            <p class="text-xs font-bold text-slate-400 mb-1">${flight}</p>
-                            <p class="text-sm">${msg}</p>
-                        </div>
-                    `;
-                }
+                document.getElementById('chat-input').disabled = false;
+                document.getElementById('chat-input').placeholder = `Message to ${flightNum}...`;
+                document.getElementById('chat-submit').disabled = false;
 
-                chatArea.appendChild(div);
-                chatArea.scrollTop = chatArea.scrollHeight; // Auto-scroll to bottom
-            });
-        }
+                document.querySelectorAll('.flight-selector').forEach(el => {
+                    el.classList.remove('bg-blue-50', 'border-blue-200');
+                });
+                const selEl = document.getElementById('sel-' + flightNum);
+                if (selEl) selEl.classList.add('bg-blue-50', 'border-blue-200');
+            };
+
+            window.sendChat = async function(e) {
+                e.preventDefault();
+                const msg = document.getElementById('chat-input').value;
+                if (!msg || !window._atcCurrentFlight) return;
+                document.getElementById('chat-input').value = '';
+                try {
+                    const formData = new URLSearchParams();
+                    formData.append('senderFlightNumber', window._atcCurrentFlight);
+                    formData.append('message', msg);
+                    await fetch('/ATC/SendChatMessage', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                        body: formData
+                    });
+                } catch(err) {
+                    console.error(err);
+                    if (window.toastr) toastr.error("Failed to send message");
+                }
+            };
+
+            window.sendQuickCommand = async function(actionType) {
+                if (!window._atcCurrentFlight) {
+                    if (window.toastr) toastr.warning("Select a flight first.");
+                    return;
+                }
+                try {
+                    const formData = new URLSearchParams();
+                    formData.append('senderFlightNumber', window._atcCurrentFlight);
+                    formData.append('actionType', actionType);
+                    await fetch('/ATC/SendChatMessage', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                        body: formData
+                    });
+                } catch(err) {
+                    console.error(err);
+                }
+            };
+
+            if (window.globalConnection) {
+                window.globalConnection.off("ReceiveATCChat");
+                window.globalConnection.on("ReceiveATCChat", function (flight, msg, role) {
+                    const chatArea = document.getElementById('chat-messages');
+                    if (!chatArea) return;
+                    const emptyMsg = document.getElementById('empty-chat-msg');
+                    if (emptyMsg) emptyMsg.remove();
+
+                    const div = document.createElement('div');
+                    if (role === 'System' || flight === 'TOWER') {
+                        div.className = "flex justify-end animate-fade-in-up";
+                        div.innerHTML = `<div class="bg-blue-600 text-white rounded-2xl rounded-tr-sm px-4 py-2 max-w-[80%] shadow-sm"><p class="text-sm">${msg}</p></div>`;
+                    } else {
+                        div.className = "flex justify-start animate-fade-in-up";
+                        div.innerHTML = `<div class="bg-white dark:bg-slate-900 dark:text-slate-200 border border-slate-200 text-slate-700 rounded-2xl rounded-tl-sm px-4 py-2 max-w-[80%] shadow-sm"><p class="text-xs font-bold text-slate-400 mb-1">${flight}</p><p class="text-sm">${msg}</p></div>`;
+                    }
+                    chatArea.appendChild(div);
+                    chatArea.scrollTop = chatArea.scrollHeight;
+                });
+            }
+        })();
+
+        // Re-init on Turbo navigation (reset guard so next page load re-runs)
+        document.addEventListener('turbo:before-visit', function() {
+            window._atcTowerInitialized = false;
+        });
     </script>
 }

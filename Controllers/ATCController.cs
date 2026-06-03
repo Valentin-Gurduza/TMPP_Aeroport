@@ -80,7 +80,11 @@ namespace TMPP_Aeroport.Controllers
                     modelType = blip.GetSharedModelName(), // Client UI will use this to select correct texture/sprite
                     status = simFlight.Status,
                     origin = dbFlight?.Origin ?? "UNK",
-                    destination = dbFlight?.Destination ?? "UNK"
+                    destination = dbFlight?.Destination ?? "UNK",
+                    originLat = simFlight.OriginLat,
+                    originLng = simFlight.OriginLng,
+                    destLat = simFlight.DestLat,
+                    destLng = simFlight.DestLng
                 });
             }
 
@@ -193,6 +197,7 @@ namespace TMPP_Aeroport.Controllers
                 .ToListAsync();
 
             await _hubContext.Clients.All.SendAsync("FlightStateChanged", new {
+                FlightId = flight?.Id ?? 0,
                 FlightNumber = flightNumber,
                 OldStatus = oldStatus,
                 NewStatus = newStatus,
@@ -273,6 +278,7 @@ namespace TMPP_Aeroport.Controllers
             }
 
             ViewBag.Logs = receiver.Logs;
+            ViewBag.LightsOn = lightsOn;
             return View();
         }
     }

@@ -50,7 +50,7 @@ namespace TMPP_Aeroport.Controllers
 
             var flights = await query
                 .OrderBy(f => f.DepartureTime)
-                .Take(20)
+                .Take(50)
                 .ToListAsync();
 
             ViewBag.AllDestinations = await _context.Flights

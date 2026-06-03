@@ -20,6 +20,29 @@ namespace TMPP_Aeroport.Controllers
             _context = context;
         }
 
+        [AllowAnonymous]
+        [HttpGet]
+        public async Task<IActionResult> NukeGhostFlights()
+        {
+            try 
+            {
+                var badFlights = await _context.Flights.Where(f => f.Status != "Completed").ToListAsync();
+                foreach(var f in badFlights) f.Status = "Completed";
+                await _context.SaveChangesAsync();
+                
+                if (System.IO.File.Exists("simulation_savegame.json"))
+                {
+                    System.IO.File.Delete("simulation_savegame.json");
+                }
+                
+                return Json(new { success = true, nukedCount = badFlights.Count });
+            } 
+            catch(Exception ex)
+            {
+                return Json(new { success = false, error = ex.Message });
+            }
+        }
+
         // Prototype & Abstract Factory: Flight Scheduler UI
         public async Task<IActionResult> FlightScheduler(int? pageNumber)
         {
