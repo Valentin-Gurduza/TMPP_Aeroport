@@ -37,15 +37,25 @@ namespace TMPP_Aeroport.Controllers
         }
 
         // GET: /Tickets/Book
-        public async Task<IActionResult> Book(string? to)
+        public async Task<IActionResult> Book(string? to, string? from, string? date)
         {
             var query = _context.Flights
                 .Include(f => f.Aircraft)
-                .Where(f => f.Status == "Scheduled");
+                .Where(f => f.Status == "Scheduled" && f.DepartureTime > DateTime.Now);
+
+            if (!string.IsNullOrEmpty(from))
+            {
+                query = query.Where(f => f.Origin == from);
+            }
 
             if (!string.IsNullOrEmpty(to))
             {
                 query = query.Where(f => f.Destination == to);
+            }
+
+            if (!string.IsNullOrEmpty(date) && DateTime.TryParse(date, out var parsedDate))
+            {
+                query = query.Where(f => f.DepartureTime.Date == parsedDate.Date);
             }
 
             var flights = await query
@@ -54,12 +64,22 @@ namespace TMPP_Aeroport.Controllers
                 .ToListAsync();
 
             ViewBag.AllDestinations = await _context.Flights
-                .Where(f => f.Status == "Scheduled")
+                .Where(f => f.Status == "Scheduled" && f.DepartureTime > DateTime.Now)
                 .Select(f => f.Destination)
                 .Distinct()
+                .OrderBy(d => d)
                 .ToListAsync();
-                
+
+            ViewBag.AllOrigins = await _context.Flights
+                .Where(f => f.Status == "Scheduled" && f.DepartureTime > DateTime.Now)
+                .Select(f => f.Origin)
+                .Distinct()
+                .OrderBy(o => o)
+                .ToListAsync();
+
             ViewBag.SelectedTo = to;
+            ViewBag.SelectedFrom = from;
+            ViewBag.SelectedDate = date;
 
             return View(flights);
         }
@@ -71,7 +91,7 @@ namespace TMPP_Aeroport.Controllers
                 .Include(f => f.Aircraft)
                 .FirstOrDefaultAsync(f => f.Id == id);
 
-            if (flight == null || flight.Status != "Scheduled")
+            if (flight == null || flight.Status != "Scheduled" || flight.DepartureTime <= DateTime.Now)
             {
                 return NotFound("Flight is no longer available for booking.");
             }

@@ -42,7 +42,12 @@ namespace TMPP_Aeroport.Data
                 };
 
                 var config = serviceProvider.GetRequiredService<IConfiguration>();
-                string adminPassword = config["SeedAdminPassword"] ?? "Admin123!";
+                string? adminPassword = config["SeedAdminPassword"];
+                if (string.IsNullOrEmpty(adminPassword))
+                {
+                    throw new InvalidOperationException("SeedAdminPassword must be configured in appsettings or environment variables.");
+                }
+
                 var createPowerUser = await userManager.CreateAsync(newAdmin, adminPassword);
                 if (createPowerUser.Succeeded)
                 {

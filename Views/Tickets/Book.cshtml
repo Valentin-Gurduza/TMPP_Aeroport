@@ -13,24 +13,44 @@
         </div>
     </div>
 
-    <!-- Filters (Working UI) -->
-    <form method="get" asp-action="Book" class="rounded-2xl border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-gray-900 shadow-sm flex flex-wrap gap-4">
-        <div class="flex-1 min-w-[200px]">
-            <label class="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">From</label>
-            <div class="relative">
-                <span class="material-symbols-rounded absolute left-4 top-1/2 -translate-y-1/2 text-gray-400">flight_takeoff</span>
-                <input type="text" value="Any Origin" readonly class="w-full rounded-lg border border-gray-200 bg-gray-50 py-3 pl-12 pr-4 text-gray-600 outline-none dark:border-gray-800 dark:bg-gray-800 dark:text-gray-400" />
+    <!-- Search Form -->
+    <form method="get" asp-action="Book" class="rounded-2xl border border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-900 shadow-sm p-5">
+        <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4 items-end">
+
+            <!-- FROM -->
+            <div>
+                <label class="mb-2 block text-sm font-semibold text-gray-700 dark:text-gray-300">
+                    <span class="material-symbols-rounded text-[16px] align-middle mr-1 text-blue-500">flight_takeoff</span> From
+                </label>
+                <select name="from" class="w-full rounded-lg border border-gray-300 dark:border-gray-700 bg-transparent py-3 px-4 text-gray-800 dark:text-white/90 outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 dark:bg-gray-900">
+                    <option value="">Any Origin</option>
+                    @if (ViewBag.AllOrigins != null)
+                    {
+                        foreach (var origin in ViewBag.AllOrigins)
+                        {
+                            if (ViewBag.SelectedFrom == origin)
+                            {
+                                <option value="@origin" selected>@origin</option>
+                            }
+                            else
+                            {
+                                <option value="@origin">@origin</option>
+                            }
+                        }
+                    }
+                </select>
             </div>
-        </div>
-        <div class="flex-1 min-w-[200px]">
-            <label class="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">To</label>
-            <div class="relative">
-                <span class="material-symbols-rounded absolute left-4 top-1/2 -translate-y-1/2 text-gray-400">flight_land</span>
-                <select name="to" class="w-full rounded-lg border border-gray-300 bg-transparent py-3 pl-12 pr-4 text-gray-800 outline-none transition focus:border-blue-500 active:border-blue-500 dark:border-gray-700 dark:bg-gray-900 dark:text-white/90">
+
+            <!-- TO -->
+            <div>
+                <label class="mb-2 block text-sm font-semibold text-gray-700 dark:text-gray-300">
+                    <span class="material-symbols-rounded text-[16px] align-middle mr-1 text-blue-500">flight_land</span> To
+                </label>
+                <select name="to" class="w-full rounded-lg border border-gray-300 dark:border-gray-700 bg-transparent py-3 px-4 text-gray-800 dark:text-white/90 outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 dark:bg-gray-900">
                     <option value="">Any Destination</option>
                     @if (ViewBag.AllDestinations != null)
                     {
-                        foreach(var dest in ViewBag.AllDestinations)
+                        foreach (var dest in ViewBag.AllDestinations)
                         {
                             if (ViewBag.SelectedTo == dest)
                             {
@@ -44,13 +64,55 @@
                     }
                 </select>
             </div>
+
+            <!-- DATE -->
+            <div>
+                <label class="mb-2 block text-sm font-semibold text-gray-700 dark:text-gray-300">
+                    <span class="material-symbols-rounded text-[16px] align-middle mr-1 text-blue-500">calendar_month</span> Departure Date
+                </label>
+                <input type="date"
+                       name="date"
+                       value="@ViewBag.SelectedDate"
+                       min="@DateTime.Now.ToString("yyyy-MM-dd")"
+                       class="w-full rounded-lg border border-gray-300 dark:border-gray-700 bg-transparent py-3 px-4 text-gray-800 dark:text-white/90 outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 dark:bg-gray-900 dark:[color-scheme:dark]" />
+            </div>
+
+            <!-- SEARCH + RESET -->
+            <div class="flex gap-2">
+                <button type="submit" class="flex-1 flex items-center justify-center gap-2 rounded-lg bg-blue-600 hover:bg-blue-700 px-5 py-3 font-semibold text-white transition shadow-sm shadow-blue-500/30">
+                    <span class="material-symbols-rounded text-[20px]">search</span> Search
+                </button>
+                <a href="/Tickets/Book" class="flex items-center justify-center rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 px-4 py-3 text-gray-500 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700 transition" title="Clear filters">
+                    <span class="material-symbols-rounded text-[20px]">filter_alt_off</span>
+                </a>
+            </div>
+
         </div>
-        <div class="flex items-end">
-            <button type="submit" class="flex items-center gap-2 rounded-lg bg-blue-600 px-6 py-3 font-medium text-white hover:bg-blue-700 transition w-full sm:w-auto">
-                <span class="material-symbols-rounded text-[20px]">search</span>
-                Search
-            </button>
-        </div>
+
+        @if (!string.IsNullOrEmpty(ViewBag.SelectedFrom as string) || !string.IsNullOrEmpty(ViewBag.SelectedTo as string) || !string.IsNullOrEmpty(ViewBag.SelectedDate as string))
+        {
+            <div class="mt-3 flex flex-wrap gap-2">
+                <span class="text-xs text-gray-500 dark:text-gray-400 self-center">Active filters:</span>
+                @if (!string.IsNullOrEmpty(ViewBag.SelectedFrom as string))
+                {
+                    <span class="inline-flex items-center gap-1 rounded-full bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-800 px-3 py-1 text-xs font-medium">
+                        <span class="material-symbols-rounded text-[12px]">flight_takeoff</span> @ViewBag.SelectedFrom
+                    </span>
+                }
+                @if (!string.IsNullOrEmpty(ViewBag.SelectedTo as string))
+                {
+                    <span class="inline-flex items-center gap-1 rounded-full bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-800 px-3 py-1 text-xs font-medium">
+                        <span class="material-symbols-rounded text-[12px]">flight_land</span> @ViewBag.SelectedTo
+                    </span>
+                }
+                @if (!string.IsNullOrEmpty(ViewBag.SelectedDate as string))
+                {
+                    <span class="inline-flex items-center gap-1 rounded-full bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-800 px-3 py-1 text-xs font-medium">
+                        <span class="material-symbols-rounded text-[12px]">calendar_month</span> @ViewBag.SelectedDate
+                    </span>
+                }
+            </div>
+        }
     </form>
 
     <!-- Flight List -->

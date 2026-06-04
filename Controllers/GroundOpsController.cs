@@ -22,13 +22,20 @@ namespace TMPP_Aeroport.Controllers
 
         // Facade & Template Method: Pre-Flight Checks
         [HttpPost]
+        [ValidateAntiForgeryToken]
         public async Task<IActionResult> PreFlightChecksExecute(string flightNumber, string runway, string flightType)
         {
             var flight = await _dbContext.Flights.Include(f => f.Aircraft).FirstOrDefaultAsync(f => f.FlightNumber == flightNumber);
             if (flight == null)
             {
                 ViewBag.Error = "Zborul nu a fost găsit.";
-                return View("PreFlightChecks");
+                return await RenderPreFlightView();
+            }
+
+            if (!TMPP_Aeroport.Domain.AirportConfig.Runways.Any(r => r.Code == runway && r.Status == "Available"))
+            {
+                ViewBag.Error = $"Pista {runway} nu este disponibilă sau nu există.";
+                return await RenderPreFlightView();
             }
 
             // Template Method execution
@@ -57,16 +64,25 @@ namespace TMPP_Aeroport.Controllers
             ViewBag.FlightLog = flightLog;
             ViewBag.RoutineLogs = routine.RoutineLogs;
             ViewBag.FlightNumber = flightNumber;
-            ViewBag.Flights = await _dbContext.Flights.Where(f => f.Status == "Scheduled" || f.Status == "Boarding").ToListAsync();
+            ViewBag.FlightLog = flightLog;
+            ViewBag.RoutineLogs = routine.RoutineLogs;
+            ViewBag.FlightNumber = flightNumber;
             
-            return View("PreFlightChecks");
+            return await RenderPreFlightView("PreFlightChecks");
         }
 
         [HttpGet]
         public async Task<IActionResult> PreFlightChecks()
         {
+            return await RenderPreFlightView();
+        }
+
+        private async Task<IActionResult> RenderPreFlightView(string viewName = "PreFlightChecks")
+        {
+            ViewBag.Runways = TMPP_Aeroport.Domain.AirportConfig.Runways.Where(r => r.Status == "Available").ToList();
+            ViewBag.FlightTypes = TMPP_Aeroport.Domain.AirportConfig.FlightTypes;
             ViewBag.Flights = await _dbContext.Flights.Where(f => f.Status == "Scheduled" || f.Status == "Boarding").ToListAsync();
-            return View();
+            return View(viewName);
         }
 
 
@@ -85,7 +101,8 @@ namespace TMPP_Aeroport.Controllers
             return (User.Identity?.IsAuthenticated == true ? User.Identity.Name : null) ?? HttpContext.Connection.RemoteIpAddress?.ToString() ?? "unknown";
         }
 
-        public async Task<IActionResult> GateAssignments(int? flightId, string actionType, string newGate)
+        [HttpGet]
+        public async Task<IActionResult> GateAssignments(int? flightId)
         {
             var key = GetSessionKey();
             
@@ -106,26 +123,6 @@ namespace TMPP_Aeroport.Controllers
                     });
                     var caretaker = _caretakers.GetOrAdd(key + "_" + flight.Id, _ => new TMPP_Aeroport.Domain.Memento.FlightConfigHistory());
 
-                    if (actionType == "Save")
-                    {
-                        caretaker.Backup(originator);
-                        // Save to real DB
-                        flight.Gate = originator.Gate;
-                        await _dbContext.SaveChangesAsync();
-                        originator.ActionLogs.Add($"Saved gate {originator.Gate} to Database for flight {flight.FlightNumber}");
-                    }
-                    else if (actionType == "Update" && !string.IsNullOrEmpty(newGate))
-                    {
-                        originator.SetConfiguration(newGate, originator.DepartureTime, originator.AircraftModel);
-                    }
-                    else if (actionType == "Undo")
-                    {
-                        caretaker.Undo(originator);
-                        // Revert in real DB if necessary
-                        flight.Gate = originator.Gate;
-                        await _dbContext.SaveChangesAsync();
-                    }
-
                     ViewBag.CurrentGate = originator.Gate;
                     ViewBag.CurrentModel = originator.AircraftModel;
                     ViewBag.Logs = originator.ActionLogs;
@@ -134,6 +131,45 @@ namespace TMPP_Aeroport.Controllers
             }
 
             return View();
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> GateAssignmentsExecute(int flightId, string actionType, string newGate)
+        {
+            var key = GetSessionKey();
+            var flight = await _dbContext.Flights.Include(f => f.Aircraft).FirstOrDefaultAsync(f => f.Id == flightId);
+            if (flight != null)
+            {
+                var originator = _originators.GetOrAdd(key + "_" + flight.Id, _ => new TMPP_Aeroport.Domain.Memento.FlightConfigurator() 
+                { 
+                    Gate = flight.Gate ?? "Unassigned", 
+                    DepartureTime = flight.DepartureTime, 
+                    AircraftModel = flight.Aircraft?.Model ?? "Unknown" 
+                });
+                var caretaker = _caretakers.GetOrAdd(key + "_" + flight.Id, _ => new TMPP_Aeroport.Domain.Memento.FlightConfigHistory());
+
+                if (actionType == "Save")
+                {
+                    caretaker.Backup(originator);
+                    // Save to real DB
+                    flight.Gate = originator.Gate;
+                    await _dbContext.SaveChangesAsync();
+                    originator.ActionLogs.Add($"Saved gate {originator.Gate} to Database for flight {flight.FlightNumber}");
+                }
+                else if (actionType == "Update" && !string.IsNullOrEmpty(newGate))
+                {
+                    originator.SetConfiguration(newGate, originator.DepartureTime, originator.AircraftModel);
+                }
+                else if (actionType == "Undo")
+                {
+                    caretaker.Undo(originator);
+                    // Revert in real DB if necessary
+                    flight.Gate = originator.Gate;
+                    await _dbContext.SaveChangesAsync();
+                }
+            }
+            return RedirectToAction("GateAssignments", new { flightId = flightId });
         }
 
         // Composite Pattern: Cargo Manifest

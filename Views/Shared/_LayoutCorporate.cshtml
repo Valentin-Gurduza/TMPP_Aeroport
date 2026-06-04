@@ -317,7 +317,7 @@
                 @if (User.IsInRole("Admin"))
                 {
                     <a asp-controller="Admin" asp-action="Index" class="sidebar-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "Admin" ? "active" : "")">
-                        <span class="material-symbols-rounded sidebar-icon">manage_accounts</span> User Mgmt
+                        <span class="material-symbols-rounded sidebar-icon">manage_accounts</span> User Management
                     </a>
                 }
             </nav>

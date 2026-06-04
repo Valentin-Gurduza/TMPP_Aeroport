@@ -33,12 +33,10 @@
                 {
                     <div class="relative">
                         <input type="radio" name="status" value="@s" id="status_@s" class="peer sr-only" @(Model.Status == s ? "checked" : "")>
-                        <label for="status_@s" class="flex cursor-pointer rounded-lg border bg-white dark:bg-slate-900 dark:text-slate-200 p-4 shadow-sm focus:outline-none transition-all peer-checked:border-blue-500 peer-checked:ring-1 peer-checked:ring-blue-500 peer-checked:bg-blue-50 border-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 items-center justify-between">
-                            <span class="flex flex-col">
-                                <span class="block text-sm font-medium text-slate-900 uppercase tracking-widest">@s</span>
-                            </span>
-                            <span class="material-symbols-rounded text-slate-200 peer-checked:text-blue-600 transition-colors">check_circle</span>
+                        <label for="status_@s" class="flex cursor-pointer rounded-lg border bg-white dark:bg-slate-800 p-4 shadow-sm focus:outline-none transition-all peer-checked:border-blue-500 peer-checked:ring-1 peer-checked:ring-blue-500 peer-checked:bg-blue-50 dark:peer-checked:bg-blue-900/30 border-slate-300 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700 items-center justify-between pr-12">
+                            <span class="block text-sm font-medium text-slate-900 dark:text-slate-100 uppercase tracking-widest">@s</span>
                         </label>
+                        <span class="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 material-symbols-rounded text-blue-500 invisible peer-checked:visible transition-all">check_circle</span>
                     </div>
                 }
             </div>

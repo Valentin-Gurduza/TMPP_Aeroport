@@ -123,7 +123,7 @@ function initRadar() {
 
             if (window.globalConnection) {
                 window.globalConnection.off("RadarUpdate");
-                window.globalConnection.off("RunwayLights");
+                // RunwayLights is handled by RunwayLightsManager
             }
 
             const panel = document.getElementById('atc-side-panel');
@@ -362,31 +362,64 @@ function initRadar() {
                     }
                 });
 
-                window.globalConnection.on("RunwayLights", function (lightsOn) {
-                    const radarMapElement = document.getElementById('radar-map');
-                    if (lightsOn) {
-                        // Flash map brightly to simulate runway lights coming on!
-                        radarMapElement.style.transition = 'filter 0.5s ease-in-out, box-shadow 0.5s ease';
-                        radarMapElement.style.filter = 'brightness(1.5) contrast(1.2)';
-                        radarMapElement.style.boxShadow = '0 0 40px 10px rgba(96, 165, 250, 0.6)';
-                        
-                        // Toast notification
-                        const toast = document.createElement('div');
-                        toast.innerHTML = '<span class="material-symbols-rounded">lightbulb</span> Runway Lights Activated';
-                        toast.style.cssText = 'position:fixed; bottom:20px; left:20px; background:#3b82f6; color:white; padding:15px 25px; border-radius:8px; font-family:sans-serif; font-weight:bold; display:flex; gap:10px; align-items:center; box-shadow:0 10px 25px rgba(0,0,0,0.5); z-index:9999; animation: slideInLeft 0.3s ease-out;';
-                        document.body.appendChild(toast);
-                        setTimeout(() => { toast.style.animation = 'slideOutLeft 0.3s ease-in'; setTimeout(() => toast.remove(), 300); }, 4000);
-                    } else {
-                        radarMapElement.style.filter = 'brightness(1) contrast(1)';
-                        radarMapElement.style.boxShadow = 'none';
-                        
-                        const toast = document.createElement('div');
-                        toast.innerHTML = '<span class="material-symbols-rounded text-slate-400">lightbulb_outline</span> Runway Lights Deactivated';
-                        toast.style.cssText = 'position:fixed; bottom:20px; left:20px; background:#1e293b; color:white; padding:15px 25px; border-radius:8px; font-family:sans-serif; font-weight:bold; display:flex; gap:10px; align-items:center; box-shadow:0 10px 25px rgba(0,0,0,0.5); z-index:9999; animation: slideInLeft 0.3s ease-out;';
-                        document.body.appendChild(toast);
-                        setTimeout(() => { toast.style.animation = 'slideOutLeft 0.3s ease-in'; setTimeout(() => toast.remove(), 300); }, 4000);
+                class RunwayLightsManager {
+                    constructor() {
+                        this.connection = null;
+                        this.handlers = new Map();
                     }
-                });
+
+                    init() {
+                        this.connection = window.globalConnection;
+                        
+                        // Prevent multiple listener bindings
+                        this.cleanup();
+
+                        const handler = (lightsOn) => this.handleLightsChange(lightsOn);
+                        this.handlers.set("RunwayLights", handler);
+                        this.connection.on("RunwayLights", handler);
+                    }
+
+                    handleLightsChange(lightsOn) {
+                        const radarMapElement = document.getElementById('radar-map');
+                        if (lightsOn) {
+                            radarMapElement.style.transition = 'filter 0.5s ease-in-out, box-shadow 0.5s ease';
+                            radarMapElement.style.filter = 'brightness(1.5) contrast(1.2)';
+                            radarMapElement.style.boxShadow = '0 0 40px 10px rgba(96, 165, 250, 0.6)';
+                            
+                            const toast = document.createElement('div');
+                            toast.innerHTML = '<span class="material-symbols-rounded">lightbulb</span> Runway Lights Activated';
+                            toast.style.cssText = 'position:fixed; bottom:20px; left:20px; background:#3b82f6; color:white; padding:15px 25px; border-radius:8px; font-family:sans-serif; font-weight:bold; display:flex; gap:10px; align-items:center; box-shadow:0 10px 25px rgba(0,0,0,0.5); z-index:9999; animation: slideInLeft 0.3s ease-out;';
+                            document.body.appendChild(toast);
+                            setTimeout(() => { toast.style.animation = 'slideOutLeft 0.3s ease-in'; setTimeout(() => toast.remove(), 300); }, 4000);
+                        } else {
+                            radarMapElement.style.filter = 'brightness(1) contrast(1)';
+                            radarMapElement.style.boxShadow = 'none';
+                            
+                            const toast = document.createElement('div');
+                            toast.innerHTML = '<span class="material-symbols-rounded text-slate-400">lightbulb_outline</span> Runway Lights Deactivated';
+                            toast.style.cssText = 'position:fixed; bottom:20px; left:20px; background:#1e293b; color:white; padding:15px 25px; border-radius:8px; font-family:sans-serif; font-weight:bold; display:flex; gap:10px; align-items:center; box-shadow:0 10px 25px rgba(0,0,0,0.5); z-index:9999; animation: slideInLeft 0.3s ease-out;';
+                            document.body.appendChild(toast);
+                            setTimeout(() => { toast.style.animation = 'slideOutLeft 0.3s ease-in'; setTimeout(() => toast.remove(), 300); }, 4000);
+                        }
+                    }
+
+                    cleanup() {
+                        if(this.connection) {
+                            this.handlers.forEach((handler, event) => {
+                                this.connection.off(event, handler);
+                            });
+                            this.handlers.clear();
+                        }
+                    }
+                }
+
+                if(!window.runwayLightsManager) {
+                    window.runwayLightsManager = new RunwayLightsManager();
+                    document.addEventListener('turbo:before-cache', () => window.runwayLightsManager.cleanup());
+                    window.addEventListener('beforeunload', () => window.runwayLightsManager.cleanup());
+                }
+                window.runwayLightsManager.init();
+
             } else {
                 console.error("Global SignalR connection not found.");
             }
