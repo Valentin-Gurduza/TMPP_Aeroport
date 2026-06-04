@@ -83,4 +83,3 @@ Use the following credentials to explore different areas of the system:
 * [Google Material Symbols](https://fonts.google.com/icons) - Modern Iconography
 
 ---
-*Created as part of the Software Design Patterns (TMPP) Laboratory.*
