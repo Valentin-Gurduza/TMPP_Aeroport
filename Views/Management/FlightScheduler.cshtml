@@ -45,7 +45,7 @@
                         </tr>
                     </thead>
                     <tbody class="divide-y divide-slate-100 dark:divide-slate-800 text-sm font-medium text-slate-700 dark:text-slate-300">
-                        @foreach (var f in Model.Take(6))
+                        @foreach (var f in Model)
                         {
                             <tr class="hover:bg-slate-50 dark:hover:bg-slate-800 dark:bg-slate-900 transition">
                                 <td class="p-4">
@@ -54,7 +54,7 @@
                                         <span class="font-bold text-slate-800 dark:text-slate-200">@f.FlightNumber</span>
                                     </div>
                                 </td>
-                                <td class="p-4">OTP → @f.Destination</td>
+                                <td class="p-4">@f.Origin → @f.Destination</td>
                                 <td class="p-4">
                                     <span class="px-2 py-1 rounded-md text-xs font-bold bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400">Scheduled</span>
                                 </td>
@@ -62,6 +62,7 @@
                                     <!-- Edit & Undo Modal Trigger -->
                                     <button type="button" onclick="openEditModal(@f.Id, '@f.Gate', '@f.DepartureTime.ToString("yyyy-MM-ddTHH:mm")')" class="inline-flex items-center px-3 py-1.5 bg-amber-50 text-amber-700 border border-amber-200 rounded-lg hover:bg-amber-100 transition text-xs font-bold shadow-sm">
                                         <span class="material-symbols-rounded text-sm mr-1">edit</span> Edit
+                                    </button>
                                     <!-- Clone Modal Trigger -->
                                     <button type="button" onclick="cloneFlight(@f.Id)" class="inline-flex items-center px-3 py-1.5 bg-green-50 text-green-700 border border-green-200 rounded-lg hover:bg-green-100 transition text-xs font-bold shadow-sm" title="Clone (Prototype)">
                                         <span class="material-symbols-rounded text-sm mr-1">content_copy</span> Clone
@@ -74,6 +75,30 @@
                         }
                     </tbody>
                 </table>
+            </div>
+
+            <!-- Pagination Controls -->
+            @{
+                var paginatedList = Model as TMPP_Aeroport.Models.PaginatedList<TMPP_Aeroport.Models.Flight>;
+                var prevDisabled = (paginatedList == null || !paginatedList.HasPreviousPage) ? "opacity-50 cursor-not-allowed pointer-events-none" : "";
+                var nextDisabled = (paginatedList == null || !paginatedList.HasNextPage) ? "opacity-50 cursor-not-allowed pointer-events-none" : "";
+            }
+            <div class="bg-slate-50 dark:bg-slate-800 border-t border-slate-200 dark:border-slate-700 px-6 py-3 flex items-center justify-between">
+                <span class="text-sm text-slate-600 dark:text-slate-400">
+                    Page <span class="font-bold">@(paginatedList?.PageIndex ?? 1)</span> of <span class="font-bold">@(paginatedList?.TotalPages ?? 1)</span>
+                </span>
+                <div class="flex items-center gap-2">
+                    <a asp-action="FlightScheduler"
+                       asp-route-pageNumber="@((paginatedList?.PageIndex ?? 1) - 1)"
+                       class="px-4 py-2 border border-slate-300 dark:border-slate-600 rounded-lg text-sm font-medium bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 transition @prevDisabled">
+                        Previous
+                    </a>
+                    <a asp-action="FlightScheduler"
+                       asp-route-pageNumber="@((paginatedList?.PageIndex ?? 1) + 1)"
+                       class="px-4 py-2 border border-slate-300 dark:border-slate-600 rounded-lg text-sm font-medium bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 transition @nextDisabled">
+                        Next
+                    </a>
+                </div>
             </div>
         </div>
 

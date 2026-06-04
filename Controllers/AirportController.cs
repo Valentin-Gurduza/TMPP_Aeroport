@@ -69,6 +69,7 @@ namespace TMPP_Aeroport.Controllers
         }
 
         [HttpGet]
+        [Authorize(Roles = "Admin,ATC_Manager")]
         public IActionResult GetLogs()
         {
             var logs = TMPP_Aeroport.Domain.Singleton.AirportLogger.Instance.GetLogs();

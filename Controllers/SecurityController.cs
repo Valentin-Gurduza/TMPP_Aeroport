@@ -29,7 +29,7 @@ namespace TMPP_Aeroport.Controllers
         }
 
         [HttpGet]
-        [AllowAnonymous]
+        [Authorize(Roles = "Admin")]
         public IActionResult DebugBags()
         {
             var stats = _context.BaggageItems

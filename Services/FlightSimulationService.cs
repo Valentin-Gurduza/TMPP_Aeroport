@@ -222,6 +222,46 @@ namespace TMPP_Aeroport.Services
                 return _activeFlights.ToList();
             }
         }
+        
+        public async Task SyncFlightAsync(int flightId)
+        {
+            using var scope = _scopeFactory.CreateScope();
+            var dbContext = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+
+            var flightDb = await dbContext.Flights
+                .Include(f => f.Aircraft)
+                .FirstOrDefaultAsync(f => f.Id == flightId);
+
+            if (flightDb == null || flightDb.Status == "Completed" || flightDb.Status == "Cancelled")
+            {
+                lock (_flightLock)
+                {
+                    _activeFlights.RemoveAll(f => f.Id == flightId);
+                }
+                return;
+            }
+
+            SimulatedFlight? existingSimFlight;
+            lock (_flightLock)
+            {
+                existingSimFlight = _activeFlights.FirstOrDefault(f => f.Id == flightId);
+            }
+
+            if (existingSimFlight != null)
+            {
+                // Update existing
+                existingSimFlight.FlightNumber = flightDb.FlightNumber;
+                existingSimFlight.DepartureTime = flightDb.DepartureTime;
+                existingSimFlight.Status = flightDb.Status;
+                existingSimFlight.AssignedGate = flightDb.Gate ?? "";
+                if (flightDb.ArrivalTime.HasValue) existingSimFlight.ActualArrivalTime = flightDb.ArrivalTime;
+            }
+            else
+            {
+                // Add new (cloned or newly created)
+                await LoadFlightIntoSimulationAsync(flightDb, dbContext);
+            }
+        }
         // --------------------
 
         private async Task InitializeFlightsAsync()
@@ -239,11 +279,25 @@ namespace TMPP_Aeroport.Services
             // Load only active (non-completed) flights from DB
             var dbFlights = await dbContext.Flights
                 .Include(f => f.Aircraft)
-                .Where(f => f.Status != "Completed")
+                .Where(f => f.Status != "Completed" && f.Status != "Cancelled")
                 .OrderBy(f => f.DepartureTime)
                 .ToListAsync();
 
-            _logger.LogInformation($"Initializing simulation with {dbFlights.Count} flights from database.");
+            var now = DateTime.Now;
+            var staleFlights = dbFlights.Where(f => f.DepartureTime < now.AddHours(-4)).ToList();
+            foreach (var sf in staleFlights)
+            {
+                sf.Status = "Cancelled"; // Mark old ghost flights as cancelled so they don't instantly spawn on radar
+                dbFlights.Remove(sf);
+            }
+            
+            if (staleFlights.Any())
+            {
+                await dbContext.SaveChangesAsync();
+                _logger.LogInformation($"Cleaned up {staleFlights.Count} stale flights from previous sessions.");
+            }
+
+            _logger.LogInformation($"Initializing simulation with {dbFlights.Count} valid flights from database.");
 
             foreach (var f in dbFlights)
             {
@@ -919,7 +973,7 @@ namespace TMPP_Aeroport.Services
             {
                 // Find the latest flight for this aircraft that is not completed
                 var latestFlight = await dbContext.Flights
-                    .Where(f => f.AircraftId == ac.Id && f.Status != "Completed")
+                    .Where(f => f.AircraftId == ac.Id && f.Status != "Completed" && f.Status != "Cancelled")
                     .OrderByDescending(f => f.DepartureTime)
                     .FirstOrDefaultAsync();
 

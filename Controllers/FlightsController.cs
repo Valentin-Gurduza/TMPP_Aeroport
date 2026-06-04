@@ -30,8 +30,7 @@ namespace TMPP_Aeroport.Controllers
             // Flights appear on FIDS 3 simulated hours before departure and
             // remain visible until they reach "Completed" status.
             var now = FlightSimulationService.VirtualTime;
-            var fidsWindowStart = now.AddHours(-1);   // keep recently-landed flights visible up to 1h after landing
-            var fidsWindowEnd   = now.AddHours(3);    // show flights departing within 3 virtual hours
+            var realNow = DateTime.Now;
 
             // Always show active flights regardless of time (Boarding, Airborne, Landed, Holding…)
             var activeStatuses = new[] { "Boarding", "Boarding Complete", "Airborne",
@@ -46,7 +45,7 @@ namespace TMPP_Aeroport.Controllers
                 .Where(f => f.Status != "Completed" &&
                     (
                         activeStatuses.Contains(f.Status) ||
-                        (f.DepartureTime >= fidsWindowStart && f.DepartureTime <= fidsWindowEnd)
+                        (f.Status == "Scheduled" && f.DepartureTime > realNow) // show all future scheduled
                     ))
                 .OrderBy(f => f.DepartureTime);
 

@@ -14,13 +14,15 @@ namespace TMPP_Aeroport.Controllers
     public class ManagementController : Controller
     {
         private readonly ApplicationDbContext _context;
+        private readonly TMPP_Aeroport.Services.FlightSimulationService _simulationService;
 
-        public ManagementController(ApplicationDbContext context)
+        public ManagementController(ApplicationDbContext context, TMPP_Aeroport.Services.FlightSimulationService simulationService)
         {
             _context = context;
+            _simulationService = simulationService;
         }
 
-        [AllowAnonymous]
+        [Authorize(Roles = "Admin")]
         [HttpGet]
         public async Task<IActionResult> NukeGhostFlights()
         {
@@ -57,9 +59,9 @@ namespace TMPP_Aeroport.Controllers
         private static readonly Dictionary<int, TMPP_Aeroport.Domain.Memento.FlightConfigHistory> _mementoHistories = new Dictionary<int, TMPP_Aeroport.Domain.Memento.FlightConfigHistory>();
 
         [HttpPost]
-        public IActionResult EditFlightConfig(int flightId, string newGate, DateTime newTime)
+        public async Task<IActionResult> EditFlightConfig(int flightId, string newGate, DateTime newTime)
         {
-            var flight = _context.Flights.FirstOrDefault(f => f.Id == flightId);
+            var flight = await _context.Flights.FirstOrDefaultAsync(f => f.Id == flightId);
             if (flight == null) return Json(new { success = false });
 
             // Create history stack if not exists
@@ -76,15 +78,17 @@ namespace TMPP_Aeroport.Controllers
             // Apply new state
             flight.Gate = newGate;
             flight.DepartureTime = newTime;
-            _context.SaveChanges();
+            await _context.SaveChangesAsync();
+
+            await _simulationService.SyncFlightAsync(flight.Id);
 
             return Json(new { success = true, message = "Flight configuration updated. Memento saved for Undo." });
         }
 
         [HttpPost]
-        public IActionResult UndoFlightConfig(int flightId)
+        public async Task<IActionResult> UndoFlightConfig(int flightId)
         {
-            var flight = _context.Flights.Include(f => f.Aircraft).FirstOrDefault(f => f.Id == flightId);
+            var flight = await _context.Flights.Include(f => f.Aircraft).FirstOrDefaultAsync(f => f.Id == flightId);
             if (flight == null || !_mementoHistories.ContainsKey(flightId)) return Json(new { success = false, message = "No history available." });
 
             var originator = new TMPP_Aeroport.Domain.Memento.FlightConfigurator();
@@ -97,7 +101,9 @@ namespace TMPP_Aeroport.Controllers
 
             flight.Gate = originator.Gate;
             flight.DepartureTime = originator.DepartureTime;
-            _context.SaveChanges();
+            await _context.SaveChangesAsync();
+
+            await _simulationService.SyncFlightAsync(flight.Id);
 
             return Json(new { success = true, message = "Flight configuration restored to previous state.", newGate = flight.Gate, newTime = flight.DepartureTime.ToString("yyyy-MM-ddTHH:mm:ss") });
         }
@@ -121,6 +127,8 @@ namespace TMPP_Aeroport.Controllers
             
             _context.Flights.Add(clonedFlight);
             await _context.SaveChangesAsync();
+
+            await _simulationService.SyncFlightAsync(clonedFlight.Id);
 
             return Json(new { success = true, message = $"Flight {flight.FlightNumber} cloned successfully for {clonedFlight.DepartureTime:yyyy-MM-dd}." });
         }
@@ -247,6 +255,11 @@ namespace TMPP_Aeroport.Controllers
             }
 
             await _context.SaveChangesAsync();
+
+            foreach (var flight in flightsToUpdate)
+            {
+                await _simulationService.SyncFlightAsync(flight.Id);
+            }
 
             return Json(new { success = true, message = $"Successfully delayed {delayVisitor.DelayedFlights.Count} flights by {hoursDelay} hours." });
         }

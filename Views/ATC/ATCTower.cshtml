@@ -45,6 +45,7 @@
                                 <div class="text-sm font-medium text-orange-600 mb-3">@req.Status</div>
                                 
                                 <form action="/ATC/HandleTowerCommand" method="post" class="flex space-x-2">
+                                    @Html.AntiForgeryToken()
                                     <input type="hidden" name="commandFlight" value="@req.FlightNumber" />
                                     @if(req.Status.Contains("Takeoff"))
                                     {
@@ -151,6 +152,7 @@
                     <!-- Chat Input -->
                     <div class="bg-white dark:bg-slate-900 dark:text-slate-200 border-t border-slate-200 p-4">
                         <form id="chat-form" onsubmit="sendChat(event)" class="flex gap-2 relative">
+                            @Html.AntiForgeryToken()
                             <input type="hidden" id="active-flight" name="senderFlightNumber" value="" />
                             
                             <button type="button" onclick="sendQuickCommand('Landing')" class="bg-slate-100 hover:bg-slate-200 text-slate-600 p-3 rounded-xl transition border border-slate-200" title="Request Landing">
@@ -201,11 +203,13 @@
                 e.preventDefault();
                 const msg = document.getElementById('chat-input').value;
                 if (!msg || !window._atcCurrentFlight) return;
+                const token = document.querySelector('input[name="__RequestVerificationToken"]')?.value || '';
                 document.getElementById('chat-input').value = '';
                 try {
                     const formData = new URLSearchParams();
                     formData.append('senderFlightNumber', window._atcCurrentFlight);
                     formData.append('message', msg);
+                    if (token) formData.append('__RequestVerificationToken', token);
                     await fetch('/ATC/SendChatMessage', {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
@@ -222,10 +226,12 @@
                     if (window.toastr) toastr.warning("Select a flight first.");
                     return;
                 }
+                const token = document.querySelector('input[name="__RequestVerificationToken"]')?.value || '';
                 try {
                     const formData = new URLSearchParams();
                     formData.append('senderFlightNumber', window._atcCurrentFlight);
                     formData.append('actionType', actionType);
+                    if (token) formData.append('__RequestVerificationToken', token);
                     await fetch('/ATC/SendChatMessage', {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/x-www-form-urlencoded' },

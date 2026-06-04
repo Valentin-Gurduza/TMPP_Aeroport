@@ -15,6 +15,7 @@ namespace TMPP_Aeroport.Domain.Command
     public class RunwayReceiver
     {
         public List<string> Logs { get; } = new List<string>();
+        public bool AreLightsOn { get; private set; } = false;
         private readonly Microsoft.Extensions.DependencyInjection.IServiceScopeFactory _scopeFactory;
 
         public RunwayReceiver(Microsoft.Extensions.DependencyInjection.IServiceScopeFactory scopeFactory)
@@ -33,11 +34,13 @@ namespace TMPP_Aeroport.Domain.Command
 
         public void TurnOnLights()
         {
+            AreLightsOn = true;
             SaveLog("Runway lights: ON");
         }
 
         public void TurnOffLights()
         {
+            AreLightsOn = false;
             SaveLog("Runway lights: OFF");
         }
 
@@ -160,6 +163,26 @@ namespace TMPP_Aeroport.Domain.Command
                 var command = _commandHistory.Pop();
                 command.Undo();
             }
+        }
+    }
+
+    // 5. Command Factory (Refactoring from Controller)
+    public interface IRunwayCommandFactory
+    {
+        ICommand CreateCommand(string commandName, RunwayReceiver receiver);
+    }
+
+    public class RunwayCommandFactory : IRunwayCommandFactory
+    {
+        public ICommand CreateCommand(string commandName, RunwayReceiver receiver)
+        {
+            return commandName switch
+            {
+                "ToggleLights" => new ToggleLightsCommand(receiver, receiver.AreLightsOn),
+                "PrepareRunway" => new PrepareRunwayCommand(receiver),
+                "Emergency" => new EmergencyMacroCommand(receiver),
+                _ => throw new System.ArgumentException($"Unknown command: {commandName}")
+            };
         }
     }
 }
